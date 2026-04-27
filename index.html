@@ -186,8 +186,8 @@
       <!-- Форма входа -->
       <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label">Никнейм</label>
-          <input type="text" class="form-input" id="loginNickname" placeholder="Твой ник" required autocomplete="username" />
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
         </div>
         <div class="form-group">
           <label class="form-label">Пароль</label>
@@ -202,7 +202,11 @@
         <div class="form-group">
           <label class="form-label">Никнейм</label>
           <input type="text" class="form-input" id="regNickname" placeholder="Крутой игрок" required minlength="2" maxlength="20" autocomplete="username" />
-          <span class="form-hint">2–20 символов, буквы и цифры</span>
+          <span class="form-hint">2–20 символов</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
         </div>
         <div class="form-group">
           <label class="form-label">Пароль</label>
