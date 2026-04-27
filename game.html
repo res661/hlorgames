@@ -72,13 +72,13 @@
 
         <!-- Создать лобби -->
         <div class="g-card g-tab-panel" id="panelCreate">
-          <div id="createLoginNotice" class="g-notice hidden">
+          <div id="createLoginNotice" class="g-notice">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-dim);margin-bottom:.5rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             <p>Войди чтобы создать лобби</p>
             <button class="btn btn--primary btn--full" onclick="openAuthModal('login')">Войти</button>
             <button class="btn btn--ghost btn--full" style="margin-top:.5rem" onclick="openAuthModal('register')">Регистрация</button>
           </div>
-          <form id="createForm" class="g-form hidden" onsubmit="handleCreateLobby(event)">
+          <form id="createForm" class="g-form" onsubmit="handleCreateLobby(event)" style="display:none">
             <div class="form-group">
               <label class="form-label">Название комнаты</label>
               <input type="text" class="form-input" id="lobbyName" placeholder="Весёлая мафия" maxlength="40" />

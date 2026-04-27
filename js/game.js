@@ -125,11 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 1200);
 
-  // Страховочный таймаут 2 — всегда обновляем форму через 2с
-  // (на случай если auth вернул сессию после initPage)
-  setTimeout(() => {
-    setupCreateForm();
-  }, 2000);
+  // Страховочный таймаут 2 — повторно через 2с и 4с
+  setTimeout(setupCreateForm, 2000);
+  setTimeout(setupCreateForm, 4000);
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -287,12 +285,14 @@ function setupCreateForm() {
 function updateCreateFormVisibility() {
   const notice = document.getElementById('createLoginNotice');
   const form   = document.getElementById('createForm');
+  if (!notice || !form) return;
+
   if (currentUser) {
-    notice.classList.add('hidden');
-    form.classList.remove('hidden');
+    notice.style.display = 'none';
+    form.style.display   = 'flex';
   } else {
-    notice.classList.remove('hidden');
-    form.classList.add('hidden');
+    notice.style.display = 'block';
+    form.style.display   = 'none';
   }
 }
 
