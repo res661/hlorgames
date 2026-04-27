@@ -259,29 +259,37 @@ async function startGame() {
   }
 }
 
-async function leaveLobby() {
+// ← Назад: уходим со страницы, НО остаёмся в лобби (индикатор остаётся)
+function exitLobbyPage() {
+  clearInterval(pollInterval);
+  // Индикатор НЕ очищаем — пользователь всё ещё в лобби
+  goBack();
+}
+
+// Покинуть лобби: убираем из лобби И уходим со страницы
+async function leaveAndExit() {
+  const msg = isHost
+    ? 'Ты хост. Закрыть лобби для всех участников?'
+    : 'Покинуть лобби?';
+  if (!confirm(msg)) return;
+
   if (typeof clearActiveLobby === 'function') clearActiveLobby();
-
-  if (!supabaseClient || !lobbyData) {
-    goBack();
-    return;
-  }
-
   clearInterval(pollInterval);
 
+  if (!supabaseClient || !lobbyData) { goBack(); return; }
+
   if (isHost) {
-    // Хост закрывает лобби
-    if (confirm('Ты хост. Закрыть лобби для всех?')) {
-      await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
-    }
+    await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
   } else {
-    // Убираем себя из списка игроков
     const players = (lobbyData.players || []).filter(p => p.id !== currentUser?.id);
     await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   }
 
   goBack();
 }
+
+// Совместимость — старый вызов
+async function leaveLobby() { await leaveAndExit(); }
 
 async function kickPlayer(playerId, nickname) {
   if (!isHost || !confirm(`Исключить ${nickname}?`)) return;

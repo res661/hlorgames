@@ -13,7 +13,7 @@
   <!-- ===== ТОПБАР ===== -->
   <header class="lobby-topbar" id="lobbyTopbar">
     <div class="lobby-topbar__left">
-      <button class="lb-back-btn" id="backBtn" onclick="leaveLobby()">← Выйти</button>
+      <button class="lb-back-btn" id="backBtn" onclick="exitLobbyPage()">← Назад</button>
       <div class="lb-game-badge" id="gameBadge">
         <span id="topbarEmoji">🎮</span>
         <span id="topbarGame">Загрузка...</span>
@@ -26,7 +26,7 @@
     </div>
     <div class="lobby-topbar__right">
       <button class="lb-copy-link-btn" id="copyLinkBtn">🔗 Скопировать ссылку</button>
-      <button class="lb-leave-btn" onclick="leaveLobby()">Покинуть лобби →</button>
+      <button class="lb-leave-btn" onclick="leaveAndExit()">Покинуть лобби</button>
     </div>
   </header>
 

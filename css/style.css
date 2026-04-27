@@ -920,20 +920,54 @@ section { padding: 80px 24px; }
   white-space: nowrap;
 }
 
+.nav-separator {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  padding: 0 0.1rem;
+  pointer-events: none;
+}
+
+.nav-link--game {
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+
+.lobby-indicator__btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 .lobby-indicator__goto {
   background: var(--accent);
   border: none;
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.35rem 0.7rem;
-  border-radius: 8px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
   cursor: pointer;
   font-family: var(--font);
   white-space: nowrap;
   transition: opacity 0.15s;
 }
 .lobby-indicator__goto:hover { opacity: 0.85; }
+
+.lobby-indicator__leave {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font);
+  white-space: nowrap;
+  transition: background 0.15s;
+  text-align: center;
+}
+.lobby-indicator__leave:hover { background: rgba(239,68,68,0.2); }
 
 .lobby-indicator__close {
   background: none;

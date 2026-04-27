@@ -101,6 +101,95 @@
   align-items: start;
 }
 
+/* ── SIDEBAR TABS ── */
+
+.g-tabs {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.g-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.g-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.g-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+.g-tab-panel { padding: 1.25rem; }
+.g-tab-panel.hidden { display: none; }
+
+/* ── MY LOBBIES ── */
+
+.g-my-lobby {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  transition: border-color var(--transition);
+}
+.g-my-lobby:last-child { margin-bottom: 0; }
+.g-my-lobby--active { border-color: rgba(34,197,94,0.3); }
+.g-my-lobby--active:hover { border-color: rgba(34,197,94,0.5); }
+
+.g-my-lobby__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.g-my-lobby__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.g-my-lobby__meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.g-my-lobby__status { color: var(--green); font-weight: 600; }
+
+.g-rules-about {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
 /* ── SIDEBAR (CREATE FORM) ── */
 
 .game-sidebar {

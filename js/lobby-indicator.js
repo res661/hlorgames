@@ -66,8 +66,11 @@ function renderLobbyIndicator() {
         <span class="lobby-indicator__name">${escHtml(name)}</span>
       </div>
     </div>
-    <button class="lobby-indicator__goto" onclick="goToActiveLobby()">Вернуться →</button>
-    <button class="lobby-indicator__close" onclick="closeLobbyIndicator()" title="Закрыть">✕</button>
+    <div class="lobby-indicator__btns">
+      <button class="lobby-indicator__goto" onclick="goToActiveLobby()">Вернуться</button>
+      <button class="lobby-indicator__leave" onclick="leaveFromIndicator()">Выйти</button>
+    </div>
+    <button class="lobby-indicator__close" onclick="closeLobbyIndicator()" title="Скрыть">✕</button>
   `;
   document.body.appendChild(el);
 
@@ -86,6 +89,29 @@ function closeLobbyIndicator() {
     el.classList.remove('lobby-indicator--visible');
     setTimeout(() => el.remove(), 300);
   }
+}
+
+async function leaveFromIndicator() {
+  if (!confirm('Покинуть лобби?')) return;
+  const lobby = getActiveLobby();
+  clearActiveLobby();
+  // Удаляем себя из лобби если подключён Supabase
+  if (typeof supabaseClient !== 'undefined' && supabaseClient && lobby) {
+    try {
+      const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', lobby.code).single();
+      if (data) {
+        if (typeof currentUser !== 'undefined' && currentUser) {
+          if (data.host_id === currentUser.id) {
+            await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobby.code);
+          } else {
+            const players = (data.players || []).filter(p => p.id !== currentUser.id);
+            await supabaseClient.from('lobbies').update({ players }).eq('code', lobby.code);
+          }
+        }
+      }
+    } catch {}
+  }
+  if (typeof showToast === 'function') showToast('Вышел из лобби', 'success');
 }
 
 function escHtml(str) {

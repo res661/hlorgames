@@ -93,9 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Цветовой акцент для этой игры
   document.documentElement.style.setProperty('--game-color', gameInfo.color);
 
-  // Правила
+  // Правила + описание
   const rulesList = document.getElementById('gameRules');
-  rulesList.innerHTML = gameInfo.rules.map(r => `<li class="g-rule">${r}</li>`).join('');
+  if (rulesList) rulesList.innerHTML = gameInfo.rules.map(r => `<li class="g-rule">${r}</li>`).join('');
+  const aboutEl = document.getElementById('gameAbout');
+  if (aboutEl) aboutEl.textContent = gameInfo.desc;
 
   // Navbar
   initNavbar();
@@ -162,6 +164,72 @@ function showToast(msg, type = 'success') {
   el.className = `toast show ${type}`;
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── ТАБЫ САЙДБАРА ────────────────────────────────────────────────────────────
+
+function switchSideTab(tab) {
+  ['create', 'mylobbies', 'rules'].forEach(t => {
+    document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1) === 'Mylobbies' ? 'MyLobbies' : t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.remove('active');
+    document.getElementById(`panel${t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.add('hidden');
+  });
+  // Map tab names to IDs
+  const tabIdMap = { create: 'tabCreate', mylobbies: 'tabMyLobbies', rules: 'tabRules' };
+  const panelIdMap = { create: 'panelCreate', mylobbies: 'panelMyLobbies', rules: 'panelRules' };
+  document.getElementById(tabIdMap[tab])?.classList.add('active');
+  document.getElementById(panelIdMap[tab])?.classList.remove('hidden');
+  if (tab === 'mylobbies') loadMyLobbies();
+}
+
+async function loadMyLobbies() {
+  const wrap = document.getElementById('myLobbiesList');
+  if (!currentUser || !supabaseClient) {
+    wrap.innerHTML = '<p class="g-empty">Войди чтобы видеть свои лобби</p>';
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient
+      .from('lobbies')
+      .select('*')
+      .eq('host_id', currentUser.id)
+      .eq('game', gameType)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (error) throw error;
+    if (!data?.length) {
+      wrap.innerHTML = '<p class="g-empty">Ты ещё не создавал лобби</p>';
+      return;
+    }
+    wrap.innerHTML = data.map(l => {
+      const isWaiting = l.status === 'waiting';
+      const players = Array.isArray(l.players) ? l.players.length : 0;
+      return `
+        <div class="g-my-lobby ${isWaiting ? 'g-my-lobby--active' : ''}">
+          <div class="g-my-lobby__top">
+            <span class="g-my-lobby__name">${esc(l.name || l.code)}</span>
+            <code class="g-lobby-code">${esc(l.code)}</code>
+          </div>
+          <div class="g-my-lobby__meta">
+            <span>${players} игр.</span>
+            <span>${fmtTimeAgo(l.created_at)}</span>
+            ${isWaiting ? '<span class="g-my-lobby__status">● Открыто</span>' : '<span style="color:var(--text-dim)">Завершено</span>'}
+          </div>
+          ${isWaiting ? `<a href="lobby.html?code=${l.code}" class="btn btn--primary g-join-btn" style="margin-top:.6rem;font-size:.78rem">Войти</a>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    wrap.innerHTML = `<p class="g-empty g-error">${err.message}</p>`;
+  }
+}
+
+function fmtTimeAgo(iso) {
+  if (!iso) return '';
+  const d = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (d < 1) return 'только что';
+  if (d < 60) return `${d} мин`;
+  if (d < 1440) return `${Math.floor(d/60)} ч`;
+  return `${Math.floor(d/1440)} дн`;
 }
 
 // ─── ФОРМА СОЗДАНИЯ ЛОББИ ────────────────────────────────────────────────────
