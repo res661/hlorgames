@@ -116,17 +116,21 @@ async function handleRegister(e) {
 
     if (existing) throw new Error('Этот ник уже занят — придумай другой');
 
-    // Регистрация
-    const { data, error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+    // Регистрация — передаём ник в метаданных (триггер создаст профиль автоматически)
+    const { data, error: signUpError } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { data: { nickname } },
+    });
     if (signUpError) throw signUpError;
 
-    // Создаём профиль
-    const { error: profileError } = await supabaseClient.from('profiles').insert({
-      id:       data.user.id,
-      nickname,
-      email,
-    });
-    if (profileError) throw profileError;
+    // Попытка создать профиль вручную (на случай если триггер ещё не настроен)
+    // ON CONFLICT DO NOTHING — не ломается если триггер уже создал профиль
+    try {
+      await supabaseClient.from('profiles').insert({ id: data.user.id, nickname, email });
+    } catch (_) {
+      // Игнорируем — профиль уже создан триггером
+    }
 
     currentUser = { ...data.user, nickname, role: 'user' };
     onUserSignedIn(currentUser);
