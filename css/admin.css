@@ -89,7 +89,7 @@ body.admin-body {
   border-left-color: var(--accent);
 }
 
-.a-nav-icon { font-size: 1rem; }
+.a-nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
 
 .admin-sidebar__footer {
   padding: 1rem;

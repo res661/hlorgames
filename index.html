@@ -50,12 +50,9 @@
           и играй с друзьями в реальном времени.
         </p>
         <div class="hero__actions">
-          <button class="btn btn--primary btn--lg" id="heroCreateLobby">
-            Создать лобби
-          </button>
-          <button class="btn btn--ghost btn--lg" id="heroJoinLobby">
-            Войти по коду
-          </button>
+          <a href="#games" class="btn btn--primary btn--lg">
+            Выбрать игру
+          </a>
         </div>
         <div class="hero__stats">
           <div class="stat"><span class="stat__num" id="statPlayers">—</span><span class="stat__label">игроков онлайн</span></div>
@@ -169,7 +166,7 @@
   <footer class="footer">
     <div class="footer__container">
       <span class="logo-text">🎮 HlorGames</span>
-      <span class="footer__copy">Сделано с ❤️ для вечеринок</span>
+      <span class="footer__copy">Made with ♥ by <strong>Res</strong></span>
     </div>
   </footer>
 
@@ -218,32 +215,30 @@
     </div>
   </div>
 
-  <!-- ===== МОДАЛЬНОЕ ОКНО ЛОББИ ===== -->
-  <div class="modal-overlay" id="lobbyModal">
-    <div class="modal">
-      <button class="modal__close" id="lobbyModalClose">✕</button>
-      <h3 class="modal__title" id="lobbyModalTitle">Создать лобби</h3>
+  <!-- ===== ПРОФИЛЬ МОДАЛ ===== -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal modal--profile">
+      <button class="modal__close" id="profileModalClose">✕</button>
+      <h3 class="modal__title">Настройки профиля</h3>
 
-      <div id="lobbyCreateView">
-        <p class="modal__subtitle">Выберите игру и создайте комнату</p>
-        <div class="game-select">
-          <button class="game-select__item active" data-val="mafia" onclick="selectGame(this)">🕵️ Мафия</button>
-          <button class="game-select__item" data-val="bunker" onclick="selectGame(this)">🏚️ Бункер</button>
-          <button class="game-select__item" data-val="alias" onclick="selectGame(this)">🗣️ Алиас</button>
-        </div>
-        <div class="form-error" id="lobbyError"></div>
-        <button class="btn btn--primary btn--full" onclick="createLobby()">Создать комнату</button>
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-big" id="profileAvatarBig">?</div>
+        <p class="profile-avatar-hint">Выбери аватар</p>
+        <div class="profile-emoji-grid" id="profileEmojiGrid"></div>
       </div>
 
-      <div id="lobbyJoinView" class="hidden">
-        <p class="modal__subtitle">Введите код комнаты</p>
-        <div class="form-group">
-          <input type="text" class="form-input form-input--code" id="joinCode"
-            placeholder="XXXX" maxlength="6" style="text-transform:uppercase;letter-spacing:0.3em;font-size:1.5rem;text-align:center;" />
-        </div>
-        <div class="form-error" id="joinError"></div>
-        <button class="btn btn--primary btn--full" onclick="joinLobby()">Войти в комнату</button>
+      <div class="form-group">
+        <label class="form-label">Никнейм</label>
+        <input type="text" class="form-input" id="profileNickname" placeholder="Твой ник" maxlength="20" />
       </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed" />
+      </div>
+
+      <div class="form-error" id="profileError"></div>
+      <div class="profile-success hidden" id="profileSuccess">✓ Сохранено!</div>
+      <button class="btn btn--primary btn--full" onclick="saveProfile()">Сохранить</button>
     </div>
   </div>
 
@@ -254,6 +249,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

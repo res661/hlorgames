@@ -185,13 +185,58 @@ function translateAuthError(msg) {
 function onUserSignedIn(user) {
   const navAuth = document.getElementById('navAuth');
   const isAdmin = ['admin', 'superadmin'].includes(user.role);
+  const avatarContent = user.avatar || user.nickname[0].toUpperCase();
+  const avatarClass = isAdmin ? 'user-avatar user-avatar--admin' : 'user-avatar';
+
   navAuth.innerHTML = `
-    <div class="navbar__user">
-      <div class="user-avatar${isAdmin ? ' user-avatar--admin' : ''}">${user.nickname[0].toUpperCase()}</div>
-      <span class="user-name">${user.nickname}${isAdmin ? ' 👑' : ''}</span>
-      <button class="btn btn--ghost" onclick="handleLogout()">Выйти</button>
+    <div class="navbar__user" id="userMenuTrigger" onclick="toggleUserMenu()">
+      <div class="${avatarClass}" id="navAvatar">${avatarContent}</div>
+      <span class="user-name">${user.nickname}</span>
+      <span class="user-chevron">▾</span>
+    </div>
+    <div class="user-dropdown hidden" id="userDropdown">
+      <div class="user-dropdown__header">
+        <div class="${avatarClass}">${avatarContent}</div>
+        <div>
+          <div class="user-dropdown__name">${user.nickname}</div>
+          <div class="user-dropdown__role">${isAdmin ? (user.role === 'superadmin' ? 'Суперадмин' : 'Админ') : 'Игрок'}</div>
+        </div>
+      </div>
+      <div class="user-dropdown__divider"></div>
+      <button class="user-dropdown__item" onclick="openProfileModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Настройки профиля
+      </button>
+      ${isAdmin ? `
+      <button class="user-dropdown__item" onclick="window.location.href='admin.html'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Админ панель
+      </button>` : ''}
+      <div class="user-dropdown__divider"></div>
+      <button class="user-dropdown__item user-dropdown__item--danger" onclick="handleLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Выйти
+      </button>
     </div>
   `;
+
+  // Закрыть по клику вне меню
+  setTimeout(() => {
+    document.addEventListener('click', closeUserMenuOutside);
+  }, 10);
+}
+
+function toggleUserMenu() {
+  document.getElementById('userDropdown')?.classList.toggle('hidden');
+}
+
+function closeUserMenuOutside(e) {
+  const trigger  = document.getElementById('userMenuTrigger');
+  const dropdown = document.getElementById('userDropdown');
+  if (dropdown && trigger && !trigger.contains(e.target)) {
+    dropdown.classList.add('hidden');
+    document.removeEventListener('click', closeUserMenuOutside);
+  }
 }
 
 function onUserSignedOut() {
