@@ -84,10 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLink = document.getElementById('navCurrentGame');
   if (navLink) navLink.textContent = gameInfo.name;
 
-  // Заполняем hero
+  // Заполняем hero (описание только в табе Правила, не в шапке)
   document.getElementById('heroEmoji').textContent  = gameInfo.emoji;
   document.getElementById('heroTitle').textContent  = gameInfo.name;
-  document.getElementById('heroDesc').textContent   = gameInfo.desc;
   document.getElementById('heroMeta').textContent   = gameInfo.meta;
 
   // Цветовой акцент для этой игры
