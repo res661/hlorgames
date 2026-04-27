@@ -4,7 +4,7 @@
 
 let currentUser = null;
 
-// ─── Открытие/закрытие модального окна ───────────────────────────────────────
+// ─── Открытие/закрытие ───────────────────────────────────────────────────────
 
 function openAuthModal(tab = 'login') {
   document.getElementById('authModal').classList.add('open');
@@ -43,14 +43,18 @@ function clearAuthErrors() {
   });
 }
 
-// ─── ВХОД (email + пароль) ───────────────────────────────────────────────────
+// ─── ВХОД ────────────────────────────────────────────────────────────────────
 
 async function handleLogin(e) {
   e.preventDefault();
+
   const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl    = document.getElementById('loginError');
 
+  errEl.textContent = '';
+
+  // Demo режим
   if (isDemoMode) {
     currentUser = { id: 'demo', email, nickname: email.split('@')[0], role: 'user' };
     onUserSignedIn(currentUser);
@@ -59,9 +63,13 @@ async function handleLogin(e) {
     return;
   }
 
-  if (!requireSupabase()) return;
+  // Supabase не готов
+  if (!supabase) {
+    errEl.textContent = 'Ошибка подключения к базе данных. Открой F12 → Console для деталей.';
+    console.error('[Auth] supabase = null при попытке входа');
+    return;
+  }
 
-  errEl.textContent = '';
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
   btn.textContent = 'Входим...';
@@ -80,6 +88,7 @@ async function handleLogin(e) {
     closeAuthModal();
     showToast(`Добро пожаловать, ${currentUser.nickname}!`, 'success');
   } catch (err) {
+    console.error('[Auth] Ошибка входа:', err);
     errEl.textContent = translateAuthError(err.message);
   } finally {
     btn.disabled = false;
@@ -87,15 +96,20 @@ async function handleLogin(e) {
   }
 }
 
-// ─── РЕГИСТРАЦИЯ (ник + email + пароль) ──────────────────────────────────────
+// ─── РЕГИСТРАЦИЯ ──────────────────────────────────────────────────────────────
 
 async function handleRegister(e) {
   e.preventDefault();
+
   const nickname = document.getElementById('regNickname').value.trim();
   const email    = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const errEl    = document.getElementById('registerError');
 
+  errEl.textContent = '';
+  console.log('[Auth] Попытка регистрации:', { nickname, email });
+
+  // Demo режим
   if (isDemoMode) {
     currentUser = { id: 'demo', email, nickname, role: 'user' };
     onUserSignedIn(currentUser);
@@ -104,27 +118,45 @@ async function handleRegister(e) {
     return;
   }
 
-  if (!requireSupabase()) return;
+  // Supabase не готов
+  if (!supabase) {
+    errEl.textContent = 'Ошибка подключения к базе данных. Открой F12 → Console для деталей.';
+    console.error('[Auth] supabase = null при попытке регистрации');
+    return;
+  }
 
-  errEl.textContent = '';
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
   btn.textContent = 'Создаём аккаунт...';
 
   try {
     // Проверяем уникальность ника
-    const { data: existing } = await supabase
+    console.log('[Auth] Проверяем уникальность ника...');
+    const { data: existing, error: checkErr } = await supabase
       .from('profiles')
       .select('id')
       .ilike('nickname', nickname)
       .maybeSingle();
 
-    if (existing) {
-      throw new Error('Этот ник уже занят');
+    if (checkErr) {
+      // Если таблица не существует — даём понятную ошибку
+      console.error('[Auth] Ошибка проверки ника:', checkErr);
+      if (checkErr.message.includes('does not exist') || checkErr.code === '42P01') {
+        throw new Error('Таблица profiles не найдена. Запусти SQL из инструкции в Supabase → SQL Editor.');
+      }
+      throw checkErr;
     }
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    if (existing) {
+      throw new Error('Этот ник уже занят — придумай другой');
+    }
+
+    // Регистрация в Supabase Auth
+    console.log('[Auth] Создаём аккаунт в Auth...');
+    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) throw signUpError;
+
+    console.log('[Auth] Аккаунт создан, user id:', data.user?.id);
 
     // Создаём профиль
     const { error: profileError } = await supabase.from('profiles').insert({
@@ -132,13 +164,19 @@ async function handleRegister(e) {
       nickname,
       email,
     });
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('[Auth] Ошибка создания профиля:', profileError);
+      throw profileError;
+    }
 
     currentUser = { ...data.user, nickname, role: 'user' };
     onUserSignedIn(currentUser);
     closeAuthModal();
     showToast(`Аккаунт создан! Добро пожаловать, ${nickname}!`, 'success');
+    console.log('[Auth] ✅ Регистрация успешна');
+
   } catch (err) {
+    console.error('[Auth] Ошибка регистрации:', err);
     errEl.textContent = translateAuthError(err.message);
   } finally {
     btn.disabled = false;
@@ -159,23 +197,29 @@ async function handleLogout() {
 
 async function fetchProfile(userId) {
   if (!supabase) return null;
-  const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-  return data;
+  try {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    return data;
+  } catch {
+    return null;
+  }
 }
 
 function translateAuthError(msg) {
+  if (!msg) return 'Неизвестная ошибка';
   const map = {
-    'Invalid login credentials':     'Неверный email или пароль',
-    'User already registered':       'Этот email уже зарегистрирован',
-    'Password should be at least 6': 'Пароль минимум 6 символов',
-    'Unable to validate email':      'Некорректный email',
-    'Email not confirmed':           'Подтверди email (проверь почту)',
-    'Этот ник уже занят':            'Этот ник уже занят',
+    'Invalid login credentials':               'Неверный email или пароль',
+    'User already registered':                 'Этот email уже зарегистрирован',
+    'Password should be at least 6':           'Пароль минимум 6 символов',
+    'Unable to validate email':                'Некорректный email',
+    'Email not confirmed':                     'Подтверди email — проверь почту',
+    'Этот ник уже занят':                      'Этот ник уже занят — придумай другой',
+    'Таблица profiles не найдена':             'Таблица profiles не найдена. Запусти SQL в Supabase.',
   };
   for (const [key, val] of Object.entries(map)) {
     if (msg.includes(key)) return val;
   }
-  return 'Ошибка: ' + msg;
+  return msg;
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -210,15 +254,19 @@ function bindAuthButtons() {
 
 async function restoreSession() {
   if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    const profile = await fetchProfile(session.user.id);
-    currentUser = {
-      ...session.user,
-      nickname: profile?.nickname || session.user.email.split('@')[0],
-      role:     profile?.role     || 'user',
-    };
-    onUserSignedIn(currentUser);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const profile = await fetchProfile(session.user.id);
+      currentUser = {
+        ...session.user,
+        nickname: profile?.nickname || session.user.email.split('@')[0],
+        role:     profile?.role     || 'user',
+      };
+      onUserSignedIn(currentUser);
+    }
+  } catch (err) {
+    console.error('[Auth] restoreSession error:', err);
   }
 }
 
@@ -230,5 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === e.currentTarget) closeAuthModal();
   });
   bindAuthButtons();
-  restoreSession();
+
+  // Небольшая задержка чтобы supabase-client успел инициализироваться
+  setTimeout(restoreSession, 600);
 });
