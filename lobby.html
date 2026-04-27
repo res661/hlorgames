@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Лобби — HlorGames</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/lobby.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="lobby-body">
+
+  <!-- ===== ТОПБАР ===== -->
+  <header class="lobby-topbar" id="lobbyTopbar">
+    <div class="lobby-topbar__left">
+      <button class="lb-back-btn" id="backBtn" onclick="leaveLobby()">← Выйти</button>
+      <div class="lb-game-badge" id="gameBadge">
+        <span id="topbarEmoji">🎮</span>
+        <span id="topbarGame">Загрузка...</span>
+      </div>
+      <div class="lb-code-wrap">
+        <span class="lb-code-label">Код:</span>
+        <span class="lb-code" id="topbarCode">—</span>
+        <button class="lb-copy-btn" id="copyCodeBtn" title="Копировать код">📋</button>
+      </div>
+    </div>
+    <div class="lobby-topbar__right">
+      <button class="lb-copy-link-btn" id="copyLinkBtn">🔗 Скопировать ссылку</button>
+      <button class="lb-leave-btn" onclick="leaveLobby()">Покинуть лобби →</button>
+    </div>
+  </header>
+
+  <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+  <main class="lobby-main" id="lobbyMain">
+
+    <!-- Загрузка -->
+    <div class="lb-loading" id="loadingScreen">
+      <div class="lb-loading-spinner"></div>
+      <p>Загрузка лобби...</p>
+    </div>
+
+    <!-- Ошибка -->
+    <div class="lb-error-screen hidden" id="errorScreen">
+      <div class="lb-error-icon">😕</div>
+      <h2 id="errorTitle">Лобби не найдено</h2>
+      <p id="errorText">Возможно, оно было закрыто или код неверный</p>
+      <a href="index.html" class="btn btn--primary" style="margin-top:1.5rem">← На главную</a>
+    </div>
+
+    <!-- Контент лобби -->
+    <div class="lobby-layout hidden" id="lobbyLayout">
+
+      <!-- ── ЛЕВАЯ КОЛОНКА: игроки ── -->
+      <div class="lb-players-col">
+
+        <div class="lb-section-header">
+          <h2 class="lb-section-title">👥 Игроки</h2>
+          <span class="lb-player-count" id="playerCount">0/8</span>
+        </div>
+
+        <!-- Слоты игроков -->
+        <div class="lb-slots" id="playerSlots"></div>
+
+        <!-- Кнопки действий -->
+        <div class="lb-actions">
+          <button class="btn lb-ready-btn" id="readyBtn" onclick="toggleReady()">
+            ✓ Готов
+          </button>
+          <button class="btn btn--primary lb-start-btn hidden" id="startBtn" onclick="startGame()">
+            ▶ Начать игру
+          </button>
+        </div>
+
+        <!-- Статус -->
+        <div class="lb-status-bar" id="statusBar">
+          <span id="statusText">Ожидание игроков...</span>
+        </div>
+      </div>
+
+      <!-- ── ЦЕНТР: инфо лобби ── -->
+      <div class="lb-info-col">
+
+        <div class="lb-info-card">
+          <div class="lb-game-logo" id="gameLogoEmoji">🎮</div>
+          <div class="lb-game-name"  id="infoGameName">—</div>
+          <div class="lb-game-meta"  id="infoGameMeta">—</div>
+        </div>
+
+        <div class="lb-details">
+          <div class="lb-detail-row">
+            <span class="lb-detail-key">Название</span>
+            <span class="lb-detail-val" id="detailName">—</span>
+          </div>
+          <div class="lb-detail-row">
+            <span class="lb-detail-key">Хост</span>
+            <span class="lb-detail-val" id="detailHost">—</span>
+          </div>
+          <div class="lb-detail-row">
+            <span class="lb-detail-key">Тип</span>
+            <span class="lb-detail-val" id="detailType">—</span>
+          </div>
+          <div class="lb-detail-row">
+            <span class="lb-detail-key">Статус</span>
+            <span class="lb-detail-val" id="detailStatus">—</span>
+          </div>
+          <div class="lb-detail-row">
+            <span class="lb-detail-key">Создано</span>
+            <span class="lb-detail-val" id="detailCreated">—</span>
+          </div>
+        </div>
+
+        <!-- Поделиться -->
+        <div class="lb-share">
+          <p class="lb-share-label">Пригласи друзей</p>
+          <div class="lb-share-code" id="shareLobbyCode">—</div>
+          <p class="lb-share-hint">Поделись кодом или ссылкой</p>
+        </div>
+
+      </div>
+
+      <!-- ── ПРАВАЯ КОЛОНКА: настройки (только хост) ── -->
+      <div class="lb-settings-col" id="settingsCol">
+
+        <!-- Ожидание (для гостей) -->
+        <div class="lb-waiting-card" id="waitingCard">
+          <div class="lb-waiting-icon">⏳</div>
+          <p class="lb-waiting-title">Ожидание хоста</p>
+          <p class="lb-waiting-text">Хост настраивает лобби. Нажми «Готов» когда будешь готов!</p>
+        </div>
+
+        <!-- Настройки (для хоста) -->
+        <div class="lb-host-settings hidden" id="hostSettings">
+          <h3 class="lb-settings-title">⚙️ Настройки лобби</h3>
+
+          <div class="form-group">
+            <label class="form-label">Название</label>
+            <input type="text" class="form-input" id="settingName" maxlength="40" placeholder="Название лобби" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Макс. игроков</label>
+            <select class="form-input" id="settingMaxPlayers"></select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Тип лобби</label>
+            <select class="form-input" id="settingType">
+              <option value="public">🌍 Публичное</option>
+              <option value="private">🔒 По паролю</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="passwordGroup" style="display:none">
+            <label class="form-label">Пароль</label>
+            <input type="text" class="form-input" id="settingPassword" placeholder="Пароль для входа" maxlength="20" />
+          </div>
+
+          <button class="btn btn--primary btn--full" onclick="saveSettings()" style="margin-top:0.5rem">
+            💾 Сохранить
+          </button>
+
+          <div class="lb-settings-divider"></div>
+
+          <h3 class="lb-settings-title" style="margin-top:0">🗑️ Управление</h3>
+          <button class="btn lb-danger-btn btn--full" onclick="closeLobby()">
+            Закрыть лобби
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ===== -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal__close" id="modalClose">✕</button>
+      <div class="modal__tabs">
+        <button class="modal__tab active" id="tabLogin" onclick="switchTab('login')">Войти</button>
+        <button class="modal__tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
+      </div>
+      <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Войти</button>
+      </form>
+      <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Никнейм</label>
+          <input type="text" class="form-input" id="regNickname" placeholder="Крутой игрок" required minlength="2" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Минимум 6 символов" required minlength="6" />
+        </div>
+        <div class="form-error" id="registerError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ТОСТ -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/lobby.js"></script>
+</body>
+</html>

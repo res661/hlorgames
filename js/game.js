@@ -201,6 +201,7 @@ async function handleCreateLobby(e) {
 
   if (!supabaseClient) {
     showToast(`Комната создана! Код: ${code}`, 'success');
+    setTimeout(() => window.location.href = `lobby.html?code=${code}`, 500);
     btn.disabled = false;
     btn.textContent = 'Создать комнату';
     return;
@@ -221,10 +222,11 @@ async function handleCreateLobby(e) {
 
     if (error) throw error;
 
-    showToast(`Комната «${name}» создана! Код: ${code}`, 'success');
-    document.getElementById('lobbyName').value = '';
-    document.getElementById('lobbyPassword').value = '';
-    loadLobbies();
+    showToast(`Комната «${name}» создана!`, 'success');
+    // Переходим на страницу лобби
+    setTimeout(() => {
+      window.location.href = `lobby.html?code=${code}`;
+    }, 500);
   } catch (err) {
     console.error('[Game] Ошибка создания лобби:', err);
     errEl.textContent = err.message;
@@ -396,8 +398,10 @@ async function joinLobby(code, hasPassword) {
       await supabaseClient.from('lobbies').update({ players }).eq('code', code);
     }
 
-    showToast(`Вошёл в комнату ${code}!`, 'success');
-    loadLobbies();
+    showToast(`Вхожу в комнату ${code}!`, 'success');
+    setTimeout(() => {
+      window.location.href = `lobby.html?code=${code}`;
+    }, 400);
   } catch (err) {
     showToast('Ошибка: ' + err.message, 'error');
   }
