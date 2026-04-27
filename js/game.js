@@ -112,13 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // _onAuthFirstLoad сработает когда onAuthStateChange определит сессию
   window._onAuthFirstLoad = initPage;
 
-  // Страховочный таймаут — если auth вообще не ответил за 2.5с
+  // Страховочный таймаут — если auth вообще не ответил за 1.5с
   setTimeout(() => {
     if (window._onAuthFirstLoad) {
       window._onAuthFirstLoad = null;
       initPage();
     }
-  }, 2500);
+  }, 1500);
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────

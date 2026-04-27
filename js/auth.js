@@ -269,8 +269,29 @@ function bindAuthButtons() {
 function startAuthListener() {
   if (!supabaseClient) return;
 
+  // ШАГ 1: Мгновенно читаем сессию из localStorage (без сетевого запроса)
+  supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
+    if (session?.user) {
+      const profile = await fetchProfile(session.user.id);
+      currentUser = {
+        ...session.user,
+        nickname: profile?.nickname || session.user.email.split('@')[0],
+        role:     profile?.role     || 'user',
+        avatar:   profile?.avatar   || null,
+      };
+      onUserSignedIn(currentUser);
+    }
+    // Сигналим страницам — авторизация определена
+    if (window._onAuthFirstLoad) {
+      const cb = window._onAuthFirstLoad;
+      window._onAuthFirstLoad = null;
+      cb();
+    }
+  });
+
+  // ШАГ 2: Слушаем последующие изменения (вход, выход, обновление токена)
   supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    console.log('[Auth] onAuthStateChange:', event);
+    if (event === 'INITIAL_SESSION') return; // уже обработано в getSession выше
 
     if (session?.user) {
       const profile = await fetchProfile(session.user.id);
@@ -281,16 +302,9 @@ function startAuthListener() {
         avatar:   profile?.avatar   || null,
       };
       onUserSignedIn(currentUser);
-    } else {
+    } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       if (typeof onUserSignedOut === 'function') onUserSignedOut();
-    }
-
-    // Первый раз — сигналим страницам что авторизация определена
-    if (window._onAuthFirstLoad) {
-      const cb = window._onAuthFirstLoad;
-      window._onAuthFirstLoad = null;
-      cb();
     }
   });
 }

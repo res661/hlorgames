@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window._onAuthFirstLoad = null;
       startWhenReady();
     }
-  }, 2500);
+  }, 1500);
 });
 
 async function initLobby() {
