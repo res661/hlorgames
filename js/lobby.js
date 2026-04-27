@@ -39,29 +39,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Ждём Supabase
   await new Promise(r => setTimeout(r, 400));
 
-  // Ждём авторизацию
-  await new Promise(r => setTimeout(r, 300));
-
   if (!supabaseClient) {
     showError('Supabase не подключён', 'Проверь настройки');
     return;
   }
 
-  // Проверяем авторизацию
-  if (!currentUser) {
-    // Показываем модальное окно входа
-    openAuthModal('login');
-    showToast('Войди чтобы зайти в лобби', 'error');
-    // После входа перезагрузим
-    const origOnSignedIn = window.onUserSignedIn || function(){};
-    window.onUserSignedIn = function(user) {
-      origOnSignedIn(user);
-      initLobby();
-    };
-    return;
-  }
+  // Ждём первого определения авторизации
+  const startWhenReady = async () => {
+    if (!currentUser) {
+      openAuthModal('login');
+      showToast('Войди чтобы зайти в лобби', 'error');
+      window._onAuthUpdate = () => {
+        if (currentUser) initLobby();
+      };
+      return;
+    }
+    await initLobby();
+  };
 
-  await initLobby();
+  window._onAuthFirstLoad = startWhenReady;
+
+  // Страховочный таймаут
+  setTimeout(() => {
+    if (window._onAuthFirstLoad) {
+      window._onAuthFirstLoad = null;
+      startWhenReady();
+    }
+  }, 2500);
 });
 
 async function initLobby() {

@@ -187,6 +187,8 @@ function translateAuthError(msg) {
 // ─── UI ───────────────────────────────────────────────────────────────────────
 
 function onUserSignedIn(user) {
+  // Вызываем хук страницы если определён (используется в game.js, lobby.js)
+  window._onAuthUpdate?.();
   const navAuth = document.getElementById('navAuth');
   if (!navAuth) return;
   const isAdmin = ['admin', 'superadmin'].includes(user.role);
@@ -248,6 +250,7 @@ function closeUserMenuOutside(e) {
 }
 
 function onUserSignedOut() {
+  window._onAuthUpdate?.();
   const navAuth = document.getElementById('navAuth');
   navAuth.innerHTML = `
     <button class="btn btn--ghost" id="btnLogin">Войти</button>
@@ -270,7 +273,6 @@ function startAuthListener() {
     console.log('[Auth] onAuthStateChange:', event);
 
     if (session?.user) {
-      // Сессия активна — загружаем профиль
       const profile = await fetchProfile(session.user.id);
       currentUser = {
         ...session.user,
@@ -280,9 +282,15 @@ function startAuthListener() {
       };
       onUserSignedIn(currentUser);
     } else {
-      // Вышли или сессия истекла
       currentUser = null;
       if (typeof onUserSignedOut === 'function') onUserSignedOut();
+    }
+
+    // Первый раз — сигналим страницам что авторизация определена
+    if (window._onAuthFirstLoad) {
+      const cb = window._onAuthFirstLoad;
+      window._onAuthFirstLoad = null;
+      cb();
     }
   });
 }

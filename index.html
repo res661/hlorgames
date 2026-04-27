@@ -15,7 +15,7 @@
   <header class="navbar" id="navbar">
     <div class="navbar__container">
       <a href="index.html" class="navbar__logo">
-        <span class="logo-icon">🎮</span>
+        <svg class="logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M8 12h2m1-1v2M16 11h2M17 12h0" stroke-width="2.2"/></svg>
         <span class="logo-text">HlorGames</span>
       </a>
 
@@ -55,11 +55,20 @@
           </a>
         </div>
         <div class="hero__stats">
-          <div class="stat"><span class="stat__num" id="statPlayers">—</span><span class="stat__label">игроков онлайн</span></div>
+          <div class="stat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+            <span class="stat__num" id="statPlayers">—</span><span class="stat__label">игроков</span>
+          </div>
           <div class="stat__divider"></div>
-          <div class="stat"><span class="stat__num" id="statSessions">—</span><span class="stat__label">активных сессий</span></div>
+          <div class="stat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"/></svg>
+            <span class="stat__num" id="statSessions">—</span><span class="stat__label">сессий</span>
+          </div>
           <div class="stat__divider"></div>
-          <div class="stat"><span class="stat__num">3</span><span class="stat__label">игры</span></div>
+          <div class="stat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span class="stat__num">3</span><span class="stat__label">игры</span>
+          </div>
         </div>
       </div>
       <div class="hero__visual">
@@ -97,38 +106,38 @@
           <h3 class="game-card__title">Мафия</h3>
           <p class="game-card__desc">Классическая игра на дедукцию. Мирные жители против мафии. Роли, ночные убийства, дневные голосования.</p>
           <div class="game-card__info">
-            <span>👥 4–12 игроков</span>
-            <span>⏱ 30–60 мин</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–12</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 30–60 мин</span>
           </div>
           <a href="game.html?g=mafia" class="btn btn--primary game-card__btn">Играть</a>
         </div>
 
-        <div class="game-card" data-game="bunker">
+        <div class="game-card game-card--soon" data-game="bunker">
           <div class="game-card__header">
             <span class="game-card__emoji">🏚️</span>
-            <div class="game-card__status game-card__status--available">Доступна</div>
+            <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Бункер</h3>
           <p class="game-card__desc">Конец света. В бункере ограниченные места. Каждый игрок — персонаж с профессией, навыком и тайной. Убеди остальных взять тебя.</p>
           <div class="game-card__info">
-            <span>👥 4–16 игроков</span>
-            <span>⏱ 20–40 мин</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–16</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 20–40 мин</span>
           </div>
-          <a href="game.html?g=bunker" class="btn btn--primary game-card__btn">Играть</a>
+          <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
 
-        <div class="game-card" data-game="alias">
+        <div class="game-card game-card--soon" data-game="alias">
           <div class="game-card__header">
             <span class="game-card__emoji">🗣️</span>
-            <div class="game-card__status game-card__status--available">Доступна</div>
+            <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Алиас</h3>
           <p class="game-card__desc">Объясняй слова — руками, словами, мимикой. Команды соревнуются кто назовёт больше слов за отведённое время.</p>
           <div class="game-card__info">
-            <span>👥 4–20 игроков</span>
-            <span>⏱ 15–30 мин</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–20</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 15–30 мин</span>
           </div>
-          <a href="game.html?g=alias" class="btn btn--primary game-card__btn">Играть</a>
+          <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
 
       </div>
@@ -140,24 +149,35 @@
         <h2 class="section-title">Как начать играть</h2>
         <p class="section-subtitle">Три шага — и ты в игре</p>
       </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step__num">1</div>
-          <h4 class="step__title">Создай лобби</h4>
-          <p class="step__desc">Выбери игру, настрой параметры и получи код комнаты</p>
+      <div class="how-cards">
+
+        <div class="how-card">
+          <div class="how-card__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M8 12h2m1-1v2M16 11h2M17 12h0" stroke-width="2"/></svg>
+          </div>
+          <div class="how-card__num">01</div>
+          <h4 class="how-card__title">Выбери игру</h4>
+          <p class="how-card__desc">Мафия, Бункер или Алиас — выбери что нравится компании и нажми «Играть»</p>
         </div>
-        <div class="steps__arrow">→</div>
-        <div class="step">
-          <div class="step__num">2</div>
-          <h4 class="step__title">Позови друзей</h4>
-          <p class="step__desc">Поделись кодом или ссылкой — друзья заходят мгновенно</p>
+
+        <div class="how-card">
+          <div class="how-card__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="how-card__num">02</div>
+          <h4 class="how-card__title">Позови друзей</h4>
+          <p class="how-card__desc">Создай лобби и поделись кодом или ссылкой — друзья заходят в один клик</p>
         </div>
-        <div class="steps__arrow">→</div>
-        <div class="step">
-          <div class="step__num">3</div>
-          <h4 class="step__title">Играй!</h4>
-          <p class="step__desc">Сайт ведёт игру, раздаёт роли и синхронизирует всех в реальном времени</p>
+
+        <div class="how-card">
+          <div class="how-card__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <div class="how-card__num">03</div>
+          <h4 class="how-card__title">Начни игру</h4>
+          <p class="how-card__desc">Хост запускает игру, роли раздаются автоматически — веселье начинается</p>
         </div>
+
       </div>
     </section>
   </main>

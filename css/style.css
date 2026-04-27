@@ -134,7 +134,7 @@ input { font-family: inherit; }
   letter-spacing: -0.5px;
   flex-shrink: 0;
 }
-.logo-icon { font-size: 1.4rem; }
+.logo-icon { width: 22px; height: 22px; color: var(--accent); flex-shrink: 0; }
 .logo-text {
   background: linear-gradient(135deg, #fff 40%, #b39ddb 100%);
   -webkit-background-clip: text;
@@ -254,7 +254,8 @@ input { font-family: inherit; }
   align-items: center;
   gap: 20px;
 }
-.stat { text-align: center; }
+.stat { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.stat svg { color: var(--text-dim); margin-bottom: 0.15rem; }
 .stat__num {
   display: block;
   font-size: 1.5rem;
@@ -392,7 +393,20 @@ section { padding: 80px 24px; }
   text-transform: uppercase;
 }
 .game-card__status--available { background: rgba(34,197,94,0.15); color: var(--green); }
-.game-card__status--soon      { background: rgba(245,158,11,0.15); color: var(--yellow); }
+.game-card__status--soon      { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+.game-card--soon {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
+.game-card__btn--soon {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: var(--text-dim) !important;
+  cursor: not-allowed !important;
+}
 
 .game-card__title { font-size: 1.3rem; font-weight: 700; }
 .game-card__desc  { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; flex: 1; }
@@ -410,30 +424,82 @@ section { padding: 80px 24px; }
   border: 1px solid var(--border);
 }
 
-.steps {
+/* ── HOW-IT-WORKS CARDS ── */
+
+.how-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.how-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.how-card:hover {
+  border-color: rgba(124,77,255,0.35);
+  transform: translateY(-3px);
+}
+
+.how-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), #e040fb);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.how-card:hover::before { opacity: 1; }
+
+.how-card__icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  background: rgba(124,77,255,0.12);
+  border: 1px solid rgba(124,77,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
 }
-.step {
-  text-align: center;
-  max-width: 220px;
-  padding: 20px;
+
+.how-card__num {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  opacity: 0.7;
 }
-.step__num {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #e040fb);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; font-weight: 800;
-  margin: 0 auto 16px;
-  box-shadow: 0 0 20px var(--accent-glow);
+
+.how-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
 }
-.step__title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
-.step__desc   { font-size: 0.85rem; color: var(--text-muted); }
-.steps__arrow { font-size: 1.5rem; color: var(--text-dim); }
+
+.how-card__desc {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .how-cards { grid-template-columns: 1fr; max-width: 360px; }
+}
 
 /* =============================================
    FOOTER

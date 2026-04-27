@@ -99,13 +99,26 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   bindAuthButtons();
 
-  // Ждём Supabase и грузим данные
-  setTimeout(() => {
+  // Обновляем форму при любом изменении авторизации
+  window._onAuthUpdate = updateCreateFormVisibility;
+
+  // Ждём первого определения авторизации (не угадываем таймаут)
+  const initPage = () => {
     setupCreateForm();
     loadLobbies();
-    // Автообновление каждые 30 секунд
     refreshInterval = setInterval(loadLobbies, 30000);
-  }, 500);
+  };
+
+  // _onAuthFirstLoad сработает когда onAuthStateChange определит сессию
+  window._onAuthFirstLoad = initPage;
+
+  // Страховочный таймаут — если auth вообще не ответил за 2.5с
+  setTimeout(() => {
+    if (window._onAuthFirstLoad) {
+      window._onAuthFirstLoad = null;
+      initPage();
+    }
+  }, 2500);
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -458,16 +471,3 @@ function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Обновляем форму создания при изменении авторизации
-const _origOnSignedIn  = typeof onUserSignedIn  !== 'undefined' ? onUserSignedIn  : () => {};
-const _origOnSignedOut = typeof onUserSignedOut !== 'undefined' ? onUserSignedOut : () => {};
-
-// Переопределяем чтобы также обновить форму
-window._gameOnSignedIn = function(user) {
-  _origOnSignedIn(user);
-  updateCreateFormVisibility();
-};
-window._gameOnSignedOut = function() {
-  _origOnSignedOut();
-  updateCreateFormVisibility();
-};
