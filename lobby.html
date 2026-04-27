@@ -213,6 +213,19 @@
   <!-- ТОСТ -->
   <div class="toast" id="toast"></div>
 
+  <!-- КРАСИВЫЙ ДИАЛОГ ПОДТВЕРЖДЕНИЯ -->
+  <div class="modal-overlay" id="confirmDialog">
+    <div class="modal modal--confirm">
+      <div class="confirm-icon" id="confirmIcon">⚠️</div>
+      <h3 class="confirm-title" id="confirmTitle">Подтвердить</h3>
+      <p class="confirm-text" id="confirmText"></p>
+      <div class="confirm-actions">
+        <button class="btn btn--ghost" id="confirmCancel">Отмена</button>
+        <button class="btn" id="confirmOk">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>

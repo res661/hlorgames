@@ -847,6 +847,51 @@ section { padding: 80px 24px; }
   margin-bottom: 0.5rem;
 }
 
+/* ── CONFIRM DIALOG ── */
+
+.modal--confirm {
+  max-width: 360px;
+  text-align: center;
+  padding: 2rem 1.75rem;
+}
+
+.confirm-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.confirm-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.confirm-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirm-actions .btn {
+  min-width: 110px;
+}
+
+.btn--danger-solid {
+  background: var(--red);
+  color: white;
+  border: none;
+}
+.btn--danger-solid:hover { background: #dc2626; }
+
 /* ── LOBBY INDICATOR ── */
 
 .lobby-indicator {

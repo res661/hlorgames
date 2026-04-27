@@ -3,6 +3,44 @@
  * URL: lobby.html?code=ABCDE
  */
 
+// ─── КРАСИВЫЙ ДИАЛОГ ПОДТВЕРЖДЕНИЯ ───────────────────────────────────────────
+
+function showConfirm({ title, text, okText = 'Подтвердить', danger = false, icon = '⚠️' }) {
+  return new Promise((resolve) => {
+    const dialog    = document.getElementById('confirmDialog');
+    const titleEl   = document.getElementById('confirmTitle');
+    const textEl    = document.getElementById('confirmText');
+    const iconEl    = document.getElementById('confirmIcon');
+    const okBtn     = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+
+    if (!dialog) { resolve(window.confirm(text)); return; }
+
+    titleEl.textContent = title;
+    textEl.textContent  = text;
+    iconEl.textContent  = icon;
+    okBtn.textContent   = okText;
+    okBtn.className     = `btn ${danger ? 'btn--danger-solid' : 'btn--primary'}`;
+
+    dialog.classList.add('open');
+
+    const cleanup = (result) => {
+      dialog.classList.remove('open');
+      okBtn.replaceWith(okBtn.cloneNode(true));
+      cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+      resolve(result);
+      // Re-bind after clone
+      document.getElementById('confirmOk').addEventListener('click', () => {});
+    };
+
+    const newOk = document.getElementById('confirmOk');
+    const newCancel = document.getElementById('confirmCancel');
+    newOk.onclick     = () => cleanup(true);
+    newCancel.onclick = () => cleanup(false);
+    dialog.onclick    = (e) => { if (e.target === dialog) cleanup(false); };
+  });
+}
+
 const GAMES_INFO = {
   mafia:  { name: 'Мафия',   emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12 },
   bunker: { name: 'Бункер',  emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16 },
@@ -268,10 +306,11 @@ function exitLobbyPage() {
 
 // Покинуть лобби: убираем из лобби И уходим со страницы
 async function leaveAndExit() {
-  const msg = isHost
-    ? 'Ты хост. Закрыть лобби для всех участников?'
-    : 'Покинуть лобби?';
-  if (!confirm(msg)) return;
+  const ok = await showConfirm(isHost
+    ? { title: 'Закрыть лобби', text: 'Ты хост. Лобби закроется для всех участников.', okText: 'Закрыть', danger: true, icon: '🚪' }
+    : { title: 'Покинуть лобби', text: 'Ты уйдёшь из комнаты. Вернуться можно по коду.', okText: 'Покинуть', danger: true, icon: '🚪' }
+  );
+  if (!ok) return;
 
   if (typeof clearActiveLobby === 'function') clearActiveLobby();
   clearInterval(pollInterval);
@@ -292,7 +331,15 @@ async function leaveAndExit() {
 async function leaveLobby() { await leaveAndExit(); }
 
 async function kickPlayer(playerId, nickname) {
-  if (!isHost || !confirm(`Исключить ${nickname}?`)) return;
+  if (!isHost) return;
+  const ok = await showConfirm({
+    title: 'Исключить игрока',
+    text: `Исключить «${nickname}» из лобби?`,
+    okText: 'Исключить',
+    danger: true,
+    icon: '👢',
+  });
+  if (!ok) return;
   const players = (lobbyData.players || []).filter(p => p.id !== playerId);
   await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   showToast(`${nickname} исключён`, 'success');
@@ -300,7 +347,9 @@ async function kickPlayer(playerId, nickname) {
 }
 
 async function closeLobby() {
-  if (!isHost || !confirm('Закрыть лобби для всех игроков?')) return;
+  if (!isHost) return;
+  const ok = await showConfirm({ title: 'Закрыть лобби', text: 'Закрыть лобби для всех игроков? Это нельзя отменить.', okText: 'Закрыть', danger: true, icon: '🔴' });
+  if (!ok) return;
   if (typeof clearActiveLobby === 'function') clearActiveLobby();
   await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
   showToast('Лобби закрыто', 'success');
