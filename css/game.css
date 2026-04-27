@@ -11,6 +11,10 @@
   min-height: 100vh;
 }
 
+.game-main > .game-content {
+  padding-top: 1.5rem;
+}
+
 /* ── HERO ── */
 
 .game-hero {
