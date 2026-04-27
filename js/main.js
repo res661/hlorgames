@@ -17,8 +17,18 @@ function showToast(msg, type = 'success') {
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
 
 function initNavbar() {
+  let lastY = 0;
   window.addEventListener('scroll', () => {
-    document.getElementById('navbar').classList.toggle('navbar--scrolled', scrollY > 20);
+    const y = window.scrollY;
+    const navbar = document.getElementById('navbar');
+    navbar.classList.toggle('navbar--scrolled', y > 20);
+    // Скрываем при скролле вниз, показываем при скролле вверх
+    if (y > lastY && y > 80) {
+      navbar.classList.add('navbar--hidden');
+    } else {
+      navbar.classList.remove('navbar--hidden');
+    }
+    lastY = y;
   });
 
   document.getElementById('burgerBtn').addEventListener('click', () => {

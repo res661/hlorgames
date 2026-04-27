@@ -110,9 +110,10 @@ input { font-family: inherit; }
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  transition: background var(--transition);
+  transition: background var(--transition), transform 0.35s ease;
 }
 .navbar--scrolled { background: rgba(13,13,18,0.97); }
+.navbar--hidden   { transform: translateY(-100%); }
 
 .navbar__container {
   max-width: 1200px;
