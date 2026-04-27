@@ -109,21 +109,45 @@
 
 .g-join-inline {
   display: flex;
-  gap: 0.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.g-join-inline:focus-within {
+  border-color: rgba(124,77,255,0.5);
+  box-shadow: 0 0 0 3px rgba(124,77,255,0.1);
 }
 
 .g-join-code-input {
   flex: 1;
-  font-size: 0.9rem;
-  padding: 0.55rem 0.75rem;
-  letter-spacing: 0.15em;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.75rem;
+  letter-spacing: 0.2em;
+  background: var(--bg);
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--text);
+  font-family: var(--font);
 }
 
 .g-join-code-btn {
   flex-shrink: 0;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 0;
   font-size: 0.85rem;
-  padding: 0.55rem 1rem;
+  font-weight: 700;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+  white-space: nowrap;
 }
+.g-join-code-btn:hover { background: var(--accent-2); }
 
 /* ── CONTENT LAYOUT ── */
 
