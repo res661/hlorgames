@@ -89,6 +89,25 @@
   font-weight: 500;
 }
 
+.game-hero__actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.game-hero__actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+}
+
+.game-info-btn {
+  color: var(--text-muted) !important;
+}
+
 /* ── CONTENT LAYOUT ── */
 
 .game-content {
@@ -189,6 +208,16 @@
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
 }
+
+/* My lobbies scroll */
+#myLobbiesList {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+#myLobbiesList::-webkit-scrollbar { width: 4px; }
+#myLobbiesList::-webkit-scrollbar-track { background: transparent; }
+#myLobbiesList::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
 /* ── SIDEBAR (CREATE FORM) ── */
 
@@ -295,10 +324,21 @@
 }
 
 .g-search-input {
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.75rem 0.4rem 2rem;
   font-size: 0.8rem;
-  max-width: 200px;
+  width: 200px;
   height: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238888aa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0.6rem center;
+  background-color: var(--bg-card-2);
+  border-color: var(--border);
+}
+.g-search-input:focus {
+  background-color: var(--bg-card);
+  outline: none;
+  border-color: rgba(124,77,255,0.5);
+  box-shadow: 0 0 0 3px rgba(124,77,255,0.1);
 }
 
 .g-online-dot {

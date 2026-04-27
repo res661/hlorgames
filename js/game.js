@@ -127,6 +127,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
 
+// ─── БЫСТРЫЕ ДЕЙСТВИЯ HERO ───────────────────────────────────────────────────
+
+function scrollAndCreate() {
+  switchSideTab('create');
+  scrollToSidebar();
+  if (!currentUser) openAuthModal('login');
+}
+
+function scrollToSidebar() {
+  document.querySelector('.game-sidebar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showJoinModal() {
+  document.getElementById('joinCodeModal')?.classList.add('open');
+  setTimeout(() => document.getElementById('heroCodeInput')?.focus(), 100);
+}
+
+async function handleHeroJoin() {
+  const code  = document.getElementById('heroCodeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('heroJoinError');
+  errEl.textContent = '';
+  if (!code || code.length < 4) { errEl.textContent = 'Введи код'; return; }
+  document.getElementById('joinCodeModal').classList.remove('open');
+  await joinLobby(code, false);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function initNavbar() {
   let lastY = 0;
   window.addEventListener('scroll', () => {

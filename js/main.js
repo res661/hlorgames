@@ -182,20 +182,28 @@ async function joinLobby() {
 // ─── СТАТИСТИКА ───────────────────────────────────────────────────────────────
 
 async function loadStats() {
+  const playersEl  = document.getElementById('statPlayers');
+  const sessionsEl = document.getElementById('statSessions');
+
   if (!supabaseClient) {
-    document.getElementById('statPlayers').textContent  = '—';
-    document.getElementById('statSessions').textContent = '—';
+    if (playersEl)  playersEl.textContent  = '—';
+    if (sessionsEl) sessionsEl.textContent = '—';
     return;
   }
 
   try {
-    const [{ count: players }, { count: sessions }] = await Promise.all([
-      supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
-      supabaseClient.from('lobbies').select('*', { count: 'exact', head: true }).eq('status', 'waiting'),
+    const [playersRes, sessionsRes] = await Promise.all([
+      supabaseClient.from('profiles').select('id', { count: 'exact', head: true }),
+      supabaseClient.from('lobbies').select('id', { count: 'exact', head: true }).eq('status', 'waiting'),
     ]);
-    document.getElementById('statPlayers').textContent  = players  ?? 0;
-    document.getElementById('statSessions').textContent = sessions ?? 0;
-  } catch {}
+
+    if (playersEl)  playersEl.textContent  = playersRes.count  ?? 0;
+    if (sessionsEl) sessionsEl.textContent = sessionsRes.count ?? 0;
+  } catch (err) {
+    console.error('[Stats] Error:', err);
+    if (playersEl)  playersEl.textContent  = '0';
+    if (sessionsEl) sessionsEl.textContent = '0';
+  }
 }
 
 // ─── СЕКРЕТНЫЙ ТРИГГЕР АДМИН-ПАНЕЛИ ──────────────────────────────────────────
@@ -225,7 +233,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
-  setTimeout(loadStats, 500);
+  setTimeout(loadStats, 1000);
 
   document.getElementById('lobbyModalClose').addEventListener('click', closeLobbyModal);
   document.getElementById('lobbyModal').addEventListener('click', (e) => {
