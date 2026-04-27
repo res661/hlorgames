@@ -109,21 +109,54 @@
 
 .g-join-inline {
   display: flex;
-  gap: 0.5rem;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.g-join-inline:focus-within {
+  border-color: rgba(124,77,255,0.5);
+  box-shadow: 0 0 0 3px rgba(124,77,255,0.1);
 }
 
 .g-join-code-input {
   flex: 1;
   font-size: 0.9rem;
-  padding: 0.55rem 0.75rem;
-  letter-spacing: 0.15em;
+  padding: 0.65rem 0.75rem;
+  letter-spacing: 0.18em;
+  background: var(--bg-card-2);
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+}
+
+.g-join-code-input::placeholder {
+  letter-spacing: 0.05em;
+  font-weight: 400;
+  color: var(--text-dim);
 }
 
 .g-join-code-btn {
   flex-shrink: 0;
   font-size: 0.85rem;
-  padding: 0.55rem 1rem;
+  font-weight: 700;
+  padding: 0.65rem 1.1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+  white-space: nowrap;
 }
+.g-join-code-btn:hover { background: var(--accent-2); }
 
 /* ── CONTENT LAYOUT ── */
 
