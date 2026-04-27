@@ -119,11 +119,15 @@
 }
 
 .g-card__title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+.g-card__title svg { color: var(--text-muted); flex-shrink: 0; }
 
 .g-form { display: flex; flex-direction: column; gap: 0; }
 
@@ -183,25 +187,61 @@
 }
 
 .g-section-title {
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+.g-section-title svg { color: var(--text-muted); flex-shrink: 0; }
 
 .g-section-header .g-section-title { margin-bottom: 0; }
+
+.g-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.g-search-input {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  max-width: 200px;
+  height: 34px;
+}
+
+.g-online-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
 
 .g-refresh-btn {
   background: none;
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-muted);
-  font-size: 0.85rem;
-  padding: 0.3rem 0.6rem;
+  padding: 0.4rem 0.5rem;
   cursor: pointer;
   transition: all var(--transition);
+  display: flex; align-items: center; justify-content: center;
+  height: 34px;
 }
 .g-refresh-btn:hover { background: var(--bg-card); color: var(--text); }
+
+.g-locked-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
 
 /* ── LOBBY GRID ── */
 

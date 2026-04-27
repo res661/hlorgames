@@ -79,10 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   gameInfo = GAMES[gameType];
 
-  // Обновляем заголовок страницы
+  // Обновляем заголовок и навбар
   document.title = `${gameInfo.name} — HlorGames`;
+  const navLink = document.getElementById('navCurrentGame');
+  if (navLink) navLink.textContent = gameInfo.name;
 
-  // Заполняем hero секцию
+  // Заполняем hero
   document.getElementById('heroEmoji').textContent  = gameInfo.emoji;
   document.getElementById('heroTitle').textContent  = gameInfo.name;
   document.getElementById('heroDesc').textContent   = gameInfo.desc;
@@ -249,6 +251,16 @@ async function handleCreateLobby(e) {
   }
 }
 
+let cachedActiveLobbies = [];
+
+function filterLobbies() {
+  const q = (document.getElementById('lobbySearch')?.value || '').toLowerCase();
+  const filtered = cachedActiveLobbies.filter(l =>
+    !q || (l.name || l.code).toLowerCase().includes(q) || l.code.toLowerCase().includes(q)
+  );
+  renderActiveLobbies(filtered);
+}
+
 // ─── ЗАГРУЗКА ЛОББИ ──────────────────────────────────────────────────────────
 
 async function loadLobbies() {
@@ -277,7 +289,8 @@ async function loadLobbies() {
 
     if (e1) throw e1;
 
-    renderActiveLobbies(active || []);
+    cachedActiveLobbies = active || [];
+    filterLobbies(); // применяем текущий поиск
     renderPastLobbies(past || []);
   } catch (err) {
     console.error('[Game] Ошибка загрузки лобби:', err);
@@ -323,7 +336,7 @@ function renderActiveLobbies(lobbies) {
         </div>
         <div class="g-lobby-footer">
           <span class="g-lobby-time">${timeAgo}</span>
-          ${hasPass ? '<span class="g-locked">🔒</span>' : ''}
+          ${hasPass ? '<svg class="g-locked-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' : ''}
           <button class="btn btn--primary g-join-btn ${isFull ? 'disabled' : ''}"
             onclick="joinLobby('${esc(l.code)}', ${hasPass})"
             ${isFull ? 'disabled' : ''}>
