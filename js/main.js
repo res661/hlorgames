@@ -17,18 +17,15 @@ function showToast(msg, type = 'success') {
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
 
 function initNavbar() {
-  // Тень при скролле
   window.addEventListener('scroll', () => {
     document.getElementById('navbar').classList.toggle('navbar--scrolled', scrollY > 20);
   });
 
-  // Бургер (мобильное меню)
   document.getElementById('burgerBtn').addEventListener('click', () => {
     document.getElementById('navLinks').classList.toggle('open');
     document.getElementById('navAuth').classList.toggle('open');
   });
 
-  // Закрыть мобильное меню при клике на ссылку
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
       document.getElementById('navLinks').classList.remove('open');
@@ -59,10 +56,10 @@ function initHeroButtons() {
 let selectedGame = 'mafia';
 
 function openLobbyModal(view = 'create') {
-  const modal        = document.getElementById('lobbyModal');
-  const createView   = document.getElementById('lobbyCreateView');
-  const joinView     = document.getElementById('lobbyJoinView');
-  const title        = document.getElementById('lobbyModalTitle');
+  const modal      = document.getElementById('lobbyModal');
+  const createView = document.getElementById('lobbyCreateView');
+  const joinView   = document.getElementById('lobbyJoinView');
+  const title      = document.getElementById('lobbyModalTitle');
 
   modal.classList.add('open');
 
@@ -97,13 +94,11 @@ function startGame(game) {
   }
   selectedGame = game;
   openLobbyModal('create');
-  // Синхронизируем выбор в модальном окне
   document.querySelectorAll('.game-select__item').forEach(b => {
     b.classList.toggle('active', b.dataset.val === game);
   });
 }
 
-// Генерация короткого кода комнаты
 function generateRoomCode() {
   return Math.random().toString(36).slice(2, 7).toUpperCase();
 }
@@ -116,35 +111,26 @@ async function createLobby() {
 
   const errEl = document.getElementById('lobbyError');
   errEl.textContent = '';
-
   const code = generateRoomCode();
 
-  if (isDemoMode || !supabase) {
-    // Demo-режим: просто показываем код
+  if (!supabaseClient) {
     closeLobbyModal();
     showToast(`Комната создана! Код: ${code}`, 'success');
-    setTimeout(() => {
-      alert(`Твой код комнаты: ${code}\n\nПоделись им с друзьями!\n\n(В demo-режиме — настрой Supabase для полноценной работы)`);
-    }, 500);
     return;
   }
 
   try {
-    const { data, error } = await supabase.from('lobbies').insert({
+    const { error } = await supabaseClient.from('lobbies').insert({
       code,
-      game:       selectedGame,
-      host_id:    currentUser.id,
-      status:     'waiting',
-      players:    [{ id: currentUser.id, nickname: currentUser.nickname }],
-      created_at: new Date().toISOString(),
-    }).select().single();
+      game:    selectedGame,
+      host_id: currentUser.id,
+      status:  'waiting',
+      players: [{ id: currentUser.id, nickname: currentUser.nickname }],
+    });
 
     if (error) throw error;
-
     closeLobbyModal();
     showToast(`Комната создана! Код: ${code}`, 'success');
-    // Можно добавить редирект на страницу лобби:
-    // window.location.href = `lobby.html?code=${code}`;
   } catch (err) {
     errEl.textContent = 'Ошибка создания комнаты: ' + err.message;
   }
@@ -160,14 +146,14 @@ async function joinLobby() {
     return;
   }
 
-  if (isDemoMode || !supabase) {
+  if (!supabaseClient) {
     closeLobbyModal();
-    showToast(`Подключаюсь к комнате ${code}... (demo-режим)`, 'success');
+    showToast(`Подключаюсь к комнате ${code}...`, 'success');
     return;
   }
 
   try {
-    const { data, error } = await supabase.from('lobbies').select('*').eq('code', code).single();
+    const { data, error } = await supabaseClient.from('lobbies').select('*').eq('code', code).single();
     if (error || !data) {
       errEl.textContent = 'Комната не найдена';
       return;
@@ -176,19 +162,17 @@ async function joinLobby() {
       errEl.textContent = 'Игра уже началась';
       return;
     }
-
     closeLobbyModal();
     showToast(`Вхожу в комнату ${code}!`, 'success');
-    // window.location.href = `lobby.html?code=${code}`;
   } catch (err) {
     errEl.textContent = 'Ошибка: ' + err.message;
   }
 }
 
-// ─── СТАТИСТИКА (онлайн игроков и сессий) ────────────────────────────────────
+// ─── СТАТИСТИКА ───────────────────────────────────────────────────────────────
 
 async function loadStats() {
-  if (isDemoMode || !supabase) {
+  if (!supabaseClient) {
     document.getElementById('statPlayers').textContent  = '—';
     document.getElementById('statSessions').textContent = '—';
     return;
@@ -196,8 +180,8 @@ async function loadStats() {
 
   try {
     const [{ count: players }, { count: sessions }] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('lobbies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+      supabaseClient.from('lobbies').select('*', { count: 'exact', head: true }).eq('status', 'waiting'),
     ]);
     document.getElementById('statPlayers').textContent  = players  ?? 0;
     document.getElementById('statSessions').textContent = sessions ?? 0;
@@ -205,7 +189,6 @@ async function loadStats() {
 }
 
 // ─── СЕКРЕТНЫЙ ТРИГГЕР АДМИН-ПАНЕЛИ ──────────────────────────────────────────
-// Напечатай "admin" на клавиатуре (вне полей ввода) чтобы открыть панель
 
 let _adminBuf = '';
 document.addEventListener('keydown', (e) => {
@@ -232,9 +215,8 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
-  loadStats();
+  setTimeout(loadStats, 500);
 
-  // Закрытие лобби-модала
   document.getElementById('lobbyModalClose').addEventListener('click', closeLobbyModal);
   document.getElementById('lobbyModal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeLobbyModal();

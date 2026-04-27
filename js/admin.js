@@ -18,21 +18,21 @@ function showToast(msg, type = 'success') {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Ждём инициализации Supabase клиента
+  // Ждём инициализации supabaseClient клиента
   await new Promise(r => setTimeout(r, 300));
 
-  if (!supabase) {
-    showAccessDenied('Supabase не подключён');
+  if (!supabaseClient) {
+    showAccessDenied('supabaseClient не подключён');
     return;
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     window.location.href = 'index.html';
     return;
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseClient
     .from('profiles')
     .select('*')
     .eq('id', session.user.id)
@@ -111,11 +111,11 @@ async function loadDashboard() {
       { count: adminCount },
       { data: recent },
     ] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('lobbies').select('*', { count: 'exact', head: true }).eq('status', 'waiting'),
-      supabase.from('lobbies').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['admin', 'superadmin']),
-      supabase.from('profiles').select('nickname, role, created_at').order('created_at', { ascending: false }).limit(6),
+      supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+      supabaseClient.from('lobbies').select('*', { count: 'exact', head: true }).eq('status', 'waiting'),
+      supabaseClient.from('lobbies').select('*', { count: 'exact', head: true }),
+      supabaseClient.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['admin', 'superadmin']),
+      supabaseClient.from('profiles').select('nickname, role, created_at').order('created_at', { ascending: false }).limit(6),
     ]);
 
     document.getElementById('statUsers').textContent   = totalUsers    ?? 0;
@@ -152,7 +152,7 @@ async function loadDashboard() {
 async function loadUsers() {
   const wrap = document.getElementById('usersWrap');
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
@@ -220,7 +220,7 @@ function renderUsers(users) {
 async function changeRole(userId, newRole, nickname) {
   if (!confirm(`Изменить роль «${nickname}» на «${newRole}»?`)) return;
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('profiles')
       .update({ role: newRole })
       .eq('id', userId);
@@ -236,7 +236,7 @@ async function changeRole(userId, newRole, nickname) {
 async function confirmDelete(userId, nickname) {
   if (!confirm(`Удалить игрока «${nickname}»?\nЭто действие нельзя отменить.`)) return;
   try {
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    const { error } = await supabaseClient.from('profiles').delete().eq('id', userId);
     if (error) throw error;
     showToast(`Игрок ${nickname} удалён`, 'success');
     allUsers = allUsers.filter(u => u.id !== userId);
@@ -253,7 +253,7 @@ async function confirmDelete(userId, nickname) {
 async function loadLobbies() {
   const wrap = document.getElementById('lobbiesWrap');
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('lobbies')
       .select('*')
       .order('created_at', { ascending: false });
@@ -302,7 +302,7 @@ async function loadLobbies() {
 async function deleteLobby(lobbyId, code) {
   if (!confirm(`Закрыть лобби ${code}?`)) return;
   try {
-    const { error } = await supabase.from('lobbies').delete().eq('id', lobbyId);
+    const { error } = await supabaseClient.from('lobbies').delete().eq('id', lobbyId);
     if (error) throw error;
     showToast(`Лобби ${code} закрыто`, 'success');
     loadLobbies();
@@ -318,7 +318,7 @@ async function cleanupLobbies() {
   const res = document.getElementById('cleanupResult');
   res.textContent = 'Очищаю...';
   try {
-    const { error, count } = await supabase
+    const { error, count } = await supabaseClient
       .from('lobbies')
       .delete({ count: 'exact' })
       .eq('status', 'ended');
