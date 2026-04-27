@@ -103,31 +103,26 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   bindAuthButtons();
 
-  // При любом изменении авторизации — переинициализируем форму
-  window._onAuthUpdate = () => {
-    setupCreateForm();
-    updateCreateFormVisibility();
-  };
+  // Обновляем форму при любом изменении авторизации
+  window._onAuthUpdate = updateCreateFormVisibility;
 
+  // Ждём первого определения авторизации (не угадываем таймаут)
   const initPage = () => {
     setupCreateForm();
     loadLobbies();
-    if (!refreshInterval) refreshInterval = setInterval(loadLobbies, 30000);
+    refreshInterval = setInterval(loadLobbies, 30000);
   };
 
+  // _onAuthFirstLoad сработает когда onAuthStateChange определит сессию
   window._onAuthFirstLoad = initPage;
 
-  // Страховочный таймаут 1
+  // Страховочный таймаут — если auth вообще не ответил за 1.5с
   setTimeout(() => {
     if (window._onAuthFirstLoad) {
       window._onAuthFirstLoad = null;
       initPage();
     }
-  }, 1200);
-
-  // Страховочный таймаут 2 — повторно через 2с и 4с
-  setTimeout(setupCreateForm, 2000);
-  setTimeout(setupCreateForm, 4000);
+  }, 1500);
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -268,31 +263,29 @@ function fmtTimeAgo(iso) {
 // ─── ФОРМА СОЗДАНИЯ ЛОББИ ────────────────────────────────────────────────────
 
 function setupCreateForm() {
-  if (!gameInfo) return;
+  // Заполняем select с количеством игроков
   const sel = document.getElementById('lobbyMaxPlayers');
-  if (sel && sel.options.length === 0) {
-    for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `${i} игроков`;
-      if (i === gameInfo.defaultMax) opt.selected = true;
-      sel.appendChild(opt);
-    }
+  sel.innerHTML = '';
+  for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${i} игроков`;
+    if (i === gameInfo.defaultMax) opt.selected = true;
+    sel.appendChild(opt);
   }
+
   updateCreateFormVisibility();
 }
 
 function updateCreateFormVisibility() {
   const notice = document.getElementById('createLoginNotice');
   const form   = document.getElementById('createForm');
-  if (!notice || !form) return;
-
   if (currentUser) {
-    notice.style.display = 'none';
-    form.style.display   = 'flex';
+    notice.classList.add('hidden');
+    form.classList.remove('hidden');
   } else {
-    notice.style.display = 'block';
-    form.style.display   = 'none';
+    notice.classList.remove('hidden');
+    form.classList.add('hidden');
   }
 }
 

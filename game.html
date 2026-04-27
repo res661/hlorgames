@@ -43,6 +43,8 @@
           <span class="game-hero__emoji" id="heroEmoji">🎮</span>
           <div class="game-hero__text">
             <h1 class="game-hero__title" id="heroTitle">Загрузка...</h1>
+            <p class="game-hero__desc" id="heroDesc"></p>
+            <div class="game-hero__meta" id="heroMeta"></div>
           </div>
         </div>
       </div>
@@ -72,13 +74,13 @@
 
         <!-- Создать лобби -->
         <div class="g-card g-tab-panel" id="panelCreate">
-          <div id="createLoginNotice" class="g-notice">
+          <div id="createLoginNotice" class="g-notice hidden">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-dim);margin-bottom:.5rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             <p>Войди чтобы создать лобби</p>
             <button class="btn btn--primary btn--full" onclick="openAuthModal('login')">Войти</button>
             <button class="btn btn--ghost btn--full" style="margin-top:.5rem" onclick="openAuthModal('register')">Регистрация</button>
           </div>
-          <form id="createForm" class="g-form" onsubmit="handleCreateLobby(event)" style="display:none">
+          <form id="createForm" class="g-form hidden" onsubmit="handleCreateLobby(event)">
             <div class="form-group">
               <label class="form-label">Название комнаты</label>
               <input type="text" class="form-input" id="lobbyName" placeholder="Весёлая мафия" maxlength="40" />
