@@ -103,26 +103,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   bindAuthButtons();
 
-  // Обновляем форму при любом изменении авторизации
-  window._onAuthUpdate = updateCreateFormVisibility;
+  // При любом изменении авторизации — переинициализируем форму
+  window._onAuthUpdate = () => {
+    setupCreateForm();
+    updateCreateFormVisibility();
+  };
 
-  // Ждём первого определения авторизации (не угадываем таймаут)
   const initPage = () => {
     setupCreateForm();
     loadLobbies();
-    refreshInterval = setInterval(loadLobbies, 30000);
+    if (!refreshInterval) refreshInterval = setInterval(loadLobbies, 30000);
   };
 
-  // _onAuthFirstLoad сработает когда onAuthStateChange определит сессию
   window._onAuthFirstLoad = initPage;
 
-  // Страховочный таймаут — если auth вообще не ответил за 1.5с
+  // Страховочный таймаут 1
   setTimeout(() => {
     if (window._onAuthFirstLoad) {
       window._onAuthFirstLoad = null;
       initPage();
     }
-  }, 1500);
+  }, 1200);
+
+  // Страховочный таймаут 2 — всегда обновляем форму через 2с
+  // (на случай если auth вернул сессию после initPage)
+  setTimeout(() => {
+    setupCreateForm();
+  }, 2000);
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -263,17 +270,17 @@ function fmtTimeAgo(iso) {
 // ─── ФОРМА СОЗДАНИЯ ЛОББИ ────────────────────────────────────────────────────
 
 function setupCreateForm() {
-  // Заполняем select с количеством игроков
+  if (!gameInfo) return;
   const sel = document.getElementById('lobbyMaxPlayers');
-  sel.innerHTML = '';
-  for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${i} игроков`;
-    if (i === gameInfo.defaultMax) opt.selected = true;
-    sel.appendChild(opt);
+  if (sel && sel.options.length === 0) {
+    for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${i} игроков`;
+      if (i === gameInfo.defaultMax) opt.selected = true;
+      sel.appendChild(opt);
+    }
   }
-
   updateCreateFormVisibility();
 }
 
