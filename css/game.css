@@ -11,6 +11,11 @@
   min-height: 100vh;
 }
 
+/* Game name in navbar replaces hero */
+.nav-link--game {
+  font-weight: 700 !important;
+}
+
 /* ── HERO ── */
 
 .game-hero {
@@ -146,27 +151,27 @@
 
 .g-join-code-btn {
   flex-shrink: 0;
+  width: 48px;
   background: var(--accent);
   border: none;
-  border-left: 1px solid rgba(124,77,255,0.4);
+  border-left: 1px solid rgba(124,77,255,0.3);
   border-radius: 0 !important;
   color: white;
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-family: var(--font);
   transition: background 0.15s;
-  white-space: nowrap;
 }
 .g-join-code-btn:hover { background: var(--accent-2); }
+.g-join-code-btn svg { pointer-events: none; }
 
 /* ── CONTENT LAYOUT ── */
 
 .game-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1.5rem 2rem;
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 2rem;

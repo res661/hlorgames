@@ -116,6 +116,18 @@
           <p class="lb-share-hint">Поделись кодом или ссылкой</p>
         </div>
 
+        <!-- Правила игры -->
+        <div class="lb-rules-card" id="lobbyRulesCard" style="display:none">
+          <div class="lb-rules-header" onclick="toggleLobbyRules()">
+            <span>Правила игры</span>
+            <svg id="lobbyRulesArrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="lb-rules-body hidden" id="lobbyRulesBody">
+            <p class="lb-rules-desc" id="lobbyRulesDesc"></p>
+            <ul class="lb-rules-list" id="lobbyRulesList"></ul>
+          </div>
+        </div>
+
       </div>
 
       <!-- ── ПРАВАЯ КОЛОНКА: настройки (только хост) ── -->

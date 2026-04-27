@@ -42,9 +42,39 @@ function showConfirm({ title, text, okText = 'Подтвердить', danger = 
 }
 
 const GAMES_INFO = {
-  mafia:  { name: 'Мафия',   emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12 },
-  bunker: { name: 'Бункер',  emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16 },
-  alias:  { name: 'Алиас',   emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20 },
+  mafia: {
+    name: 'Мафия', emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12,
+    desc: 'Классическая игра на дедукцию. Мирные жители против мафии — роли, ночные убийства, дневные голосования.',
+    rules: [
+      'Ведущий раздаёт роли: мафия, мирные, шериф, доктор',
+      'Ночью мафия выбирает жертву, шериф проверяет игрока, доктор лечит',
+      'Днём все обсуждают и голосуют кого исключить',
+      'Победа мирных — исключить всю мафию',
+      'Победа мафии — когда их количество ≥ мирным',
+    ],
+  },
+  bunker: {
+    name: 'Бункер', emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16,
+    desc: 'Конец света. В бункере ограниченные места. Убеди остальных взять именно тебя.',
+    rules: [
+      'Каждый получает карточку персонажа с профессией и тайной',
+      'Игроки раскрывают характеристики и убеждают остальных',
+      'Голосованием исключают тех, кто не нужен в бункере',
+      'Тайны раскрываются при исключении',
+      'Побеждают те, кто попал в бункер',
+    ],
+  },
+  alias: {
+    name: 'Алиас', emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20,
+    desc: 'Объясняй слова — только словами, жестами или мимикой. Команды соревнуются кто назовёт больше.',
+    rules: [
+      'Игроки делятся на команды по 2+ человека',
+      'Один объясняет слово — нельзя использовать однокоренные',
+      'Команда угадывает за отведённое время (60 сек)',
+      'За каждое угаданное слово — 1 очко',
+      'Побеждает команда с наибольшим количеством очков',
+    ],
+  },
 };
 
 let lobbyCode    = null;
@@ -134,6 +164,8 @@ async function loadLobby() {
     if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
       setActiveLobby(data.code, data.game, data.name || data.code);
     }
+    // Показываем правила игры
+    populateLobbyRules(data.game);
 
   } catch (err) {
     console.error('[Lobby] Ошибка загрузки:', err);
@@ -448,6 +480,24 @@ function fmtDate(iso) {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+}
+
+function populateLobbyRules(game) {
+  const info = GAMES_INFO[game];
+  if (!info?.rules) return;
+  const card = document.getElementById('lobbyRulesCard');
+  if (card) card.style.display = '';
+  const desc = document.getElementById('lobbyRulesDesc');
+  if (desc) desc.textContent = info.desc || '';
+  const list = document.getElementById('lobbyRulesList');
+  if (list) list.innerHTML = (info.rules || []).map(r => `<li>${esc(r)}</li>`).join('');
+}
+
+function toggleLobbyRules() {
+  const body  = document.getElementById('lobbyRulesBody');
+  const arrow = document.getElementById('lobbyRulesArrow');
+  body.classList.toggle('hidden');
+  if (arrow) arrow.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
 }
 
 function esc(str) {

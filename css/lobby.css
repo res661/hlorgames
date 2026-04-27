@@ -411,6 +411,66 @@ body.lobby-body {
   text-align: center;
 }
 
+/* ── RULES IN LOBBY ── */
+
+.lb-rules-card {
+  background: #111118;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lb-rules-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.lb-rules-header:hover { background: rgba(255,255,255,0.03); }
+
+.lb-rules-body {
+  padding: 0 1.25rem 1.25rem;
+}
+.lb-rules-body.hidden { display: none; }
+
+.lb-rules-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.lb-rules-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.lb-rules-list li {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  padding-left: 1rem;
+  position: relative;
+}
+.lb-rules-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--game-color);
+  font-weight: 700;
+}
+
 .lb-share-label {
   font-size: 0.75rem;
   color: #8888aa;
