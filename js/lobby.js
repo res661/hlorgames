@@ -42,21 +42,9 @@ function showConfirm({ title, text, okText = 'Подтвердить', danger = 
 }
 
 const GAMES_INFO = {
-  mafia: {
-    name: 'Мафия', emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12,
-    desc: 'Классическая игра на дедукцию. Мирные жители против мафии — роли, ночные убийства, дневные голосования.',
-    rules: ['Ведущий раздаёт роли: мафия, мирные, шериф, доктор', 'Ночью мафия выбирает жертву, шериф проверяет игрока', 'Днём все обсуждают и голосуют кого исключить', 'Победа мирных — исключить всю мафию', 'Победа мафии — когда их количество ≥ мирным'],
-  },
-  bunker: {
-    name: 'Бункер', emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16,
-    desc: 'Конец света. В бункере ограниченные места. Убеди остальных взять тебя.',
-    rules: ['Каждый получает карточку персонажа с профессией, здоровьем и тайной', 'Игроки раскрывают характеристики и убеждают остальных', 'Голосованием исключают ненужных', 'Тайны раскрываются при исключении', 'Побеждают попавшие в бункер'],
-  },
-  alias: {
-    name: 'Алиас', emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20,
-    desc: 'Объясняй слова — словами, жестами или мимикой. Команды соревнуются кто назовёт больше.',
-    rules: ['Игроки делятся на команды по 2+ человека', 'Один объясняет слово — нельзя однокоренные', 'Команда угадывает за отведённое время (60 сек)', 'За каждое угаданное слово — 1 очко', 'Побеждает команда с наибольшим счётом'],
-  },
+  mafia:  { name: 'Мафия',   emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12 },
+  bunker: { name: 'Бункер',  emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16 },
+  alias:  { name: 'Алиас',   emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20 },
 };
 
 let lobbyCode    = null;
@@ -142,7 +130,6 @@ async function loadLobby() {
 
     lobbyData = data;
     renderLobby(data);
-    populateRules(data.game);
     // Сохраняем в localStorage для индикатора
     if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
       setActiveLobby(data.code, data.game, data.name || data.code);
@@ -151,25 +138,6 @@ async function loadLobby() {
   } catch (err) {
     console.error('[Lobby] Ошибка загрузки:', err);
   }
-}
-
-// ─── ПРАВИЛА ИГРЫ ────────────────────────────────────────────────────────────
-
-function populateRules(gameType) {
-  const game = GAMES_INFO[gameType];
-  if (!game || !game.rules) return;
-  const descEl  = document.getElementById('lobbyRulesDesc');
-  const listEl  = document.getElementById('lobbyRulesList');
-  if (descEl) descEl.textContent = game.desc || '';
-  if (listEl) listEl.innerHTML = (game.rules || []).map(r => `<li>${r}</li>`).join('');
-  document.getElementById('lobbyRulesCard')?.classList.remove('hidden');
-}
-
-function toggleLobbyRules() {
-  const body    = document.getElementById('lobbyRulesBody');
-  const chevron = document.querySelector('.lb-rules-chevron');
-  body?.classList.toggle('hidden');
-  if (chevron) chevron.style.transform = body?.classList.contains('hidden') ? '' : 'rotate(180deg)';
 }
 
 // ─── РЕНДЕР ───────────────────────────────────────────────────────────────────
