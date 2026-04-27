@@ -11,10 +11,6 @@
   min-height: 100vh;
 }
 
-.game-main > .game-content {
-  padding-top: 1.5rem;
-}
-
 /* ── HERO ── */
 
 .game-hero {
@@ -99,11 +95,9 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 1rem 0 0.85rem;
+  margin: 1rem 0 0.75rem;
   color: var(--text-dim);
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
 }
 .g-form-divider::before,
 .g-form-divider::after {
@@ -115,55 +109,21 @@
 
 .g-join-inline {
   display: flex;
-  gap: 0;
-  border: 1px solid rgba(124,77,255,0.35);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--bg);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.g-join-inline:focus-within {
-  border-color: rgba(124,77,255,0.7);
-  box-shadow: 0 0 0 3px rgba(124,77,255,0.12);
+  gap: 0.5rem;
 }
 
 .g-join-code-input {
   flex: 1;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  padding: 0.65rem 0.875rem;
-  color: var(--text);
-  text-align: center;
-  outline: none;
-}
-.g-join-code-input::placeholder {
-  color: var(--text-dim);
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.75rem;
+  letter-spacing: 0.15em;
 }
 
 .g-join-code-btn {
   flex-shrink: 0;
-  background: var(--accent);
-  border: none;
-  border-left: 1px solid rgba(124,77,255,0.4);
-  border-radius: 0 !important;
-  color: white;
   font-size: 0.85rem;
-  font-weight: 700;
-  padding: 0 1.25rem;
-  cursor: pointer;
-  font-family: var(--font);
-  transition: background 0.15s;
-  white-space: nowrap;
+  padding: 0.55rem 1rem;
 }
-.g-join-code-btn:hover { background: var(--accent-2); }
 
 /* ── CONTENT LAYOUT ── */
 

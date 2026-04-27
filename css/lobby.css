@@ -159,58 +159,13 @@ body.lobby-body {
 /* ── LAYOUT ── */
 
 .lobby-layout {
-  max-width: 1260px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
   display: grid;
-  grid-template-columns: 1fr 200px 260px 220px;
+  grid-template-columns: 1fr 220px 280px;
   gap: 1.25rem;
   align-items: start;
-}
-
-/* ── RULES COLUMN ── */
-
-.lb-rules-col {
-  position: sticky;
-  top: 70px;
-}
-
-.lb-rules-card {
-  background: #111118;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
-  padding: 1.25rem;
-}
-
-.lb-rules-about {
-  font-size: 0.8rem;
-  color: #8888aa;
-  line-height: 1.5;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-/* Reuse g-rules from game.css */
-.lb-rules-card .g-rules {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.lb-rules-card .g-rule {
-  font-size: 0.78rem;
-  color: #8888aa;
-  line-height: 1.5;
-  padding-left: 1rem;
-  position: relative;
-}
-.lb-rules-card .g-rule::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--game-color, #7c4dff);
-  font-weight: 700;
 }
 
 /* ── PLAYERS COLUMN ── */
@@ -544,15 +499,11 @@ body.lobby-body {
 
 /* ── RESPONSIVE ── */
 
-@media (max-width: 1200px) {
-  .lobby-layout { grid-template-columns: 1fr 200px 260px; }
-  .lb-rules-col { display: none; }
-}
-
 @media (max-width: 1024px) {
-  .lobby-layout { grid-template-columns: 1fr 1fr; }
+  .lobby-layout {
+    grid-template-columns: 1fr 1fr;
+  }
   .lb-settings-col { grid-column: 1 / -1; position: static; }
-  .lb-rules-col { display: none; }
 }
 
 @media (max-width: 700px) {

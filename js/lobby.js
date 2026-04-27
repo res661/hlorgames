@@ -42,21 +42,9 @@ function showConfirm({ title, text, okText = 'Подтвердить', danger = 
 }
 
 const GAMES_INFO = {
-  mafia:  {
-    name: 'Мафия', emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12,
-    desc: 'Классическая игра на дедукцию. Мирные жители против мафии.',
-    rules: ['Ведущий раздаёт роли: мафия, мирные, шериф, доктор','Ночью мафия выбирает жертву, шериф проверяет, доктор лечит','Днём все обсуждают и голосуют кого исключить','Мирные побеждают — исключив всю мафию','Мафия побеждает — когда их ≥ числа мирных'],
-  },
-  bunker: {
-    name: 'Бункер', emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16,
-    desc: 'Конец света. В бункере ограниченные места. Убеди остальных взять тебя.',
-    rules: ['Каждый получает карточку: профессия, здоровье, навык, тайна','Игроки раскрывают характеристики и убеждают остальных','Голосованием исключают ненужных','Тайны раскрываются при исключении — они меняют всё','Побеждают попавшие в бункер'],
-  },
-  alias:  {
-    name: 'Алиас', emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20,
-    desc: 'Объясняй слова — только словами, без однокоренных.',
-    rules: ['Игроки делятся на команды по 2+','Один объясняет слово без однокоренных','Команда угадывает за 60 сек','За каждое угаданное слово — 1 очко','Побеждает команда с наибольшим счётом'],
-  },
+  mafia:  { name: 'Мафия',   emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12 },
+  bunker: { name: 'Бункер',  emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16 },
+  alias:  { name: 'Алиас',   emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20 },
 };
 
 let lobbyCode    = null;
@@ -161,18 +149,8 @@ function renderLobby(lobby) {
 
   isHost = currentUser && lobby.host_id === currentUser.id;
 
-  // Цвет темы
+  // Обновляем цвет темы
   document.documentElement.style.setProperty('--game-color', game.color);
-
-  // Правила
-  const rulesCard  = document.getElementById('rulesCard');
-  const rulesAbout = document.getElementById('lobbyRulesAbout');
-  const rulesList  = document.getElementById('lobbyRulesList');
-  if (rulesCard && game.rules) {
-    rulesCard.classList.remove('hidden');
-    if (rulesAbout) rulesAbout.textContent = game.desc || '';
-    if (rulesList)  rulesList.innerHTML = game.rules.map(r => `<li class="g-rule">${r}</li>`).join('');
-  }
 
   // Топбар
   document.title = `${lobby.name || lobbyCode} — HlorGames`;
