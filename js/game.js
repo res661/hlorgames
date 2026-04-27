@@ -150,7 +150,7 @@ function bindAuthButtons() {
   document.getElementById('authModal')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeAuthModal();
   });
-  setTimeout(restoreSession, 600);
+  setTimeout(startAuthListener, 300);
 }
 
 // showToast для этой страницы
