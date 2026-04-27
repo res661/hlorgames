@@ -17,7 +17,7 @@
   background: linear-gradient(135deg, rgba(13,13,18,0) 0%, color-mix(in srgb, var(--game-color) 12%, transparent) 100%),
               var(--bg);
   border-bottom: 1px solid var(--border);
-  padding: 2.5rem 0 2rem;
+  padding: 1.25rem 0 1rem;
   position: relative;
   overflow: hidden;
 }
@@ -57,14 +57,14 @@
 }
 
 .game-hero__emoji {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   line-height: 1;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 20px color-mix(in srgb, var(--game-color) 50%, transparent));
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--game-color) 50%, transparent));
 }
 
 .game-hero__title {
-  font-size: 2.2rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: var(--text);
   margin-bottom: 0.4rem;
@@ -73,10 +73,14 @@
 
 .game-hero__desc {
   color: var(--text-muted);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  max-width: 560px;
-  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 480px;
+  margin-bottom: 0.35rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .game-hero__meta {

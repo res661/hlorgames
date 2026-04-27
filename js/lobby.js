@@ -88,6 +88,10 @@ async function loadLobby() {
 
     lobbyData = data;
     renderLobby(data);
+    // Сохраняем в localStorage для индикатора
+    if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
+      setActiveLobby(data.code, data.game, data.name || data.code);
+    }
 
   } catch (err) {
     console.error('[Lobby] Ошибка загрузки:', err);
@@ -252,6 +256,8 @@ async function startGame() {
 }
 
 async function leaveLobby() {
+  if (typeof clearActiveLobby === 'function') clearActiveLobby();
+
   if (!supabaseClient || !lobbyData) {
     goBack();
     return;
@@ -283,6 +289,7 @@ async function kickPlayer(playerId, nickname) {
 
 async function closeLobby() {
   if (!isHost || !confirm('Закрыть лобби для всех игроков?')) return;
+  if (typeof clearActiveLobby === 'function') clearActiveLobby();
   await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
   showToast('Лобби закрыто', 'success');
   goBack();

@@ -184,8 +184,12 @@ function translateAuthError(msg) {
 
 function onUserSignedIn(user) {
   const navAuth = document.getElementById('navAuth');
+  if (!navAuth) return;
   const isAdmin = ['admin', 'superadmin'].includes(user.role);
-  const avatarContent = user.avatar || user.nickname[0].toUpperCase();
+  const hasPhoto = user.avatar && user.avatar.startsWith('http');
+  const avatarContent = hasPhoto
+    ? `<img src="${user.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    : (user.avatar || user.nickname[0].toUpperCase());
   const avatarClass = isAdmin ? 'user-avatar user-avatar--admin' : 'user-avatar';
 
   navAuth.innerHTML = `
@@ -253,33 +257,42 @@ function bindAuthButtons() {
   document.getElementById('btnRegister')?.addEventListener('click', () => openAuthModal('register'));
 }
 
-// ─── ВОССТАНОВЛЕНИЕ СЕССИИ ───────────────────────────────────────────────────
+// ─── СЛУШАТЕЛЬ СЕССИИ (работает при F5, переходах между страницами) ───────────
 
-async function restoreSession() {
+function startAuthListener() {
   if (!supabaseClient) return;
-  try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
+
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth] onAuthStateChange:', event);
+
+    if (session?.user) {
+      // Сессия активна — загружаем профиль
       const profile = await fetchProfile(session.user.id);
       currentUser = {
         ...session.user,
         nickname: profile?.nickname || session.user.email.split('@')[0],
         role:     profile?.role     || 'user',
+        avatar:   profile?.avatar   || null,
       };
       onUserSignedIn(currentUser);
+    } else {
+      // Вышли или сессия истекла
+      currentUser = null;
+      if (typeof onUserSignedOut === 'function') onUserSignedOut();
     }
-  } catch (err) {
-    console.error('[Auth] restoreSession error:', err);
-  }
+  });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('modalClose').addEventListener('click', closeAuthModal);
-  document.getElementById('authModal').addEventListener('click', (e) => {
+  document.getElementById('modalClose')?.addEventListener('click', closeAuthModal);
+  document.getElementById('authModal')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeAuthModal();
   });
   bindAuthButtons();
-  setTimeout(restoreSession, 400);
+
+  // Запускаем слушатель после инициализации Supabase
+  // onAuthStateChange сам восстановит сессию из localStorage — никаких setTimeout
+  setTimeout(startAuthListener, 350);
 });
