@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ панель — HlorGames</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="admin-body">
+
+  <div class="admin-layout">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar__logo">
+        <span>🎮</span>
+        <span>HlorGames</span>
+        <span class="a-badge">ADMIN</span>
+      </div>
+
+      <nav class="admin-nav">
+        <button class="admin-nav__item active" onclick="showSection('dashboard')" id="nav-dashboard">
+          <span class="a-nav-icon">📊</span>
+          <span>Дашборд</span>
+        </button>
+        <button class="admin-nav__item" onclick="showSection('users')" id="nav-users">
+          <span class="a-nav-icon">👥</span>
+          <span>Игроки</span>
+        </button>
+        <button class="admin-nav__item" onclick="showSection('lobbies')" id="nav-lobbies">
+          <span class="a-nav-icon">🎮</span>
+          <span>Лобби</span>
+        </button>
+        <button class="admin-nav__item" onclick="showSection('settings')" id="nav-settings">
+          <span class="a-nav-icon">⚙️</span>
+          <span>Настройки</span>
+        </button>
+      </nav>
+
+      <div class="admin-sidebar__footer">
+        <div class="a-user-info" id="adminUserInfo">
+          <div class="a-user-avatar">?</div>
+          <span class="a-user-name">Загрузка...</span>
+        </div>
+        <button class="btn btn--ghost a-back-btn" onclick="window.location.href='index.html'">
+          ← На сайт
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="admin-main" id="adminMain">
+
+      <!-- Topbar -->
+      <div class="admin-topbar">
+        <button class="a-burger" onclick="toggleSidebar()" aria-label="Меню">☰</button>
+        <h1 class="a-page-title" id="pageTitle">Дашборд</h1>
+        <div class="a-topbar-right">
+          <span class="a-role-badge" id="roleBadge">👑 Загрузка...</span>
+        </div>
+      </div>
+
+      <!-- ── ДАШБОРД ── -->
+      <section class="a-section" id="section-dashboard">
+        <div class="a-stats-grid">
+          <div class="a-stat-card">
+            <div class="a-stat-icon">👥</div>
+            <div class="a-stat-val" id="statUsers">—</div>
+            <div class="a-stat-lbl">Игроков всего</div>
+          </div>
+          <div class="a-stat-card a-stat-card--green">
+            <div class="a-stat-icon">🟢</div>
+            <div class="a-stat-val" id="statOnline">—</div>
+            <div class="a-stat-lbl">Лобби в ожидании</div>
+          </div>
+          <div class="a-stat-card a-stat-card--purple">
+            <div class="a-stat-icon">🎮</div>
+            <div class="a-stat-val" id="statLobbies">—</div>
+            <div class="a-stat-lbl">Всего комнат</div>
+          </div>
+          <div class="a-stat-card a-stat-card--gold">
+            <div class="a-stat-icon">👑</div>
+            <div class="a-stat-val" id="statAdmins">—</div>
+            <div class="a-stat-lbl">Администраторов</div>
+          </div>
+        </div>
+
+        <div class="a-card">
+          <div class="a-card-header">
+            <span>Последние регистрации</span>
+            <button class="btn btn--ghost a-refresh-btn" onclick="loadDashboard()">🔄</button>
+          </div>
+          <div id="recentUsersWrap"><div class="a-loading">Загрузка...</div></div>
+        </div>
+      </section>
+
+      <!-- ── ИГРОКИ ── -->
+      <section class="a-section hidden" id="section-users">
+        <div class="a-toolbar">
+          <input
+            type="text"
+            class="form-input a-search"
+            id="userSearch"
+            placeholder="🔍  Поиск по нику..."
+            oninput="filterUsers()"
+          />
+          <button class="btn btn--ghost a-refresh-btn" onclick="loadUsers()">🔄 Обновить</button>
+          <span class="a-count" id="usersCount"></span>
+        </div>
+        <div class="a-card">
+          <div id="usersWrap"><div class="a-loading">Загрузка...</div></div>
+        </div>
+      </section>
+
+      <!-- ── ЛОББИ ── -->
+      <section class="a-section hidden" id="section-lobbies">
+        <div class="a-toolbar">
+          <button class="btn btn--ghost a-refresh-btn" onclick="loadLobbies()">🔄 Обновить</button>
+          <span class="a-count" id="lobbiesCount"></span>
+        </div>
+        <div class="a-card">
+          <div id="lobbiesWrap"><div class="a-loading">Загрузка...</div></div>
+        </div>
+      </section>
+
+      <!-- ── НАСТРОЙКИ ── -->
+      <section class="a-section hidden" id="section-settings">
+        <div class="a-card a-settings-card">
+          <div class="a-card-header"><span>⚙️ Управление ролями</span></div>
+          <div class="a-settings-body">
+            <p class="a-settings-desc">
+              Чтобы назначить кого-то администратором вручную, выполни SQL-запрос в
+              <a href="https://supabase.com/dashboard" target="_blank" class="a-link">Supabase → SQL Editor</a>:
+            </p>
+            <pre class="a-code">UPDATE public.profiles
+SET role = 'admin'
+WHERE nickname = 'НИК_ИГРОКА';</pre>
+            <p class="a-settings-desc" style="margin-top:1rem">
+              Для суперадмина (полные права):
+            </p>
+            <pre class="a-code">UPDATE public.profiles
+SET role = 'superadmin'
+WHERE nickname = 'НИК_ИГРОКА';</pre>
+          </div>
+        </div>
+
+        <div class="a-card a-settings-card">
+          <div class="a-card-header"><span>🗑️ Очистка старых лобби</span></div>
+          <div class="a-settings-body">
+            <p class="a-settings-desc">Удалить все завершённые лобби из базы:</p>
+            <button class="btn btn--primary" onclick="cleanupLobbies()">Очистить завершённые лобби</button>
+            <div id="cleanupResult" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)"></div>
+          </div>
+        </div>
+
+        <div class="a-card a-settings-card">
+          <div class="a-card-header"><span>ℹ️ Информация о системе</span></div>
+          <div class="a-settings-body">
+            <div class="a-info-grid">
+              <div class="a-info-row"><span class="a-info-key">Supabase URL</span><span class="a-info-val" id="infoUrl">—</span></div>
+              <div class="a-info-row"><span class="a-info-key">Версия</span><span class="a-info-val">1.0.0</span></div>
+              <div class="a-info-row"><span class="a-info-key">Статус БД</span><span class="a-info-val" id="infoDbStatus">—</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Тост -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

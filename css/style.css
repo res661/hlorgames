@@ -517,6 +517,7 @@ section { padding: 80px 24px; }
 .auth-form { display: flex; flex-direction: column; gap: 16px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+.form-hint  { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem; display: block; }
 .form-input {
   padding: 12px 16px;
   background: var(--bg);

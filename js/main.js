@@ -204,6 +204,29 @@ async function loadStats() {
   } catch {}
 }
 
+// ─── СЕКРЕТНЫЙ ТРИГГЕР АДМИН-ПАНЕЛИ ──────────────────────────────────────────
+// Напечатай "admin" на клавиатуре (вне полей ввода) чтобы открыть панель
+
+let _adminBuf = '';
+document.addEventListener('keydown', (e) => {
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+    _adminBuf = '';
+    return;
+  }
+  _adminBuf += e.key.toLowerCase();
+  if (_adminBuf.length > 5) _adminBuf = _adminBuf.slice(-5);
+  if (_adminBuf === 'admin') {
+    _adminBuf = '';
+    if (currentUser && ['admin', 'superadmin'].includes(currentUser.role)) {
+      window.location.href = 'admin.html';
+    } else if (!currentUser) {
+      showToast('Сначала войди в аккаунт', 'error');
+    } else {
+      showToast('Нет доступа к панели администратора', 'error');
+    }
+  }
+});
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {

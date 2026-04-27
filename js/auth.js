@@ -1,5 +1,5 @@
 /**
- * AUTH.JS — Регистрация, вход, выход, состояние пользователя
+ * AUTH.JS — Регистрация, вход, выход через ник + пароль (без email)
  */
 
 let currentUser = null;
@@ -37,26 +37,31 @@ function switchTab(tab) {
 }
 
 function clearAuthErrors() {
-  ['loginError','registerError'].forEach(id => {
+  ['loginError', 'registerError'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = '';
   });
+}
+
+// Генерация скрытого внутреннего email по нику
+function nicknameToEmail(nickname) {
+  const safe = nickname.toLowerCase().replace(/[^a-z0-9_а-яё]/gi, '').replace(/[а-яё]/gi, 'x');
+  return (safe || 'user') + '@hlorgames.local';
 }
 
 // ─── ВХОД ────────────────────────────────────────────────────────────────────
 
 async function handleLogin(e) {
   e.preventDefault();
-  const email    = document.getElementById('loginEmail').value.trim();
+  const nickname = document.getElementById('loginNickname').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl    = document.getElementById('loginError');
 
   if (isDemoMode) {
-    // Demo: просто устанавливаем заглушку пользователя
-    currentUser = { id: 'demo', email, nickname: email.split('@')[0] };
+    currentUser = { id: 'demo', nickname, role: 'user' };
     onUserSignedIn(currentUser);
     closeAuthModal();
-    showToast('Вошёл в demo-режиме', 'success');
+    showToast(`Добро пожаловать, ${nickname}! (demo)`, 'success');
     return;
   }
 
@@ -68,11 +73,24 @@ async function handleLogin(e) {
   btn.textContent = 'Входим...';
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Ищем email по нику (profiles доступны всем для чтения)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, nickname, role')
+      .ilike('nickname', nickname)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      throw new Error('Игрок с таким ником не найден');
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: profile.email,
+      password,
+    });
     if (error) throw error;
 
-    const profile = await fetchProfile(data.user.id);
-    currentUser = { ...data.user, nickname: profile?.nickname || email.split('@')[0] };
+    currentUser = { ...data.user, nickname: profile.nickname, role: profile.role || 'user' };
     onUserSignedIn(currentUser);
     closeAuthModal();
     showToast(`Добро пожаловать, ${currentUser.nickname}!`, 'success');
@@ -89,19 +107,23 @@ async function handleLogin(e) {
 async function handleRegister(e) {
   e.preventDefault();
   const nickname = document.getElementById('regNickname').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const errEl    = document.getElementById('registerError');
 
   if (isDemoMode) {
-    currentUser = { id: 'demo', email, nickname };
+    currentUser = { id: 'demo', nickname, role: 'user' };
     onUserSignedIn(currentUser);
     closeAuthModal();
-    showToast(`Привет, ${nickname}! (demo-режим)`, 'success');
+    showToast(`Привет, ${nickname}! (demo)`, 'success');
     return;
   }
 
   if (!requireSupabase()) return;
+
+  if (!/^[a-zA-Zа-яёА-ЯЁ0-9_]{2,20}$/.test(nickname)) {
+    errEl.textContent = 'Ник: 2–20 символов, только буквы, цифры, _';
+    return;
+  }
 
   errEl.textContent = '';
   const btn = e.target.querySelector('button[type=submit]');
@@ -109,17 +131,29 @@ async function handleRegister(e) {
   btn.textContent = 'Создаём аккаунт...';
 
   try {
+    // Проверяем уникальность ника
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('nickname', nickname)
+      .maybeSingle();
+
+    if (existing) {
+      throw new Error('Этот ник уже занят');
+    }
+
+    const email = nicknameToEmail(nickname);
+
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
 
-    // Создаём профиль в таблице profiles
     await supabase.from('profiles').insert({
       id:       data.user.id,
       nickname,
       email,
     });
 
-    currentUser = { ...data.user, nickname };
+    currentUser = { ...data.user, nickname, role: 'user' };
     onUserSignedIn(currentUser);
     closeAuthModal();
     showToast(`Аккаунт создан! Добро пожаловать, ${nickname}!`, 'success');
@@ -150,10 +184,12 @@ async function fetchProfile(userId) {
 
 function translateAuthError(msg) {
   const map = {
-    'Invalid login credentials':     'Неверный email или пароль',
-    'User already registered':       'Этот email уже зарегистрирован',
-    'Password should be at least 6': 'Пароль должен быть минимум 6 символов',
-    'Unable to validate email':      'Некорректный email',
+    'Invalid login credentials':     'Неверный ник или пароль',
+    'User already registered':       'Аккаунт уже существует',
+    'Password should be at least 6': 'Пароль минимум 6 символов',
+    'Unable to validate email':      'Ошибка регистрации',
+    'Игрок с таким ником не найден': 'Игрок с таким ником не найден',
+    'Этот ник уже занят':            'Этот ник уже занят',
   };
   for (const [key, val] of Object.entries(map)) {
     if (msg.includes(key)) return val;
@@ -161,14 +197,15 @@ function translateAuthError(msg) {
   return 'Ошибка: ' + msg;
 }
 
-// ─── UI ОБНОВЛЕНИЕ ────────────────────────────────────────────────────────────
+// ─── UI ───────────────────────────────────────────────────────────────────────
 
 function onUserSignedIn(user) {
   const navAuth = document.getElementById('navAuth');
+  const isAdmin = ['admin', 'superadmin'].includes(user.role);
   navAuth.innerHTML = `
     <div class="navbar__user">
-      <div class="user-avatar">${user.nickname[0].toUpperCase()}</div>
-      <span class="user-name">${user.nickname}</span>
+      <div class="user-avatar${isAdmin ? ' user-avatar--admin' : ''}">${user.nickname[0].toUpperCase()}</div>
+      <span class="user-name">${user.nickname}${isAdmin ? ' 👑' : ''}</span>
       <button class="btn btn--ghost" onclick="handleLogout()">Выйти</button>
     </div>
   `;
@@ -195,7 +232,11 @@ async function restoreSession() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
     const profile = await fetchProfile(session.user.id);
-    currentUser = { ...session.user, nickname: profile?.nickname || session.user.email.split('@')[0] };
+    currentUser = {
+      ...session.user,
+      nickname: profile?.nickname || 'Игрок',
+      role:     profile?.role     || 'user',
+    };
     onUserSignedIn(currentUser);
   }
 }
