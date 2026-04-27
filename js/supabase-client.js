@@ -8,8 +8,8 @@
  * Никогда не вставляй сюда service_role key!
  */
 
-const SUPABASE_URL  = 'https://ТВОЙ_ПРОЕКТ.supabase.co';   // ← замени
-const SUPABASE_KEY  = 'ТВОЙ_ANON_PUBLIC_KEY';               // ← замени
+const SUPABASE_URL  = 'https://mkkwzqbvzvuvuvbskcmt.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_JOqfy2zW-hNVV3jPiBYhpw_FYeknfpM';
 
 // Подключаем Supabase через CDN (загружается в index.html)
 // Если ключи не заменены — работаем в demo-режиме
