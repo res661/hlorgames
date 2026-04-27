@@ -110,23 +110,24 @@
         </div>
 
         <!-- Поделиться -->
-        <div class="lb-share">
-          <p class="lb-share-label">Пригласи друзей</p>
-          <div class="lb-share-code" id="shareLobbyCode">—</div>
-          <p class="lb-share-hint">Поделись кодом или ссылкой</p>
-        </div>
+          <div class="lb-share">
+            <p class="lb-share-label">Пригласи друзей</p>
+            <div class="lb-share-code" id="shareLobbyCode">—</div>
+            <p class="lb-share-hint">Поделись кодом или ссылкой</p>
+          </div>
 
-        <!-- Правила игры -->
-        <div class="lb-rules-card" id="lobbyRulesCard" style="display:none">
-          <div class="lb-rules-header" onclick="toggleLobbyRules()">
-            <span>Правила игры</span>
-            <svg id="lobbyRulesArrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          <!-- Правила игры -->
+          <div class="lb-rules-card" id="lobbyRulesCard">
+            <button class="lb-rules-toggle" onclick="toggleLobbyRules()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Правила игры
+              <svg class="lb-rules-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="lb-rules-body hidden" id="lobbyRulesBody">
+              <p class="lb-rules-desc" id="lobbyRulesDesc"></p>
+              <ul class="lb-rules-list" id="lobbyRulesList"></ul>
+            </div>
           </div>
-          <div class="lb-rules-body hidden" id="lobbyRulesBody">
-            <p class="lb-rules-desc" id="lobbyRulesDesc"></p>
-            <ul class="lb-rules-list" id="lobbyRulesList"></ul>
-          </div>
-        </div>
 
       </div>
 

@@ -11,12 +11,15 @@
   min-height: 100vh;
 }
 
-/* Game name in navbar replaces hero */
-.nav-link--game {
-  font-weight: 700 !important;
+/* ── ACCENT BAR ── */
+
+.game-accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--game-color), #e040fb);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--game-color) 60%, transparent);
 }
 
-/* ── HERO ── */
+/* ── HERO (kept for backward compat) ── */
 
 .game-hero {
   background: linear-gradient(135deg, rgba(13,13,18,0) 0%, color-mix(in srgb, var(--game-color) 12%, transparent) 100%),
@@ -151,12 +154,12 @@
 
 .g-join-code-btn {
   flex-shrink: 0;
-  width: 48px;
   background: var(--accent);
   border: none;
-  border-left: 1px solid rgba(124,77,255,0.3);
+  border-left: 1px solid rgba(124,77,255,0.35);
   border-radius: 0 !important;
   color: white;
+  width: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,14 +167,14 @@
   transition: background 0.15s;
 }
 .g-join-code-btn:hover { background: var(--accent-2); }
-.g-join-code-btn svg { pointer-events: none; }
+.g-join-code-btn svg { flex-shrink: 0; }
 
 /* ── CONTENT LAYOUT ── */
 
 .game-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: 2rem 1.5rem;
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 2rem;
