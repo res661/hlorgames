@@ -85,10 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navLink) navLink.textContent = gameInfo.name;
 
   // Заполняем hero
-  document.getElementById('heroEmoji').textContent  = gameInfo.emoji;
-  document.getElementById('heroTitle').textContent  = gameInfo.name;
-  document.getElementById('heroDesc').textContent   = gameInfo.desc;
-  document.getElementById('heroMeta').textContent   = gameInfo.meta;
+  const heroEmoji = document.getElementById('heroEmoji');
+  const heroTitle = document.getElementById('heroTitle');
+  const heroDesc  = document.getElementById('heroDesc');
+  const heroMeta  = document.getElementById('heroMeta');
+  if (heroEmoji) heroEmoji.textContent = gameInfo.emoji;
+  if (heroTitle) heroTitle.textContent = gameInfo.name;
+  if (heroDesc)  heroDesc.textContent  = gameInfo.desc;
+  if (heroMeta)  heroMeta.textContent  = gameInfo.meta;
 
   // Цветовой акцент для этой игры
   document.documentElement.style.setProperty('--game-color', gameInfo.color);
