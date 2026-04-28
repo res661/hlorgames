@@ -72,6 +72,41 @@
   let presenterUserId  = null;
   let isRoomHost       = false;
 
+  let lobbyDbRealtimeCh = null;
+
+  function detachLobbyRowRealtime() {
+    if (lobbyDbRealtimeCh && supabaseClient?.removeChannel) {
+      try {
+        supabaseClient.removeChannel(lobbyDbRealtimeCh);
+      } catch (_) {}
+      lobbyDbRealtimeCh = null;
+    }
+  }
+
+  function attachLobbyRowRealtime() {
+    if (!supabaseClient || !LOBBY) return;
+    detachLobbyRowRealtime();
+    const chName = `mafia_lobby:${String(LOBBY).replace(/[^\w]/g, '_')}`;
+    try {
+      lobbyDbRealtimeCh = supabaseClient
+        .channel(chName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'lobbies', filter: `code=eq.${LOBBY}` },
+          () => {
+            refreshPlayerMapFromDb();
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') {
+            console.warn('[mafia] Realtime для lobbies недоступен (включи Replication в Supabase)');
+          }
+        });
+    } catch (e) {
+      console.warn('[mafia] realtime', e);
+    }
+  }
+
   // ── DOM ──────────────────────────────────────────────────────────────────────
   const $grid      = () => document.getElementById('mafiaGrid');
   const $toast     = () => document.getElementById('toast');
@@ -407,7 +442,9 @@
     setupChat();
     setupHotkeys();
     initRealtimeChat();
-    setInterval(refreshPlayerMapFromDb, 4000);
+    attachLobbyRowRealtime();
+    const LOBBY_DB_POLL_MS = 20000;
+    setInterval(refreshPlayerMapFromDb, LOBBY_DB_POLL_MS);
     updatePresenterForm();
     updateHostPanelTabsVisibility();
     refreshTopBarBadges();

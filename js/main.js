@@ -130,12 +130,24 @@ async function createLobby() {
   }
 
   try {
+    const maxPlayers = 8;
+    const seatT      = maxPlayers;
+    const hp         = false;
+    const seed       = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
+    const ctxRow     = { host_id: currentUser.id, host_plays: hp };
+    const players    = window.LobbySeatUtils
+      ? window.LobbySeatUtils.normalizeLobbySlotsForSave(seed, seatT, ctxRow)
+      : [{ ...seed[0], slot: 0 }];
+
     const { error } = await supabaseClient.from('lobbies').insert({
       code,
-      game:    selectedGame,
-      host_id: currentUser.id,
-      status:  'waiting',
-      players: [{ id: currentUser.id, nickname: currentUser.nickname }],
+      game:        selectedGame,
+      host_id:     currentUser.id,
+      host_name:   currentUser.nickname,
+      status:      'waiting',
+      max_players: maxPlayers,
+      host_plays:  hp,
+      players,
     });
 
     if (error) throw error;

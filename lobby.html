@@ -58,6 +58,8 @@
           <span class="lb-player-count" id="playerCount">0/8</span>
         </div>
 
+        <p class="lb-auto-hint" id="lobbyRealtimeHint">Обновление по сети: без перезагрузки страницы (если включён Realtime в Supabase).</p>
+
         <!-- Слоты игроков -->
         <div class="lb-slots" id="playerSlots"></div>
 
@@ -84,6 +86,12 @@
           <div class="lb-game-logo" id="gameLogoEmoji">🎮</div>
           <div class="lb-game-name"  id="infoGameName">—</div>
           <div class="lb-game-meta"  id="infoGameMeta">—</div>
+        </div>
+
+        <div id="lbGoGamePanel" class="lb-go-game hidden">
+          <div class="lb-go-game__title">🎭 Игра идёт — роли и стол здесь</div>
+          <p class="lb-go-game__text">Твою роль показывает ведущий на игровой странице. Обновления приходят по сети без F5, если включён Realtime для таблицы lobbies.</p>
+          <a href="#" id="lbGoGameLink" class="btn btn--primary btn--full lb-go-game__btn">Открыть игровой стол</a>
         </div>
 
         <div class="lb-details">
@@ -135,13 +143,6 @@
           <div class="form-group">
             <label class="form-label">Название</label>
             <input type="text" class="form-input" id="settingName" maxlength="40" placeholder="Название лобби" />
-          </div>
-
-          <div class="form-group">
-            <label class="lb-check-label" style="display:flex;align-items:flex-start;gap:0.55rem;cursor:pointer;font-size:0.88rem;color:var(--text,#e8e8f0);margin-bottom:0.35rem">
-              <input type="checkbox" id="settingHostPlays" checked style="margin-top:3px" />
-              <span><strong>Хост играет за столом</strong> — в лобби появляется ещё одно место только для хоста. В сетке камер мафии это место не показывается (ведущий вне окна).</span>
-            </label>
           </div>
 
           <div class="form-group">
@@ -298,6 +299,7 @@
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/lobby-indicator.js"></script>
+  <script src="js/lobby-seat-utils.js"></script>
   <script src="js/lobby.js"></script>
   <script src="js/shared.js"></script>
 </body>

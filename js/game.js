@@ -339,6 +339,8 @@ async function handleCreateLobby(e) {
   const maxPlayers = parseInt(document.getElementById('lobbyMaxPlayers').value);
   const password   = document.getElementById('lobbyPassword').value.trim();
   const code       = generateCode();
+  /** Создатель — ведущий, без отдельного места за столом (места только участникам, по очереди входа). */
+  const host_plays = false;
 
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -353,6 +355,13 @@ async function handleCreateLobby(e) {
   }
 
   try {
+    let playersSeed = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
+    const seatT = maxPlayers;
+    const ctxRow = { host_id: currentUser.id, host_plays };
+    if (window.LobbySeatUtils) {
+      playersSeed = window.LobbySeatUtils.normalizeLobbySlotsForSave(playersSeed, seatT, ctxRow);
+    }
+
     const { error } = await supabaseClient.from('lobbies').insert({
       code,
       name,
@@ -362,7 +371,8 @@ async function handleCreateLobby(e) {
       status:      'waiting',
       max_players: maxPlayers,
       password:    password || null,
-      players:     [{ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: 0 }],
+      host_plays:  host_plays,
+      players:     playersSeed,
     });
 
     if (error) throw error;
@@ -586,8 +596,13 @@ async function joinLobby(code, hasPassword) {
         showToast('Комната заполнена', 'error');
         return;
       }
-      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: null });
-      await supabaseClient.from('lobbies').update({ players }).eq('code', code);
+      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
+      let nextPlayers = players;
+      if (window.LobbySeatUtils) {
+        const ctxRow = { host_id: lobby.host_id, host_plays: lobby.host_plays !== false };
+        nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, ctxRow);
+      }
+      await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', code);
     }
 
     showToast(`Вхожу в комнату ${code}!`, 'success');
