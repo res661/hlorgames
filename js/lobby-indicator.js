@@ -58,19 +58,22 @@ function renderLobbyIndicator() {
   el.id = 'lobbyIndicator';
   el.className = 'lobby-indicator';
   el.innerHTML = `
+    <div class="lobby-indicator__bar"></div>
     <div class="lobby-indicator__pulse"></div>
-    <div class="lobby-indicator__content">
-      <span class="lobby-indicator__icon">${emoji}</span>
-      <div class="lobby-indicator__text">
-        <span class="lobby-indicator__label">Ты в лобби</span>
-        <span class="lobby-indicator__name">${escHtml(name)}</span>
+    <div class="lobby-indicator__body">
+      <div class="lobby-indicator__content">
+        <span class="lobby-indicator__icon">${emoji}</span>
+        <div class="lobby-indicator__text">
+          <span class="lobby-indicator__label">Ты в лобби</span>
+          <span class="lobby-indicator__name">${escHtml(name)}</span>
+        </div>
       </div>
+      <button class="lobby-indicator__close" onclick="closeLobbyIndicator()" title="Скрыть">✕</button>
     </div>
     <div class="lobby-indicator__btns">
-      <button class="lobby-indicator__goto" onclick="goToActiveLobby()">Вернуться</button>
-      <button class="lobby-indicator__leave" onclick="leaveFromIndicator()">Выйти</button>
+      <button class="lobby-indicator__goto" onclick="goToActiveLobby()">↩ Вернуться</button>
+      <button class="lobby-indicator__leave" onclick="leaveFromIndicator()">✕ Выйти</button>
     </div>
-    <button class="lobby-indicator__close" onclick="closeLobbyIndicator()" title="Скрыть">✕</button>
   `;
   document.body.appendChild(el);
 
