@@ -201,15 +201,12 @@ function showToast(msg, type = 'success') {
 // ─── ТАБЫ САЙДБАРА ────────────────────────────────────────────────────────────
 
 function switchSideTab(tab) {
-  ['create', 'mylobbies', 'rules'].forEach(t => {
-    document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1) === 'Mylobbies' ? 'MyLobbies' : t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.remove('active');
-    document.getElementById(`panel${t.charAt(0).toUpperCase() + t.slice(1)}`)?.classList.add('hidden');
-  });
-  // Map tab names to IDs
-  const tabIdMap = { create: 'tabCreate', mylobbies: 'tabMyLobbies', rules: 'tabRules' };
-  const panelIdMap = { create: 'panelCreate', mylobbies: 'panelMyLobbies', rules: 'panelRules' };
-  document.getElementById(tabIdMap[tab])?.classList.add('active');
-  document.getElementById(panelIdMap[tab])?.classList.remove('hidden');
+  const tabs   = { create: 'tabCreate',   mylobbies: 'tabMyLobbies',   rules: 'tabRules'   };
+  const panels = { create: 'panelCreate', mylobbies: 'panelMyLobbies', rules: 'panelRules' };
+  Object.values(tabs).forEach(id   => document.getElementById(id)?.classList.remove('active'));
+  Object.values(panels).forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  document.getElementById(tabs[tab])?.classList.add('active');
+  document.getElementById(panels[tab])?.classList.remove('hidden');
   if (tab === 'mylobbies') loadMyLobbies();
 }
 
