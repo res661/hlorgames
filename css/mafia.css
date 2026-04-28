@@ -27,6 +27,21 @@ body.mafia-body {
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+.mf-lobby-roster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--mf-brd);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+.mf-lobby-roster-name { color: var(--mf-text); flex: 1; min-width: 0; }
+.mf-lobby-roster-kick { flex-shrink: 0; font-size: 0.72rem !important; padding: 5px 10px !important; }
+
 /* ── TOPBAR ── */
 .mafia-topbar {
   height: 52px;

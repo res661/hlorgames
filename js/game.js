@@ -363,6 +363,7 @@ async function handleCreateLobby(e) {
       max_players: maxPlayers,
       password:    password || null,
       players:     [{ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: 0 }],
+      host_plays:  true,
     });
 
     if (error) throw error;
@@ -461,12 +462,18 @@ function renderActiveLobbies(lobbies) {
         ${lobbies.map(l => {
           const players  = lobbyParticipantsCount(l.players);
           const maxP     = l.max_players || gameInfo.maxPlayers;
-          const pct      = Math.round((players / maxP) * 100);
+          const hostPlays = l.host_plays !== false;
+          const roomCap   = maxP + (hostPlays ? 1 : 0);
+          const pct      = Math.round((players / roomCap) * 100);
           const hasPass  = !!l.password;
           const name     = l.name || `Лобби ${l.code}`;
           const hostName = l.host_name || 'Игрок';
           const timeAgo  = getTimeAgo(l.created_at);
-          const isFull   = players >= maxP;
+          const isFull   = players >= roomCap;
+          const iAmHost  = currentUser && String(l.host_id) === String(currentUser.id);
+          const codeCell = iAmHost
+            ? `<span class="g-lobby-code" title="Виден только тебе">${esc(l.code)}</span>`
+            : '<span class="g-lobby-code g-lobby-code--private">—</span>';
           return `
             <tr class="g-lobby-row ${isFull ? 'g-lobby-row--full' : ''}">
               <td class="g-lobby-row__name">
@@ -479,10 +486,10 @@ function renderActiveLobbies(lobbies) {
                   <div class="g-fill-bar">
                     <div class="g-fill-bar__inner" style="width:${pct}%"></div>
                   </div>
-                  <span class="g-fill-text">${players}/${maxP}</span>
+                  <span class="g-fill-text">${players}/${roomCap}</span>
                 </div>
               </td>
-              <td><span class="g-lobby-code">${esc(l.code)}</span></td>
+              <td>${codeCell}</td>
               <td class="g-lobby-row__time">${timeAgo}</td>
               <td>
                 <button class="btn btn--primary g-join-btn ${isFull ? 'disabled' : ''}"
@@ -564,10 +571,12 @@ async function joinLobby(code, hasPassword) {
 
     const players   = Array.isArray(lobby.players) ? lobby.players : [];
     const maxP      = lobby.max_players || gameInfo.maxPlayers;
+    const hostPlays = lobby.host_plays !== false;
+    const roomCap   = maxP + (hostPlays ? 1 : 0);
     const alreadyIn = players.some(p => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
-      if (lobbyParticipantsCount(players) >= maxP) {
+      if (lobbyParticipantsCount(players) >= roomCap) {
         showToast('Комната заполнена', 'error');
         return;
       }

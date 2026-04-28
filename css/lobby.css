@@ -239,6 +239,11 @@ body.lobby-body {
   opacity: 0.88;
 }
 
+.lb-slot--host-bench {
+  border-color: rgba(200, 255, 120, 0.25);
+  opacity: 0.95;
+}
+
 .lb-slot-avatar {
   width: 36px; height: 36px;
   border-radius: 50%;

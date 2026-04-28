@@ -119,27 +119,29 @@ function showLobbyConfirm(onConfirm) {
 
 async function leaveFromIndicator() {
   showLobbyConfirm(async () => {
-  const lobby = getActiveLobby();
-  clearActiveLobby();
-  // Удаляем себя из лобби если подключён Supabase
-  if (typeof supabaseClient !== 'undefined' && supabaseClient && lobby) {
-    try {
-      const code = String(lobby.code || '').toUpperCase();
-      const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', code).single();
-      if (data) {
-          if (typeof currentUser !== 'undefined' && currentUser) {
-          if (String(data.host_id) === String(currentUser.id)) {
+    const lobby = getActiveLobby();
+    clearActiveLobby();
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && lobby) {
+      try {
+        const code = String(lobby.code || '').toUpperCase();
+        const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', code).single();
+        let uid = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
+        if (!uid) {
+          const { data: sess } = await supabaseClient.auth.getSession();
+          uid = sess?.session?.user?.id ?? null;
+        }
+        if (data && uid) {
+          if (String(data.host_id) === String(uid)) {
             await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', code);
           } else {
-            const players = (data.players || []).filter(p => String(p.id) !== String(currentUser.id));
+            const players = (data.players || []).filter(p => String(p.id) !== String(uid));
             await supabaseClient.from('lobbies').update({ players }).eq('code', code);
           }
         }
-      }
-    } catch {}
-  }
-  if (typeof showToast === 'function') showToast('Вышел из лобби', 'success');
-  }); // конец showLobbyConfirm
+      } catch (_) {}
+    }
+    if (typeof showToast === 'function') showToast('Вышел из лобби', 'success');
+  });
 }
 
 function escHtml(str) {

@@ -95,7 +95,7 @@
           <button type="button" class="mf-stab" data-stab="settings">Настройки</button>
         </div>
 
-        <!-- Игроки -->
+          <!-- Игроки -->
         <div class="mf-stab-panel active mf-for-game-master" id="stab-players">
           <p class="mf-hint">Нажмите на игрока для настройки</p>
           <div id="hostPlayersList"></div>
@@ -148,6 +148,12 @@
             </select>
             <button type="button" class="mf-btn mf-btn--blue" id="btnSavePresenter" style="margin-top:10px;width:100%">Сохранить</button>
             <p class="mf-hint" id="presenterStatusLine" style="margin-top:8px"></p>
+          </div>
+
+          <div class="mf-lobby-mod hidden" id="mfLobbyModBlock">
+            <div class="mf-ctrl__label" style="margin-top:14px">Состав лобби</div>
+            <p class="mf-hint">Исключить из комнаты — сбросится привязка к слоту в сетке.</p>
+            <div id="mfLobbyRosterList"></div>
           </div>
 
           <div class="mf-for-game-master">
@@ -247,6 +253,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/lobby-indicator.js"></script>
   <script src="js/mafia-play.js"></script>
 </body>
 </html>

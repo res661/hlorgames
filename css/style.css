@@ -799,6 +799,26 @@ section { padding: 80px 24px; }
 }
 .lobby-indicator__leave:hover { background:rgba(239,68,68,0.1); }
 
+.hlor-secret-admin-fab {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  z-index: 9998;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(200,255,78,0.12);
+  border: 1px solid rgba(200,255,78,0.35);
+  color: var(--lime, #c8ff4e);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  font-family: var(--font, 'Inter', system-ui, sans-serif);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+}
+.hlor-secret-admin-fab:hover {
+  background: rgba(200,255,78,0.2);
+}
+
 /* ── LOBBY CONFIRM ── */
 .lobby-confirm-overlay {
   position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.8);

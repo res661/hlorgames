@@ -81,12 +81,28 @@
     });
   }
 
+  function applyLobbyGridFromRow(row) {
+    if (!row || row.max_players == null || row.max_players === undefined) return;
+    const m = Math.max(1, Math.min(TOTAL, Number(row.max_players) || 8));
+    activeSlots = m;
+    const inp = document.getElementById('settingSlots');
+    if (inp) inp.value = String(m);
+  }
+
+  function syncMafiaLobbyIndicator(row) {
+    if (typeof setActiveLobby !== 'function' || !LOBBY || !row || !myUserId) return;
+    if (row.status !== 'waiting' && row.status !== 'active') return;
+    const inPl = (row.players || []).some((p) => String(p.id) === String(myUserId));
+    const isH = String(row.host_id) === String(myUserId);
+    if (inPl || isH) setActiveLobby(String(LOBBY).toUpperCase(), row.game || 'mafia', row.name || LOBBY);
+  }
+
   async function refreshPlayerMapFromDb() {
     if (!LOBBY || !supabaseClient) return;
     try {
       const { data } = await supabaseClient
         .from('lobbies')
-        .select('players,host_id,host_name,presenter_id')
+        .select('players,host_id,host_name,presenter_id,max_players,host_plays,name,status,game')
         .eq('code', LOBBY)
         .maybeSingle();
       if (!data) return;
@@ -117,12 +133,15 @@
       }
       isRoomHost = !!(myUserId && roomHostId && String(roomHostId) === String(myUserId));
       recomputeGameMasterFlags();
+      applyLobbyGridFromRow(data);
+      syncMafiaLobbyIndicator(data);
       applyLobbySlotBindings();
       renderGrid();
       rerenderChatNicknames();
       updatePresenterForm();
       updateHostPanelTabsVisibility();
       refreshTopBarBadges();
+      updateLobbyModerationUI();
     } catch (_) {}
   }
 
@@ -143,6 +162,10 @@
 
   function applyLobbySlotBindings() {
     for (let i = 0; i < TOTAL; i++) {
+      if (i >= activeSlots) {
+        slots[i].linkedUserId = null;
+        continue;
+      }
       const bound = lobbyPlayersRaw.find((p) => Number(p.mafia_slot) === i);
       if (bound) {
         slots[i].linkedUserId = bound.id;
@@ -340,7 +363,7 @@
     try {
       const { data: row } = await supabaseClient
         .from('lobbies')
-        .select('host_id,players,presenter_id')
+        .select('host_id,players,presenter_id,max_players,host_plays,name,status,game')
         .eq('code', LOBBY)
         .maybeSingle();
       if (row) {
@@ -350,7 +373,10 @@
         isRoomHost      = String(row.host_id) === String(myUserId);
         rebuildLobbyPlayersMap(row.players);
         recomputeGameMasterFlags();
+        applyLobbyGridFromRow(row);
+        syncMafiaLobbyIndicator(row);
         applyLobbySlotBindings();
+        updateLobbyModerationUI();
       }
     } catch (e) {
       console.warn('[mafia] resolveLobbyAndUser', e);
@@ -359,8 +385,8 @@
 
   // ── INIT ─────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
-    await resolveLobbyAndUser();
     applySettings();
+    await resolveLobbyAndUser();
     renderGrid();
     await loadMafiaChatHistory();
     setupRoleUI();
@@ -379,6 +405,7 @@
       addSysMsg('Добро пожаловать в игру!');
       if (isHostFlag) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
     }
+    updateLobbyModerationUI();
   });
 
   function setupPresenterControls() {
@@ -741,6 +768,57 @@
       `;
       row.addEventListener('click', () => { if(isHostFlag) openSlotModal(i); });
       list.appendChild(row);
+    }
+    updateLobbyModerationUI();
+  }
+
+  function updateLobbyModerationUI() {
+    const block = document.getElementById('mfLobbyModBlock');
+    const list = document.getElementById('mfLobbyRosterList');
+    if (!block || !list) return;
+    const show = (isRoomHost || isHostFlag) && Array.isArray(lobbyPlayersRaw) && lobbyPlayersRaw.length > 0;
+    block.classList.toggle('hidden', !show);
+    if (!show) return;
+    list.innerHTML = '';
+    lobbyPlayersRaw.forEach((p) => {
+      if (!p || p.id == null || String(p.id) === String(myUserId)) return;
+      const row = document.createElement('div');
+      row.className = 'mf-lobby-roster-row';
+      const lb = typeof p.slot === 'number' ? ` · лобби #${p.slot + 1}` : '';
+      const ms =
+        p.mafia_slot != null && p.mafia_slot !== '' && !Number.isNaN(Number(p.mafia_slot))
+          ? ` · сетка #${Number(p.mafia_slot) + 1}`
+          : '';
+      row.innerHTML = `<span class="mf-lobby-roster-name">${esc(p.nickname || 'Игрок')}${lb}${ms}</span>`;
+      const bt = document.createElement('button');
+      bt.type = 'button';
+      bt.className = 'mf-btn mf-btn--dim mf-lobby-roster-kick';
+      bt.textContent = 'Выгнать';
+      bt.onclick = (e) => {
+        e.stopPropagation();
+        kickLobbyMember(p.id, p.nickname);
+      };
+      row.appendChild(bt);
+      list.appendChild(row);
+    });
+  }
+
+  async function kickLobbyMember(uid, nickname) {
+    if (!(isRoomHost || isHostFlag)) return;
+    if (!confirm(`Исключить «${nickname || 'игрока'}» из лобби?`)) return;
+    if (!supabaseClient || !LOBBY) return;
+    try {
+      const pl = lobbyPlayersRaw.filter((p) => String(p.id) !== String(uid));
+      await supabaseClient.from('lobbies').update({ players: pl }).eq('code', LOBBY);
+      lobbyPlayersRaw = pl;
+      rebuildLobbyPlayersMap(pl);
+      applyLobbySlotBindings();
+      renderGrid();
+      renderHostPlayers();
+      updatePresenterForm();
+      toast('Игрок исключён из лобби', 'success');
+    } catch (e) {
+      toast('Не удалось исключить', 'error');
     }
   }
 

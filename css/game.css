@@ -481,6 +481,14 @@
   letter-spacing: 0.1em;
 }
 
+.g-lobby-code--private {
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border);
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
 .g-fill-inline {
   display: flex;
   align-items: center;

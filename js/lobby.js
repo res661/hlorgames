@@ -116,6 +116,17 @@ function countLobbyParticipants(players) {
   return dedupeLobbyPlayers(players).length;
 }
 
+function hostPlaysEnabled(lobby) {
+  return lobby && lobby.host_plays !== false;
+}
+
+/** Число мест за столом в лобби: max_players + при «хост играет» */
+function lobbySeatTotal(lobby) {
+  const game = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
+  const maxP = lobby.max_players || game.max;
+  return maxP + (hostPlaysEnabled(lobby) ? 1 : 0);
+}
+
 function updatePlayerSlot(players, userId, newSlot, maxP) {
   const list = dedupeLobbyPlayers(players).map(p => ({ ...p }));
   const uid = String(userId);
@@ -292,10 +303,11 @@ function renderLobby(lobby) {
   document.getElementById('detailCreated').textContent = fmtDate(lobby.created_at);
 
   const playersRaw = Array.isArray(lobby.players) ? lobby.players : [];
-  const playersNorm = normalizeLobbySlotsForSave(playersRaw, maxP);
+  const seatT = lobbySeatTotal(lobby);
+  const playersNorm = normalizeLobbySlotsForSave(playersRaw, seatT);
   const seatedCount = playersNorm.filter(p => p.slot != null).length;
   document.getElementById('playerCount').textContent =
-    `${seatedCount}/${maxP} за столом · ${playersNorm.length} в комнате`;
+    `${seatedCount}/${seatT} за столом · ${playersNorm.length} в комнате`;
 
   renderSlots(lobby);
 
@@ -334,6 +346,8 @@ function renderLobby(lobby) {
     }
     document.getElementById('settingPassword').value = lobby.password || '';
     togglePasswordField();
+    const hp = document.getElementById('settingHostPlays');
+    if (hp) hp.checked = hostPlaysEnabled(lobby);
   }
 
   // Статус бар
@@ -357,16 +371,19 @@ function renderLobby(lobby) {
 
 function renderSlots(lobby) {
   const game   = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
+  const seatT  = lobbySeatTotal(lobby);
   const maxP   = lobby.max_players || game.max;
+  const hostPlays = hostPlaysEnabled(lobby);
   const hostId = lobby.host_id;
-  const players = normalizeLobbySlotsForSave(lobby.players || [], maxP);
+  const players = normalizeLobbySlotsForSave(lobby.players || [], seatT);
   const wrap = document.getElementById('playerSlots');
   if (!wrap) return;
 
   let html = '';
 
-  for (let i = 0; i < maxP; i++) {
+  for (let i = 0; i < seatT; i++) {
     const p = players.find(x => x.slot === i);
+    const isHostBench = hostPlays && i === maxP;
     if (p) {
       const isMe      = String(p.id) === String(currentUser?.id);
       const isHostP   = String(p.id) === String(hostId);
@@ -396,20 +413,24 @@ function renderSlots(lobby) {
           <div class="lb-slot-avatar" style="background:${strToColor(p.id || p.nickname)}">${initials}</div>
           <div class="lb-slot-info">
             <span class="lb-slot-name">${esc(p.nickname || 'Игрок')}</span>
-            <span class="lb-slot-status">${isHostP ? '👑 Хост' : (p.ready ? '✓ Готов' : 'Не готов')}</span>
+            <span class="lb-slot-status">${isHostBench ? 'Вне сетки камер · ' : ''}${isHostP ? '👑 Хост' : (p.ready ? '✓ Готов' : 'Не готов')}</span>
           </div>
           ${clearHtml}
           ${kickHtml}
           ${p.ready ? '<span class="lb-ready-dot"></span>' : ''}
         </div>`;
     } else {
+      const emptyLabel = isHostBench ? 'Место хоста' : 'Свободное место';
+      const emptySub = isHostBench
+        ? (isHost ? 'Без окна в сетке мафии · назначь или сядь' : 'Только для хоста комнаты')
+        : (isHost ? 'Нажми — назначить игрока' : 'Нажми — сесть');
       html += `
-        <div class="lb-slot lb-slot--empty lb-slot--pickable" data-lobby-slot-index="${i}" title="Нажми, чтобы занять место">
+        <div class="lb-slot lb-slot--empty lb-slot--pickable ${isHostBench ? 'lb-slot--host-bench' : ''}" data-lobby-slot-index="${i}" title="${isHostBench ? 'Доп. место хоста — не рисуется в сетке камер' : 'Нажми, чтобы занять место'}">
           <span class="lb-slot-num">${i + 1}</span>
           <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
           <div class="lb-slot-info">
-            <span class="lb-slot-empty-text">Свободное место</span>
-            <span class="lb-slot-status">${isHost ? 'Нажми — назначить игрока' : 'Нажми — сесть'}</span>
+            <span class="lb-slot-empty-text">${emptyLabel}</span>
+            <span class="lb-slot-status">${emptySub}</span>
           </div>
         </div>`;
     }
@@ -452,12 +473,17 @@ function renderSlots(lobby) {
 
 function handleLobbySlotClick(slotIndex) {
   if (!currentUser || !lobbyData || lobbyData.status !== 'waiting') return;
-  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
-  const maxP = lobbyData.max_players || game.max;
-  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const maxPBase = lobbyData.max_players || (GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia).max;
+  const seatT = lobbySeatTotal(lobbyData);
+  const isHostBench = hostPlaysEnabled(lobbyData) && slotIndex === maxPBase;
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT);
   const me = players.find(p => String(p.id) === String(currentUser.id));
   if (!me) {
     showToast('Ты не в составе лобби', 'error');
+    return;
+  }
+  if (!isHost && isHostBench) {
+    showToast('Это место только для хоста', 'info');
     return;
   }
   const at = players.find(p => p.slot === slotIndex);
@@ -465,25 +491,30 @@ function handleLobbySlotClick(slotIndex) {
   if (!isHost) {
     if (at && String(at.id) !== String(currentUser.id)) return;
     if (at && String(at.id) === String(currentUser.id)) {
-      const next = updatePlayerSlot(players, currentUser.id, null, maxP);
+      const next = updatePlayerSlot(players, currentUser.id, null, seatT);
       const mi = next.findIndex(p => String(p.id) === String(currentUser.id));
       if (mi >= 0) next[mi] = { ...next[mi], ready: false };
-      persistLobbyPlayers(next, maxP);
+      persistLobbyPlayers(next, seatT);
       return;
     }
-    persistLobbyPlayers(updatePlayerSlot(players, currentUser.id, slotIndex, maxP), maxP);
+    persistLobbyPlayers(updatePlayerSlot(players, currentUser.id, slotIndex, seatT), seatT);
     return;
   }
 
   if (at && String(at.id) === String(currentUser.id)) {
-    const next = updatePlayerSlot(players, currentUser.id, null, maxP);
+    const next = updatePlayerSlot(players, currentUser.id, null, seatT);
     const mi = next.findIndex(p => String(p.id) === String(currentUser.id));
     if (mi >= 0) next[mi] = { ...next[mi], ready: false };
-    persistLobbyPlayers(next, maxP);
+    persistLobbyPlayers(next, seatT);
     return;
   }
   if (at) {
     showToast('Сними игрока кнопкой «Со слота»', 'info');
+    return;
+  }
+  if (isHostBench) {
+    const next = updatePlayerSlot(players, lobbyData.host_id, slotIndex, seatT);
+    persistLobbyPlayers(next, seatT);
     return;
   }
   openHostAssignSlotModal(slotIndex);
@@ -492,8 +523,10 @@ function handleLobbySlotClick(slotIndex) {
 function openHostAssignSlotModal(slotIndex) {
   if (!isHost || !lobbyData) return;
   const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
-  const maxP = lobbyData.max_players || game.max;
-  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const maxPBase = lobbyData.max_players || game.max;
+  const seatT = lobbySeatTotal(lobbyData);
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT);
+  const isHostBench = hostPlaysEnabled(lobbyData) && slotIndex === maxPBase;
   if (players.some(p => p.slot === slotIndex)) {
     showToast('Место уже занято', 'info');
     return;
@@ -504,7 +537,7 @@ function openHostAssignSlotModal(slotIndex) {
   overlay.innerHTML = `
     <div class="lb-assign-box">
       <div class="lb-assign-title">Место ${slotIndex + 1}</div>
-      <p class="lb-assign-hint">Кого посадить за стол?</p>
+      <p class="lb-assign-hint">${isHostBench ? 'Только хост комнаты (вне сетки камер в мафии).' : 'Кого посадить за стол?'}</p>
       <div class="lb-assign-list" id="lbAssignList"></div>
       <button type="button" class="btn lb-assign-cancel">Отмена</button>
     </div>`;
@@ -521,19 +554,23 @@ function openHostAssignSlotModal(slotIndex) {
     b.textContent = label;
     b.addEventListener('click', async () => {
       overlay.remove();
-      const next = updatePlayerSlot(players, userId, slotIndex, maxP);
-      await persistLobbyPlayers(next, maxP);
+      const next = updatePlayerSlot(players, userId, slotIndex, seatT);
+      await persistLobbyPlayers(next, seatT);
     });
     list.appendChild(b);
   }
 
-  unseated.forEach((p) => addPick(p.nickname || 'Игрок', p.id));
-  if (me && me.slot != null) {
-    addPick('Пересесть меня сюда', currentUser.id);
+  if (isHostBench) {
+    addPick('Хост садится здесь', lobbyData.host_id);
+  } else {
+    unseated.forEach((p) => addPick(p.nickname || 'Игрок', p.id));
+    if (me && me.slot != null) {
+      addPick('Пересесть меня сюда', currentUser.id);
+    }
   }
 
   if (!list.children.length) {
-    list.innerHTML = '<p class="lb-assign-empty">Нет игроков без места. Дождись входа в комнату.</p>';
+    list.innerHTML = '<p class="lb-assign-empty">Нет вариантов</p>';
   }
 
   overlay.querySelector('.lb-assign-cancel').onclick = () => overlay.remove();
@@ -542,23 +579,21 @@ function openHostAssignSlotModal(slotIndex) {
 
 async function hostClearSlotFromLobby(slotIndex) {
   if (!isHost || !lobbyData) return;
-  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
-  const maxP = lobbyData.max_players || game.max;
-  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const seatT = lobbySeatTotal(lobbyData);
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT);
   const p = players.find(x => x.slot === slotIndex);
   if (!p) return;
   p.slot = null;
   p.ready = false;
-  await persistLobbyPlayers(players, maxP);
+  await persistLobbyPlayers(players, seatT);
 }
 
 // ─── ДЕЙСТВИЯ ────────────────────────────────────────────────────────────────
 
 async function toggleReady() {
   if (!currentUser || !lobbyData) return;
-  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
-  const maxP = lobbyData.max_players || game.max;
-  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const seatT = lobbySeatTotal(lobbyData);
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT);
   const idx = players.findIndex(p => String(p.id) === String(currentUser.id));
 
   if (idx === -1) return;
@@ -572,7 +607,7 @@ async function toggleReady() {
   updateReadyBtn();
 
   try {
-    const cleaned = normalizeLobbySlotsForSave(players, maxP);
+    const cleaned = normalizeLobbySlotsForSave(players, seatT);
     await supabaseClient.from('lobbies').update({ players: cleaned }).eq('code', lobbyCode);
     await loadLobby();
   } catch (err) {
@@ -583,9 +618,8 @@ async function toggleReady() {
 function updateReadyBtn() {
   const btn = document.getElementById('readyBtn');
   if (!lobbyData || !currentUser) return;
-  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
-  const maxP = lobbyData.max_players || game.max;
-  const players = normalizeLobbySlotsForSave(lobbyData.players || [], maxP);
+  const seatT = lobbySeatTotal(lobbyData);
+  const players = normalizeLobbySlotsForSave(lobbyData.players || [], seatT);
   const me = players.find(p => String(p.id) === String(currentUser.id));
   const hasSeat = me && me.slot != null;
 
@@ -691,10 +725,25 @@ async function saveSettings() {
   const maxPlayers = parseInt(document.getElementById('settingMaxPlayers').value);
   const type       = document.getElementById('settingType').value;
   const password   = type === 'private' ? document.getElementById('settingPassword').value.trim() : null;
+  const hostPlays  = document.getElementById('settingHostPlays')?.checked !== false;
+
+  const tmpLobby = { ...lobbyData, max_players: maxPlayers, host_plays: hostPlays };
+  const seatT    = lobbySeatTotal(tmpLobby);
+
+  let players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT);
+  players.forEach((p) => {
+    if (typeof p.slot === 'number' && p.slot >= seatT) p.slot = null;
+  });
+  if (!hostPlays && lobbyData.host_id) {
+    const hid = String(lobbyData.host_id);
+    const hp = players.find(p => String(p.id) === hid);
+    if (hp && hp.slot === maxPlayers) hp.slot = null;
+  }
+  players = normalizeLobbySlotsForSave(players, seatT);
 
   try {
     await supabaseClient.from('lobbies')
-      .update({ name, max_players: maxPlayers, password })
+      .update({ name, max_players: maxPlayers, password, host_plays: hostPlays, players })
       .eq('code', lobbyCode);
     showToast('Настройки сохранены', 'success');
     await loadLobby();
