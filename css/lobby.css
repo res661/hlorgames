@@ -235,6 +235,9 @@ body.lobby-body {
   opacity: 0.4;
   border-style: dashed;
 }
+.lb-slot--empty.lb-slot--pickable {
+  opacity: 0.88;
+}
 
 .lb-slot-avatar {
   width: 36px; height: 36px;
@@ -304,6 +307,124 @@ body.lobby-body {
   font-family: inherit;
 }
 .lb-kick-btn:hover { background: rgba(239,68,68,0.18); }
+
+.lb-slot--pickable {
+  cursor: pointer;
+}
+.lb-slot--pickable:hover {
+  border-color: color-mix(in srgb, var(--game-color) 35%, transparent);
+  opacity: 1;
+}
+.lb-slot--locked {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.lb-slot--filled.lb-slot--locked {
+  opacity: 1;
+}
+
+.lb-slot-num {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 1.25rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.lb-slot-clear-btn {
+  font-size: 0.62rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 200, 220, 0.25);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.lb-slot-clear-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.08);
+}
+
+.lb-unseated-banner {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius, 6px);
+  border: 1px dashed rgba(200,255,78,0.22);
+  background: rgba(200,255,78,0.04);
+}
+.lb-unseated-banner__title {
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+.lb-unseated-banner__names {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.lb-assign-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.lb-assign-box {
+  background: var(--bg-card-2, #16161f);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.25rem 1.35rem;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.lb-assign-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+.lb-assign-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+.lb-assign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.lb-assign-pick {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.lb-assign-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.75rem;
+}
+.lb-assign-cancel {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.lb-assign-cancel:hover {
+  background: rgba(255,255,255,0.1);
+}
 
 /* ── ACTIONS ── */
 

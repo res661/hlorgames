@@ -53,6 +53,93 @@ let pollInterval = null;
 let isHost       = false;
 let isReady      = false;
 
+// ─── Слоты за столом (0 … max−1); slot: null = в комнате, но не за столом ─────
+
+function dedupeLobbyPlayers(players) {
+  const m = new Map();
+  for (const p of players || []) {
+    if (!p || p.id == null) continue;
+    const id = String(p.id);
+    const prev = m.get(id);
+    if (!prev) {
+      m.set(id, {
+        id: p.id,
+        nickname: p.nickname || 'Игрок',
+        ready: !!p.ready,
+        slot: Object.prototype.hasOwnProperty.call(p, 'slot') ? p.slot : undefined,
+      });
+    } else {
+      const sA = prev.slot;
+      const sB = Object.prototype.hasOwnProperty.call(p, 'slot') ? p.slot : undefined;
+      let slot = sA;
+      if (sA === undefined) slot = sB;
+      else if (sB !== undefined && sB !== null && (sA === null || sA === undefined)) slot = sB;
+      m.set(id, {
+        ...prev,
+        nickname: p.nickname || prev.nickname,
+        ready: p.ready !== undefined ? !!p.ready : prev.ready,
+        slot,
+      });
+    }
+  }
+  return [...m.values()];
+}
+
+/** Убрать дубликаты id, конфликты слотов; slot === undefined (старые данные) — занять свободные места по порядку */
+function normalizeLobbySlotsForSave(players, maxP) {
+  const list = dedupeLobbyPlayers(players);
+  const bySlot = new Map();
+  for (const p of list) {
+    const s = p.slot;
+    if (s === null || s === undefined) continue;
+    if (typeof s !== 'number' || s < 0 || s >= maxP || bySlot.has(s)) {
+      p.slot = null;
+    } else {
+      bySlot.set(s, p);
+    }
+  }
+  for (const p of list) {
+    if (p.slot !== undefined) continue;
+    let free = 0;
+    while (free < maxP && bySlot.has(free)) free++;
+    if (free < maxP) {
+      p.slot = free;
+      bySlot.set(free, p);
+    } else {
+      p.slot = null;
+    }
+  }
+  return list;
+}
+
+function countLobbyParticipants(players) {
+  return dedupeLobbyPlayers(players).length;
+}
+
+function updatePlayerSlot(players, userId, newSlot, maxP) {
+  const list = dedupeLobbyPlayers(players).map(p => ({ ...p }));
+  const uid = String(userId);
+  const idx = list.findIndex(p => String(p.id) === uid);
+  if (idx === -1) return normalizeLobbySlotsForSave(list, maxP);
+  if (newSlot != null) {
+    const other = list.find(p => p.slot === newSlot && String(p.id) !== uid);
+    if (other) other.slot = null;
+  }
+  list[idx] = { ...list[idx], slot: newSlot };
+  return normalizeLobbySlotsForSave(list, maxP);
+}
+
+async function persistLobbyPlayers(players, maxP) {
+  const cleaned = normalizeLobbySlotsForSave(players, maxP);
+  try {
+    await supabaseClient.from('lobbies').update({ players: cleaned }).eq('code', lobbyCode);
+    await loadLobby();
+  } catch (err) {
+    console.error('[Lobby] Ошибка сохранения слотов:', err);
+    showToast('Не удалось обновить слоты', 'error');
+  }
+}
+
 /** Плавающий чат (Supabase broadcast) */
 let lobbyChatChannel   = null;
 let lobbyChatOpen      = false;
@@ -136,7 +223,7 @@ async function loadLobby() {
 
     lobbyData = await syncMyLobbyIdentity(data);
     renderLobby(lobbyData);
-    // Сохраняем в localStorage для индикатора
+    // Сохраняем в localStorage для индикатора (код нормализуется в setActiveLobby)
     if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
       setActiveLobby(data.code, data.game, data.name || data.code);
     }
@@ -203,10 +290,14 @@ function renderLobby(lobby) {
   document.getElementById('detailType').textContent    = lobby.password ? '🔒 С паролем' : '🌍 Публичное';
   document.getElementById('detailStatus').innerHTML    = statusBadge(lobby.status);
   document.getElementById('detailCreated').textContent = fmtDate(lobby.created_at);
-  document.getElementById('playerCount').textContent   = `${players.length}/${maxP}`;
 
-  // Слоты игроков
-  renderSlots(players, maxP, lobby.host_id);
+  const playersRaw = Array.isArray(lobby.players) ? lobby.players : [];
+  const playersNorm = normalizeLobbySlotsForSave(playersRaw, maxP);
+  const seatedCount = playersNorm.filter(p => p.slot != null).length;
+  document.getElementById('playerCount').textContent =
+    `${seatedCount}/${maxP} за столом · ${playersNorm.length} в комнате`;
+
+  renderSlots(lobby);
 
   // Кнопка "Начать игру" — только хосту
   const startBtn = document.getElementById('startBtn');
@@ -217,7 +308,7 @@ function renderLobby(lobby) {
   }
 
   // Кнопка готовности
-  const myPlayer = players.find(p => String(p.id) === String(currentUser?.id));
+  const myPlayer = playersNorm.find(p => String(p.id) === String(currentUser?.id));
   isReady = myPlayer?.ready || false;
   updateReadyBtn();
 
@@ -246,10 +337,11 @@ function renderLobby(lobby) {
   }
 
   // Статус бар
-  const readyCount = players.filter(p => p.ready).length;
+  const seatedForReady = playersNorm.filter(p => p.slot != null).length;
+  const readyCount = playersNorm.filter(p => p.ready && p.slot != null).length;
   const statusEl   = document.getElementById('statusText');
   if (lobby.status === 'waiting') {
-    statusEl.textContent = `${readyCount} из ${players.length} готовы`;
+    statusEl.textContent = `${readyCount} из ${seatedForReady} за столом готовы`;
   } else if (lobby.status === 'active') {
     statusEl.textContent = '🎮 Игра началась!';
   }
@@ -263,62 +355,225 @@ function renderLobby(lobby) {
   rerenderLobbyChatNicknames();
 }
 
-function renderSlots(players, maxPlayers, hostId) {
+function renderSlots(lobby) {
+  const game   = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
+  const maxP   = lobby.max_players || game.max;
+  const hostId = lobby.host_id;
+  const players = normalizeLobbySlotsForSave(lobby.players || [], maxP);
   const wrap = document.getElementById('playerSlots');
+  if (!wrap) return;
+
   let html = '';
 
-  // Заполненные слоты
-  players.forEach(p => {
-    const isMe      = String(p.id) === String(currentUser?.id);
-    const isHostP   = String(p.id) === String(hostId);
-    const initials  = (p.nickname || '?')[0].toUpperCase();
-    const readyMark = p.ready ? 'lb-slot--ready' : '';
+  for (let i = 0; i < maxP; i++) {
+    const p = players.find(x => x.slot === i);
+    if (p) {
+      const isMe      = String(p.id) === String(currentUser?.id);
+      const isHostP   = String(p.id) === String(hostId);
+      const initials  = (p.nickname || '?')[0].toUpperCase();
+      const readyMark = p.ready ? 'lb-slot--ready' : '';
+      const pickable  = isMe;
+      const busyOther = !isMe;
+      const cls = [
+        'lb-slot',
+        'lb-slot--filled',
+        readyMark,
+        isMe ? 'lb-slot--me' : '',
+        pickable ? 'lb-slot--pickable' : '',
+        busyOther ? 'lb-slot--locked' : '',
+      ].filter(Boolean).join(' ');
 
-    html += `
-      <div class="lb-slot ${readyMark} ${isMe ? 'lb-slot--me' : ''}">
-        <div class="lb-slot-avatar" style="background:${strToColor(p.id || p.nickname)}">${initials}</div>
-        <div class="lb-slot-info">
-          <span class="lb-slot-name">${esc(p.nickname || 'Игрок')}</span>
-          <span class="lb-slot-status">${isHostP ? '👑 Хост' : (p.ready ? '✓ Готов' : 'Не готов')}</span>
-        </div>
-        ${isMe ? '' : isHost ? `<button class="lb-kick-btn" onclick="kickPlayer('${p.id}','${esc(p.nickname)}')" title="Исключить">✕</button>` : ''}
-        ${p.ready ? '<span class="lb-ready-dot"></span>' : ''}
-      </div>
-    `;
-  });
+      const kickHtml = (isHost && !isMe)
+        ? `<button type="button" class="lb-kick-btn" data-kick="${String(p.id).replace(/"/g, '&quot;')}" title="Исключить">✕</button>`
+        : '';
+      const clearHtml = (isHost && !isMe)
+        ? `<button type="button" class="lb-slot-clear-btn" data-clear-slot="${i}" title="Снять со слота">Со слота</button>`
+        : '';
 
-  // Пустые слоты
-  for (let i = players.length; i < maxPlayers; i++) {
-    html += `
-      <div class="lb-slot lb-slot--empty">
-        <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
-        <span class="lb-slot-empty-text">Свободный слот</span>
-      </div>
-    `;
+      html += `
+        <div class="${cls}" data-lobby-slot-index="${i}" title="${isMe ? 'Нажми снова, чтобы встать из-за стола' : ''}">
+          <span class="lb-slot-num">${i + 1}</span>
+          <div class="lb-slot-avatar" style="background:${strToColor(p.id || p.nickname)}">${initials}</div>
+          <div class="lb-slot-info">
+            <span class="lb-slot-name">${esc(p.nickname || 'Игрок')}</span>
+            <span class="lb-slot-status">${isHostP ? '👑 Хост' : (p.ready ? '✓ Готов' : 'Не готов')}</span>
+          </div>
+          ${clearHtml}
+          ${kickHtml}
+          ${p.ready ? '<span class="lb-ready-dot"></span>' : ''}
+        </div>`;
+    } else {
+      html += `
+        <div class="lb-slot lb-slot--empty lb-slot--pickable" data-lobby-slot-index="${i}" title="Нажми, чтобы занять место">
+          <span class="lb-slot-num">${i + 1}</span>
+          <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
+          <div class="lb-slot-info">
+            <span class="lb-slot-empty-text">Свободное место</span>
+            <span class="lb-slot-status">${isHost ? 'Нажми — назначить игрока' : 'Нажми — сесть'}</span>
+          </div>
+        </div>`;
+    }
+  }
+
+  const unseated = players.filter(p => p.slot == null);
+  if (unseated.length) {
+    html += `<div class="lb-unseated-banner">
+      <div class="lb-unseated-banner__title">В комнате, но не за столом</div>
+      <div class="lb-unseated-banner__names">${unseated.map(u => esc(u.nickname || 'Игрок')).join(' · ')}</div>
+    </div>`;
   }
 
   wrap.innerHTML = html;
+
+  wrap.querySelectorAll('[data-kick]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-kick');
+      const pl = (lobbyData?.players || []).find(p => String(p.id) === String(id));
+      kickPlayer(id, pl?.nickname || 'Игрок');
+    });
+  });
+  wrap.querySelectorAll('[data-clear-slot]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.getAttribute('data-clear-slot'), 10);
+      hostClearSlotFromLobby(idx);
+    });
+  });
+
+  wrap.onclick = (e) => {
+    if (e.target.closest('button')) return;
+    const row = e.target.closest('[data-lobby-slot-index]');
+    if (!row || !row.classList.contains('lb-slot--pickable')) return;
+    const idx = parseInt(row.getAttribute('data-lobby-slot-index'), 10);
+    handleLobbySlotClick(idx);
+  };
+}
+
+function handleLobbySlotClick(slotIndex) {
+  if (!currentUser || !lobbyData || lobbyData.status !== 'waiting') return;
+  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
+  const maxP = lobbyData.max_players || game.max;
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const me = players.find(p => String(p.id) === String(currentUser.id));
+  if (!me) {
+    showToast('Ты не в составе лобби', 'error');
+    return;
+  }
+  const at = players.find(p => p.slot === slotIndex);
+
+  if (!isHost) {
+    if (at && String(at.id) !== String(currentUser.id)) return;
+    if (at && String(at.id) === String(currentUser.id)) {
+      const next = updatePlayerSlot(players, currentUser.id, null, maxP);
+      const mi = next.findIndex(p => String(p.id) === String(currentUser.id));
+      if (mi >= 0) next[mi] = { ...next[mi], ready: false };
+      persistLobbyPlayers(next, maxP);
+      return;
+    }
+    persistLobbyPlayers(updatePlayerSlot(players, currentUser.id, slotIndex, maxP), maxP);
+    return;
+  }
+
+  if (at && String(at.id) === String(currentUser.id)) {
+    const next = updatePlayerSlot(players, currentUser.id, null, maxP);
+    const mi = next.findIndex(p => String(p.id) === String(currentUser.id));
+    if (mi >= 0) next[mi] = { ...next[mi], ready: false };
+    persistLobbyPlayers(next, maxP);
+    return;
+  }
+  if (at) {
+    showToast('Сними игрока кнопкой «Со слота»', 'info');
+    return;
+  }
+  openHostAssignSlotModal(slotIndex);
+}
+
+function openHostAssignSlotModal(slotIndex) {
+  if (!isHost || !lobbyData) return;
+  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
+  const maxP = lobbyData.max_players || game.max;
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  if (players.some(p => p.slot === slotIndex)) {
+    showToast('Место уже занято', 'info');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'lb-assign-overlay';
+  overlay.innerHTML = `
+    <div class="lb-assign-box">
+      <div class="lb-assign-title">Место ${slotIndex + 1}</div>
+      <p class="lb-assign-hint">Кого посадить за стол?</p>
+      <div class="lb-assign-list" id="lbAssignList"></div>
+      <button type="button" class="btn lb-assign-cancel">Отмена</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const list = overlay.querySelector('#lbAssignList');
+  const unseated = players.filter(p => p.slot == null);
+  const me = currentUser && players.find(p => String(p.id) === String(currentUser.id));
+
+  function addPick(label, userId) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn--primary lb-assign-pick';
+    b.textContent = label;
+    b.addEventListener('click', async () => {
+      overlay.remove();
+      const next = updatePlayerSlot(players, userId, slotIndex, maxP);
+      await persistLobbyPlayers(next, maxP);
+    });
+    list.appendChild(b);
+  }
+
+  unseated.forEach((p) => addPick(p.nickname || 'Игрок', p.id));
+  if (me && me.slot != null) {
+    addPick('Пересесть меня сюда', currentUser.id);
+  }
+
+  if (!list.children.length) {
+    list.innerHTML = '<p class="lb-assign-empty">Нет игроков без места. Дождись входа в комнату.</p>';
+  }
+
+  overlay.querySelector('.lb-assign-cancel').onclick = () => overlay.remove();
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
+async function hostClearSlotFromLobby(slotIndex) {
+  if (!isHost || !lobbyData) return;
+  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
+  const maxP = lobbyData.max_players || game.max;
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
+  const p = players.find(x => x.slot === slotIndex);
+  if (!p) return;
+  p.slot = null;
+  p.ready = false;
+  await persistLobbyPlayers(players, maxP);
 }
 
 // ─── ДЕЙСТВИЯ ────────────────────────────────────────────────────────────────
 
 async function toggleReady() {
   if (!currentUser || !lobbyData) return;
-  isReady = !isReady;
-
-  const players = Array.isArray(lobbyData.players) ? [...lobbyData.players] : [];
+  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
+  const maxP = lobbyData.max_players || game.max;
+  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], maxP);
   const idx = players.findIndex(p => String(p.id) === String(currentUser.id));
 
-  if (idx === -1) {
-    players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: isReady });
-  } else {
-    players[idx] = { ...players[idx], nickname: currentUser.nickname, ready: isReady };
+  if (idx === -1) return;
+  if (players[idx].slot == null) {
+    showToast('Сначала выбери место за столом', 'error');
+    return;
   }
 
+  isReady = !players[idx].ready;
+  players[idx] = { ...players[idx], nickname: currentUser.nickname, ready: isReady };
   updateReadyBtn();
 
   try {
-    await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
+    const cleaned = normalizeLobbySlotsForSave(players, maxP);
+    await supabaseClient.from('lobbies').update({ players: cleaned }).eq('code', lobbyCode);
     await loadLobby();
   } catch (err) {
     console.error('[Lobby] Ошибка ready:', err);
@@ -327,6 +582,21 @@ async function toggleReady() {
 
 function updateReadyBtn() {
   const btn = document.getElementById('readyBtn');
+  if (!lobbyData || !currentUser) return;
+  const game = GAMES_INFO[lobbyData.game] || GAMES_INFO.mafia;
+  const maxP = lobbyData.max_players || game.max;
+  const players = normalizeLobbySlotsForSave(lobbyData.players || [], maxP);
+  const me = players.find(p => String(p.id) === String(currentUser.id));
+  const hasSeat = me && me.slot != null;
+
+  if (lobbyData.status === 'waiting' && me && !hasSeat) {
+    btn.disabled = true;
+    btn.title = 'Сначала нажми на свободное место';
+  } else {
+    btn.disabled = false;
+    btn.title = '';
+  }
+
   if (isReady) {
     btn.textContent = '✓ Готов';
     btn.classList.add('lb-ready-btn--active');
@@ -392,7 +662,7 @@ async function kickPlayer(playerId, nickname) {
   if (!isHost) return;
   const ok = await showConfirm({
     title: 'Исключить игрока',
-    text: `Исключить «${nickname}» из лобби?`,
+    text: `Исключить «${esc(String(nickname || ''))}» из лобби?`,
     okText: 'Исключить',
     danger: true,
     icon: '👢',

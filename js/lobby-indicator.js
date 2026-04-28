@@ -11,7 +11,8 @@ const GAME_EMOJIS = { mafia: '🕵️', bunker: '🏚️', alias: '🗣️' };
 // ─── Сохранить / удалить лобби ───────────────────────────────────────────────
 
 function setActiveLobby(code, game, name) {
-  localStorage.setItem(LOBBY_KEY, JSON.stringify({ code, game, name, ts: Date.now() }));
+  const c = String(code || '').toUpperCase();
+  localStorage.setItem(LOBBY_KEY, JSON.stringify({ code: c, game, name, ts: Date.now() }));
   renderLobbyIndicator();
 }
 
@@ -46,8 +47,9 @@ function renderLobbyIndicator() {
   if (!lobby) return;
 
   // Не показываем на самой странице лобби
+  const urlCode = new URLSearchParams(window.location.search).get('code');
   if (window.location.pathname.includes('lobby.html') &&
-      new URLSearchParams(window.location.search).get('code') === lobby.code) {
+      urlCode && String(urlCode).toUpperCase() === String(lobby.code).toUpperCase()) {
     return;
   }
 
@@ -122,14 +124,15 @@ async function leaveFromIndicator() {
   // Удаляем себя из лобби если подключён Supabase
   if (typeof supabaseClient !== 'undefined' && supabaseClient && lobby) {
     try {
-      const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', lobby.code).single();
+      const code = String(lobby.code || '').toUpperCase();
+      const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', code).single();
       if (data) {
           if (typeof currentUser !== 'undefined' && currentUser) {
           if (String(data.host_id) === String(currentUser.id)) {
-            await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobby.code);
+            await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', code);
           } else {
             const players = (data.players || []).filter(p => String(p.id) !== String(currentUser.id));
-            await supabaseClient.from('lobbies').update({ players }).eq('code', lobby.code);
+            await supabaseClient.from('lobbies').update({ players }).eq('code', code);
           }
         }
       }
@@ -147,4 +150,9 @@ function escHtml(str) {
 
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(renderLobbyIndicator, 800);
+});
+
+// «Назад» из браузера / BFCache: DOMContentLoaded может не сработать — всегда обновляем виджет
+window.addEventListener('pageshow', () => {
+  renderLobbyIndicator();
 });

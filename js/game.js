@@ -65,6 +65,15 @@ let gameType   = null;
 let gameInfo   = null;
 let refreshInterval = null;
 
+/** Уникальные участники лобби (по id), без дублей в массиве players */
+function lobbyParticipantsCount(players) {
+  const seen = new Set();
+  for (const p of players || []) {
+    if (p && p.id != null) seen.add(String(p.id));
+  }
+  return seen.size;
+}
+
 // ─── ИНИЦИАЛИЗАЦИЯ ───────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -231,7 +240,7 @@ async function loadMyLobbies() {
     }
     wrap.innerHTML = data.map(l => {
       const isWaiting = l.status === 'waiting';
-      const players = Array.isArray(l.players) ? l.players.length : 0;
+      const players = lobbyParticipantsCount(l.players);
       return `
         <div class="g-my-lobby ${isWaiting ? 'g-my-lobby--active' : ''}">
           <div class="g-my-lobby__top">
@@ -353,7 +362,7 @@ async function handleCreateLobby(e) {
       status:      'waiting',
       max_players: maxPlayers,
       password:    password || null,
-      players:     [{ id: currentUser.id, nickname: currentUser.nickname }],
+      players:     [{ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: 0 }],
     });
 
     if (error) throw error;
@@ -450,7 +459,7 @@ function renderActiveLobbies(lobbies) {
       </thead>
       <tbody>
         ${lobbies.map(l => {
-          const players  = Array.isArray(l.players) ? l.players.length : 0;
+          const players  = lobbyParticipantsCount(l.players);
           const maxP     = l.max_players || gameInfo.maxPlayers;
           const pct      = Math.round((players / maxP) * 100);
           const hasPass  = !!l.password;
@@ -507,7 +516,7 @@ function renderPastLobbies(lobbies) {
           <tr>
             <td>${esc(l.name || l.code)}</td>
             <td>${esc(l.host_name || '—')}</td>
-            <td>${Array.isArray(l.players) ? l.players.length : 0}</td>
+            <td>${lobbyParticipantsCount(l.players)}</td>
             <td>${statusLabel(l.status)}</td>
             <td>${fmtDate(l.created_at)}</td>
           </tr>
@@ -558,11 +567,11 @@ async function joinLobby(code, hasPassword) {
     const alreadyIn = players.some(p => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
-      if (players.length >= maxP) {
+      if (lobbyParticipantsCount(players) >= maxP) {
         showToast('Комната заполнена', 'error');
         return;
       }
-      players.push({ id: currentUser.id, nickname: currentUser.nickname });
+      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: null });
       await supabaseClient.from('lobbies').update({ players }).eq('code', code);
     }
 
