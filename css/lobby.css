@@ -5,7 +5,7 @@
 :root { --game-color: #3b82f6; }
 
 body.lobby-body {
-  background: var(--bg, #07080f);
+  background: var(--bg, #0b0e1a);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -16,7 +16,7 @@ body.lobby-body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 56px;
-  background: rgba(7,8,15,0.95);
+  background: rgba(11,14,26,0.97);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   display: flex;

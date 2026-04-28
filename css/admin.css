@@ -3,7 +3,7 @@
    ============================================= */
 
 body.admin-body {
-  background: var(--bg, #07080f);
+  background: var(--bg, #0b0e1a);
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -149,7 +149,7 @@ body.admin-body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg, #07080f);
+  background: var(--bg, #0b0e1a);
 }
 
 /* ── TOPBAR ── */

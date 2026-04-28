@@ -3,10 +3,10 @@
    ============================================= */
 
 :root {
-  --bg:          #07080f;
-  --bg-card:     #0d0f1a;
-  --bg-card-2:   #121422;
-  --border:      rgba(255,255,255,0.07);
+  --bg:          #0b0e1a;
+  --bg-card:     #111627;
+  --bg-card-2:   #161d30;
+  --border:      rgba(255,255,255,0.08);
   --border-glow: rgba(59,130,246,0.35);
 
   --accent:      #3b82f6;
@@ -105,13 +105,13 @@ input { font-family: inherit; }
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  background: rgba(7,8,15,0.92);
+  background: rgba(11,14,26,0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   transition: background var(--transition), transform 0.35s ease;
 }
-.navbar--scrolled { background: rgba(7,8,15,0.98); }
+.navbar--scrolled { background: rgba(11,14,26,0.98); }
 .navbar--hidden   { transform: translateY(-100%); }
 
 .navbar__container {
