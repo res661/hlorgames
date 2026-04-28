@@ -83,9 +83,20 @@ function renderLobbyIndicator() {
   requestAnimationFrame(() => el.classList.add('lobby-indicator--visible'));
 }
 
-function goToActiveLobby() {
+async function goToActiveLobby() {
   const lobby = getActiveLobby();
-  if (lobby) window.location.href = `lobby.html?code=${lobby.code}`;
+  if (!lobby) return;
+  const code = String(lobby.code || '').toUpperCase();
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data } = await supabaseClient.from('lobbies').select('status,game').eq('code', code).maybeSingle();
+      if (data && data.game === 'mafia' && data.status === 'active') {
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}`;
+        return;
+      }
+    } catch (_) {}
+  }
+  window.location.href = `lobby.html?code=${encodeURIComponent(code)}`;
 }
 
 function closeLobbyIndicator() {

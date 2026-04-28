@@ -19,6 +19,16 @@
   let isHostFlag = params.get('role') === 'host';
   let mySlot     = parseInt(params.get('slot') ?? '-1', 10);
   const CHANNEL  = `mafia:${LOBBY || 'local'}`;
+  /** Каждая комната — отдельные слоты/настройки в localStorage (без призраков старых игр). */
+  function lobbyLsId() {
+    return String(LOBBY || 'local').toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'local';
+  }
+  function slotsLsKey() {
+    return `hlor_mafia_slots:${lobbyLsId()}`;
+  }
+  function settingsLsKey() {
+    return `hlor_mafia_settings:${lobbyLsId()}`;
+  }
 
   // ── Константы ────────────────────────────────────────────────────────────────
   const TOTAL     = 12;
@@ -406,6 +416,17 @@
       if (isHostFlag) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
     }
     updateLobbyModerationUI();
+  });
+
+  window.addEventListener('pageshow', (ev) => {
+    if (!ev.persisted || !LOBBY) return;
+    resolveLobbyAndUser().then(() => {
+      renderGrid();
+      setupRoleUI();
+      refreshTopBarBadges();
+      updatePresenterForm();
+      updateHostPanelTabsVisibility();
+    });
   });
 
   function setupPresenterControls() {
@@ -1082,7 +1103,7 @@
   }
   function loadSlots() {
     try {
-      const raw = localStorage.getItem('hlor_mafia_slots');
+      const raw = localStorage.getItem(slotsLsKey());
       if (raw) {
         const p = JSON.parse(raw);
         if (Array.isArray(p) && p.length === TOTAL) return p.map((s) => ({ ...defSlot(), ...s }));
@@ -1090,11 +1111,11 @@
     } catch {}
     return Array.from({length:TOTAL}, defSlot);
   }
-  function saveSlots() { localStorage.setItem('hlor_mafia_slots', JSON.stringify(slots)); }
+  function saveSlots() { localStorage.setItem(slotsLsKey(), JSON.stringify(slots)); }
 
   function applySettings() {
     try {
-      const s = JSON.parse(localStorage.getItem('hlor_mafia_settings')||'{}');
+      const s = JSON.parse(localStorage.getItem(settingsLsKey())||'{}');
       if (s.activeSlots) { activeSlots=s.activeSlots; document.getElementById('settingSlots').value=activeSlots; }
       if (s.gridCols)    { gridCols=s.gridCols;       document.getElementById('settingGrid').value=gridCols; }
       if (s.roomName)    { document.getElementById('roomName').textContent=s.roomName; document.getElementById('settingRoom').value=s.roomName; }
@@ -1102,9 +1123,9 @@
   }
   function saveSettings(obj) {
     try {
-      const cur = JSON.parse(localStorage.getItem('hlor_mafia_settings')||'{}');
+      const cur = JSON.parse(localStorage.getItem(settingsLsKey())||'{}');
       Object.assign(cur, obj);
-      localStorage.setItem('hlor_mafia_settings', JSON.stringify(cur));
+      localStorage.setItem(settingsLsKey(), JSON.stringify(cur));
     } catch {}
   }
 

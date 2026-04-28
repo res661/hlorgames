@@ -208,6 +208,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       startWhenReady();
     }
   }, 1500);
+
+  window.addEventListener('pageshow', (ev) => {
+    if (!ev.persisted || !lobbyCode) return;
+    loadLobby();
+  });
 });
 
 async function initLobby() {

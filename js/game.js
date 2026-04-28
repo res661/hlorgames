@@ -541,6 +541,13 @@ async function joinLobby(code, hasPassword) {
     return;
   }
 
+  const want = String(code || '').trim().toUpperCase();
+  const active = typeof getActiveLobby === 'function' ? getActiveLobby() : null;
+  if (active && String(active.code || '').toUpperCase() !== want) {
+    showToast('Ты уже в другой комнате. Сначала выйди: плашка справа внизу — «Выйти».', 'error');
+    return;
+  }
+
   if (hasPassword) {
     const pass = prompt('Введи пароль комнаты:');
     if (pass === null) return;
@@ -584,13 +591,15 @@ async function joinLobby(code, hasPassword) {
     }
 
     showToast(`Вхожу в комнату ${code}!`, 'success');
-    // Для Мафии — слот выбирается на игровой странице или из лобби (mafia_slot в БД)
+    const hostJoin = String(lobby.host_id) === String(currentUser.id);
+    // Для Мафии — слот выбирается на игровой странице или из лобби (mafia_slot в БД); роль в URL — только подсказка
     setTimeout(() => {
       if (gameType === 'mafia') {
-        window.location.href = `mafia-play.html?code=${code}&role=player`;
+        const roleQ = hostJoin ? 'host' : 'player';
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${roleQ}`;
         return;
       }
-      window.location.href = `lobby.html?code=${code}`;
+      window.location.href = `lobby.html?code=${encodeURIComponent(code)}`;
     }, 400);
   } catch (err) {
     showToast('Ошибка: ' + err.message, 'error');
