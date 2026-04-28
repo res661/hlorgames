@@ -58,22 +58,19 @@ function renderLobbyIndicator() {
   el.id = 'lobbyIndicator';
   el.className = 'lobby-indicator';
   el.innerHTML = `
-    <div class="lobby-indicator__bar"></div>
     <div class="lobby-indicator__pulse"></div>
-    <div class="lobby-indicator__body">
-      <div class="lobby-indicator__content">
-        <span class="lobby-indicator__icon">${emoji}</span>
-        <div class="lobby-indicator__text">
-          <span class="lobby-indicator__label">Ты в лобби</span>
-          <span class="lobby-indicator__name">${escHtml(name)}</span>
-        </div>
+    <div class="lobby-indicator__content">
+      <span class="lobby-indicator__icon">${emoji}</span>
+      <div class="lobby-indicator__text">
+        <span class="lobby-indicator__label">Ты в лобби</span>
+        <span class="lobby-indicator__name">${escHtml(name)}</span>
       </div>
-      <button class="lobby-indicator__close" onclick="closeLobbyIndicator()" title="Скрыть">✕</button>
     </div>
     <div class="lobby-indicator__btns">
-      <button class="lobby-indicator__goto" onclick="goToActiveLobby()">↩ Вернуться</button>
-      <button class="lobby-indicator__leave" onclick="leaveFromIndicator()">✕ Выйти</button>
+      <button class="lobby-indicator__goto" onclick="goToActiveLobby()">Войти</button>
+      <button class="lobby-indicator__leave" onclick="leaveFromIndicator()">Выйти</button>
     </div>
+    <button class="lobby-indicator__close" onclick="closeLobbyIndicator()">✕</button>
   `;
   document.body.appendChild(el);
 
@@ -94,8 +91,29 @@ function closeLobbyIndicator() {
   }
 }
 
+function showLobbyConfirm(onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'lobby-confirm-overlay';
+  overlay.id = 'lobbyConfirmOverlay';
+  overlay.innerHTML = `
+    <div class="lobby-confirm-box">
+      <div class="lobby-confirm-icon">🚪</div>
+      <div class="lobby-confirm-title">Покинуть лобби?</div>
+      <div class="lobby-confirm-text">Ты выйдешь из текущей игровой комнаты.<br>Зайти снова можно по коду.</div>
+      <div class="lobby-confirm-actions">
+        <button class="lobby-confirm-cancel" id="lobbyConfirmCancel">Остаться</button>
+        <button class="lobby-confirm-ok" id="lobbyConfirmOk">Выйти</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#lobbyConfirmCancel').onclick = () => overlay.remove();
+  overlay.querySelector('#lobbyConfirmOk').onclick = () => { overlay.remove(); onConfirm(); };
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
 async function leaveFromIndicator() {
-  if (!confirm('Покинуть лобби?')) return;
+  showLobbyConfirm(async () => {
   const lobby = getActiveLobby();
   clearActiveLobby();
   // Удаляем себя из лобби если подключён Supabase
@@ -115,6 +133,7 @@ async function leaveFromIndicator() {
     } catch {}
   }
   if (typeof showToast === 'function') showToast('Вышел из лобби', 'success');
+  }); // конец showLobbyConfirm
 }
 
 function escHtml(str) {

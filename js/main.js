@@ -233,7 +233,9 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
-  setTimeout(loadStats, 1000);
+  // Ждём пока supabase инициализируется, затем грузим
+  setTimeout(loadStats, 600);
+  setTimeout(loadStats, 2500); // второй попытка если первая не успела
 
   document.getElementById('lobbyModalClose').addEventListener('click', closeLobbyModal);
   document.getElementById('lobbyModal').addEventListener('click', (e) => {
