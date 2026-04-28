@@ -556,6 +556,36 @@ function rerenderLobbyChatNicknames() {
   });
 }
 
+async function loadLobbyChatFromDb() {
+  if (!supabaseClient || !lobbyCode) return;
+  try {
+    const { data, error } = await supabaseClient.from('lobbies').select('lobby_chat').eq('code', lobbyCode).maybeSingle();
+    if (error) return;
+    const arr = Array.isArray(data?.lobby_chat) ? data.lobby_chat : [];
+    const wrap = document.getElementById('lobbyChatMsgs');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    arr.forEach((m) => {
+      if (m.kind === 'msg' && m.text) {
+        appendLobbyChatMessage(m.uid, m.text, m.ts, m.nick, String(m.uid) === String(currentUser?.id));
+      }
+    });
+    scrollLobbyChatBottom();
+  } catch (_) {}
+}
+
+async function persistLobbyChatRow(uid, text, nick) {
+  if (!supabaseClient || !lobbyCode) return;
+  try {
+    const { data } = await supabaseClient.from('lobbies').select('lobby_chat').eq('code', lobbyCode).maybeSingle();
+    const arr = Array.isArray(data?.lobby_chat) ? data.lobby_chat : [];
+    arr.push({ kind: 'msg', uid, text, ts: Date.now(), nick: nick || null });
+    await supabaseClient.from('lobbies').update({ lobby_chat: arr.slice(-250) }).eq('code', lobbyCode);
+  } catch (e) {
+    console.warn('[lobby] lobby_chat', e);
+  }
+}
+
 function initLobbyChatOnce() {
   if (lobbyChatInited || !supabaseClient || !lobbyCode || !currentUser) return;
 
@@ -593,12 +623,15 @@ function initLobbyChatOnce() {
 
   function postLobbyChat() {
     const text = input.value.trim();
-    if (!text || !currentUser || !lobbyChatChannel) return;
+    if (!text || !currentUser) return;
     const ts = Date.now();
     const payload = { type: 'chat', uid: currentUser.id, text, ts, nick: currentUser.nickname };
     appendLobbyChatMessage(currentUser.id, text, ts, currentUser.nickname, true);
     input.value = '';
-    lobbyChatChannel.send({ type: 'broadcast', event: 'msg', payload });
+    persistLobbyChatRow(currentUser.id, text, currentUser.nickname);
+    if (lobbyChatChannel) {
+      lobbyChatChannel.send({ type: 'broadcast', event: 'msg', payload });
+    }
     scrollLobbyChatBottom();
   }
 
@@ -610,18 +643,21 @@ function initLobbyChatOnce() {
     }
   });
 
-  const chName = `lobby_chat:${lobbyCode}`;
-  lobbyChatChannel = supabaseClient.channel(chName, { config: { broadcast: { self: false } } });
-  lobbyChatChannel
-    .on('broadcast', { event: 'msg' }, ({ payload }) => {
-      if (!payload || payload.type !== 'chat' || !payload.text) return;
-      appendLobbyChatMessage(payload.uid, payload.text, payload.ts, payload.nick, false);
-      if (!lobbyChatOpen) {
-        lobbyChatUnread++;
-        updateLobbyChatBadge();
-      }
-    })
-    .subscribe();
+  (async () => {
+    await loadLobbyChatFromDb();
+    const chName = `lobby_chat:${lobbyCode}`;
+    lobbyChatChannel = supabaseClient.channel(chName, { config: { broadcast: { self: false } } });
+    lobbyChatChannel
+      .on('broadcast', { event: 'msg' }, ({ payload }) => {
+        if (!payload || payload.type !== 'chat' || !payload.text) return;
+        appendLobbyChatMessage(payload.uid, payload.text, payload.ts, payload.nick, false);
+        if (!lobbyChatOpen) {
+          lobbyChatUnread++;
+          updateLobbyChatBadge();
+        }
+      })
+      .subscribe();
+  })();
 }
 
 // ─── ВСПОМОГАТЕЛЬНЫЕ ─────────────────────────────────────────────────────────

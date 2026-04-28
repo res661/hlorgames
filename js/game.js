@@ -567,11 +567,10 @@ async function joinLobby(code, hasPassword) {
     }
 
     showToast(`Вхожу в комнату ${code}!`, 'success');
-    // Для Мафии — определяем номер слота (позиция в списке) и идём на игровую страницу
-    const mySlotIdx = players.findIndex(p => String(p.id) === String(currentUser.id));
+    // Для Мафии — слот выбирается на игровой странице или из лобби (mafia_slot в БД)
     setTimeout(() => {
       if (gameType === 'mafia') {
-        window.location.href = `mafia-play.html?code=${code}&role=player&slot=${mySlotIdx}`;
+        window.location.href = `mafia-play.html?code=${code}&role=player`;
         return;
       }
       window.location.href = `lobby.html?code=${code}`;

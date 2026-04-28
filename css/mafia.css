@@ -84,6 +84,18 @@ body.mafia-body {
   border-radius: 8px; padding: 4px 10px;
   font-size: 0.78rem; font-weight: 700; color: #fcd34d;
 }
+.mf-room-owner-badge {
+  background: rgba(200,255,78,0.08);
+  border-color: rgba(200,255,78,0.25);
+  color: var(--mf-accent, #c8ff4e);
+}
+.mf-check-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.82rem; color: var(--mf-text);
+  cursor: pointer;
+  user-select: none;
+}
+.mf-check-row input { flex-shrink: 0; }
 
 /* Top buttons */
 .mf-top-btn {

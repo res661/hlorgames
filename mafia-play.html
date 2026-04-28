@@ -35,10 +35,14 @@
         <span class="mf-role-badge__label">Роль</span>
         <span class="mf-role-badge__val" id="myRoleVal">—</span>
       </div>
-      <!-- Хост-метка -->
+      <!-- Хост-метка (ведёт игру) -->
       <div class="mf-host-badge hidden" id="hostBadge">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         Ведущий
+      </div>
+      <div class="mf-host-badge mf-room-owner-badge hidden" id="roomOwnerBadge" title="Ты создал лобби">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Создатель
       </div>
       <!-- Кнопки хоста -->
       <button class="mf-top-btn hidden" id="btnHostPanel">
@@ -85,20 +89,20 @@
       </div>
       <div class="mf-sidebar__body">
 
-        <div class="mf-stabs">
-          <button class="mf-stab active" data-stab="players">Игроки</button>
-          <button class="mf-stab" data-stab="phases">Фазы</button>
-          <button class="mf-stab" data-stab="settings">Настройки</button>
+        <div class="mf-stabs" id="hostStabs">
+          <button type="button" class="mf-stab mf-for-game-master active" data-stab="players">Игроки</button>
+          <button type="button" class="mf-stab mf-for-game-master" data-stab="phases">Фазы</button>
+          <button type="button" class="mf-stab" data-stab="settings">Настройки</button>
         </div>
 
         <!-- Игроки -->
-        <div class="mf-stab-panel active" id="stab-players">
+        <div class="mf-stab-panel active mf-for-game-master" id="stab-players">
           <p class="mf-hint">Нажмите на игрока для настройки</p>
           <div id="hostPlayersList"></div>
         </div>
 
         <!-- Фазы -->
-        <div class="mf-stab-panel hidden" id="stab-phases">
+        <div class="mf-stab-panel hidden mf-for-game-master" id="stab-phases">
           <div class="mf-ctrl">
             <div class="mf-ctrl__label">Фаза игры</div>
             <div class="mf-phase-grid">
@@ -132,6 +136,21 @@
 
         <!-- Настройки -->
         <div class="mf-stab-panel hidden" id="stab-settings">
+          <div class="mf-ctrl mf-for-room-host" id="presenterRoomBlock">
+            <div class="mf-ctrl__label">Ведущий за столом</div>
+            <p class="mf-hint">Отдельный ведущий не показывается в сетке камер. Панель фаз и слотов только у него; хост комнаты остаётся владельцем лобби.</p>
+            <label class="mf-check-row">
+              <input type="checkbox" id="chkSeparatePresenter"/>
+              <span>Назначить отдельного ведущего</span>
+            </label>
+            <select class="mf-input" id="selectPresenter" disabled style="margin-top:8px">
+              <option value="">— Кто ведёт игру —</option>
+            </select>
+            <button type="button" class="mf-btn mf-btn--blue" id="btnSavePresenter" style="margin-top:10px;width:100%">Сохранить</button>
+            <p class="mf-hint" id="presenterStatusLine" style="margin-top:8px"></p>
+          </div>
+
+          <div class="mf-for-game-master">
           <div class="mf-ctrl">
             <div class="mf-ctrl__label">Название комнаты</div>
             <input class="mf-input" id="settingRoom" placeholder="Мафия"/>
@@ -153,6 +172,11 @@
             </select>
             <button class="mf-btn mf-btn--blue" id="btnApplyGrid" style="width:100%;margin-top:6px">Применить сетку</button>
           </div>
+          </div>
+
+          <div class="mf-room-only-hint hidden" id="roomOnlyHint">
+            <p class="mf-hint">Ты хозяин комнаты: здесь можно сменить ведущего. Управление игрой — только у назначенного ведущего.</p>
+          </div>
         </div>
 
       </div>
@@ -166,6 +190,13 @@
       <button class="modal__close" id="btnCloseSlot">✕</button>
       <h3 class="modal__title" id="slotModalTitle">Слот #1</h3>
 
+      <div class="form-group">
+        <label class="form-label">Привязка к игроку лобби</label>
+        <select class="form-input" id="slotLobbyPlayer">
+          <option value="">— Нет привязки —</option>
+        </select>
+        <span class="form-hint">Игроки могут сами занять свободный слот; ты можешь переназначить здесь</span>
+      </div>
       <div class="form-group">
         <label class="form-label">Имя игрока</label>
         <input class="form-input" id="slotName" placeholder="Имя..." maxlength="30"/>

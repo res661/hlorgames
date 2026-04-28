@@ -128,7 +128,7 @@ async function leaveFromIndicator() {
           if (String(data.host_id) === String(currentUser.id)) {
             await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobby.code);
           } else {
-            const players = (data.players || []).filter(p => p.id !== currentUser.id);
+            const players = (data.players || []).filter(p => String(p.id) !== String(currentUser.id));
             await supabaseClient.from('lobbies').update({ players }).eq('code', lobby.code);
           }
         }
