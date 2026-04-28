@@ -224,6 +224,25 @@
     </div>
   </div>
 
+  <!-- Чат лобби: мини-окно справа снизу -->
+  <div id="lobbyChatWidget" class="lb-chat-widget hidden">
+    <button type="button" class="lb-chat-fab" id="lobbyChatFab" aria-label="Открыть чат">
+      <span class="lb-chat-fab__icon">💬</span>
+      <span class="lb-chat-fab__badge hidden" id="lobbyChatBadge">0</span>
+    </button>
+    <div class="lb-chat-panel hidden" id="lobbyChatPanel">
+      <div class="lb-chat-panel__top">
+        <span class="lb-chat-panel__title">Чат лобби</span>
+        <button type="button" class="lb-chat-panel__min" id="lobbyChatMinimize" title="Свернуть">▾</button>
+      </div>
+      <div class="lb-chat-panel__msgs" id="lobbyChatMsgs"></div>
+      <div class="lb-chat-panel__input">
+        <input type="text" id="lobbyChatInput" maxlength="1000" placeholder="Написать сообщение…" autocomplete="off" />
+        <button type="button" class="lb-chat-panel__send" id="lobbyChatSend" aria-label="Отправить">➤</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ТОСТ -->
   <div class="toast" id="toast"></div>
 

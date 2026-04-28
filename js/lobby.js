@@ -53,6 +53,12 @@ let pollInterval = null;
 let isHost       = false;
 let isReady      = false;
 
+/** Плавающий чат (Supabase broadcast) */
+let lobbyChatChannel   = null;
+let lobbyChatOpen      = false;
+let lobbyChatUnread    = 0;
+let lobbyChatInited    = false;
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -128,8 +134,8 @@ async function loadLobby() {
       return;
     }
 
-    lobbyData = data;
-    renderLobby(data);
+    lobbyData = await syncMyLobbyIdentity(data);
+    renderLobby(lobbyData);
     // Сохраняем в localStorage для индикатора
     if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
       setActiveLobby(data.code, data.game, data.name || data.code);
@@ -140,6 +146,35 @@ async function loadLobby() {
   }
 }
 
+// ─── СИНХРОНИЗАЦИЯ НИКА С ПРОФИЛЕМ В КОМНАТЕ ─────────────────────────────────
+
+async function syncMyLobbyIdentity(data) {
+  if (!currentUser || !supabaseClient || !data) return data;
+  try {
+    const players = [...(data.players || [])];
+    let host_name = data.host_name;
+    let changed   = false;
+    const i = players.findIndex(p => String(p.id) === String(currentUser.id));
+    if (i >= 0 && players[i].nickname !== currentUser.nickname) {
+      players[i] = { ...players[i], nickname: currentUser.nickname };
+      changed = true;
+    }
+    if (String(data.host_id) === String(currentUser.id) && host_name !== currentUser.nickname) {
+      host_name = currentUser.nickname;
+      changed = true;
+    }
+    if (!changed) return data;
+    const { error } = await supabaseClient
+      .from('lobbies')
+      .update({ players, host_name })
+      .eq('code', data.code);
+    if (error) return data;
+    return { ...data, players, host_name };
+  } catch {
+    return data;
+  }
+}
+
 // ─── РЕНДЕР ───────────────────────────────────────────────────────────────────
 
 function renderLobby(lobby) {
@@ -147,7 +182,7 @@ function renderLobby(lobby) {
   const maxP   = lobby.max_players || game.max;
   const players = Array.isArray(lobby.players) ? lobby.players : [];
 
-  isHost = currentUser && lobby.host_id === currentUser.id;
+  isHost = !!(currentUser && String(lobby.host_id) === String(currentUser.id));
 
   // Обновляем цвет темы
   document.documentElement.style.setProperty('--game-color', game.color);
@@ -182,7 +217,7 @@ function renderLobby(lobby) {
   }
 
   // Кнопка готовности
-  const myPlayer = players.find(p => p.id === currentUser?.id);
+  const myPlayer = players.find(p => String(p.id) === String(currentUser?.id));
   isReady = myPlayer?.ready || false;
   updateReadyBtn();
 
@@ -222,6 +257,10 @@ function renderLobby(lobby) {
   // Показываем контент
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('lobbyLayout').classList.remove('hidden');
+
+  document.getElementById('lobbyChatWidget')?.classList.remove('hidden');
+  initLobbyChatOnce();
+  rerenderLobbyChatNicknames();
 }
 
 function renderSlots(players, maxPlayers, hostId) {
@@ -230,8 +269,8 @@ function renderSlots(players, maxPlayers, hostId) {
 
   // Заполненные слоты
   players.forEach(p => {
-    const isMe      = p.id === currentUser?.id;
-    const isHostP   = p.id === hostId;
+    const isMe      = String(p.id) === String(currentUser?.id);
+    const isHostP   = String(p.id) === String(hostId);
     const initials  = (p.nickname || '?')[0].toUpperCase();
     const readyMark = p.ready ? 'lb-slot--ready' : '';
 
@@ -268,12 +307,12 @@ async function toggleReady() {
   isReady = !isReady;
 
   const players = Array.isArray(lobbyData.players) ? [...lobbyData.players] : [];
-  const idx = players.findIndex(p => p.id === currentUser.id);
+  const idx = players.findIndex(p => String(p.id) === String(currentUser.id));
 
   if (idx === -1) {
     players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: isReady });
   } else {
-    players[idx] = { ...players[idx], ready: isReady };
+    players[idx] = { ...players[idx], nickname: currentUser.nickname, ready: isReady };
   }
 
   updateReadyBtn();
@@ -339,7 +378,7 @@ async function leaveAndExit() {
   if (isHost) {
     await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
   } else {
-    const players = (lobbyData.players || []).filter(p => p.id !== currentUser?.id);
+    const players = (lobbyData.players || []).filter(p => String(p.id) !== String(currentUser?.id));
     await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   }
 
@@ -359,7 +398,7 @@ async function kickPlayer(playerId, nickname) {
     icon: '👢',
   });
   if (!ok) return;
-  const players = (lobbyData.players || []).filter(p => p.id !== playerId);
+  const players = (lobbyData.players || []).filter(p => String(p.id) !== String(playerId));
   await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   showToast(`${nickname} исключён`, 'success');
   await loadLobby();
@@ -458,6 +497,133 @@ function togglePasswordField() {
   if (group) group.style.display = type === 'private' ? 'block' : 'none';
 }
 
+// ─── ЧАТ ЛОББИ (мини-окно, broadcast) ─────────────────────────────────────────
+
+function lobbyChatDisplayName(uid, hintNick) {
+  if (!uid) return hintNick || 'Игрок';
+  if (currentUser && String(uid) === String(currentUser.id)) return currentUser.nickname || 'Ты';
+  const pl = (lobbyData?.players || []).find(p => String(p.id) === String(uid));
+  return pl?.nickname || hintNick || 'Игрок';
+}
+
+function trimLobbyChatDom() {
+  const wrap = document.getElementById('lobbyChatMsgs');
+  while (wrap && wrap.children.length > 200) wrap.removeChild(wrap.firstChild);
+}
+
+function scrollLobbyChatBottom() {
+  const wrap = document.getElementById('lobbyChatMsgs');
+  if (wrap) requestAnimationFrame(() => { wrap.scrollTop = wrap.scrollHeight; });
+}
+
+function updateLobbyChatBadge() {
+  const b = document.getElementById('lobbyChatBadge');
+  if (!b) return;
+  if (lobbyChatUnread > 0) {
+    b.textContent = lobbyChatUnread > 99 ? '99+' : String(lobbyChatUnread);
+    b.classList.remove('hidden');
+  } else {
+    b.classList.add('hidden');
+  }
+}
+
+function appendLobbyChatMessage(uid, text, ts, hintNick, isMine) {
+  const wrap = document.getElementById('lobbyChatMsgs');
+  if (!wrap) return;
+  const div = document.createElement('div');
+  div.className = 'lb-chat-msg' + (isMine ? ' lb-chat-msg--mine' : '');
+  if (uid) div.dataset.uid = uid;
+  const from = lobbyChatDisplayName(uid, hintNick);
+  const time = new Date(ts || Date.now()).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+  div.innerHTML = `
+    <div class="lb-chat-msg__head">
+      <span class="lb-chat-msg__from">${esc(from)}</span>
+      <span class="lb-chat-msg__time">${time}</span>
+    </div>
+    <div class="lb-chat-msg__text">${esc(text)}</div>
+  `;
+  wrap.appendChild(div);
+  trimLobbyChatDom();
+  scrollLobbyChatBottom();
+}
+
+function rerenderLobbyChatNicknames() {
+  document.querySelectorAll('#lobbyChatMsgs .lb-chat-msg[data-uid]').forEach((el) => {
+    const uid = el.dataset.uid;
+    const fromEl = el.querySelector('.lb-chat-msg__from');
+    if (!fromEl || !uid) return;
+    fromEl.textContent = lobbyChatDisplayName(uid, '');
+  });
+}
+
+function initLobbyChatOnce() {
+  if (lobbyChatInited || !supabaseClient || !lobbyCode || !currentUser) return;
+
+  const fab   = document.getElementById('lobbyChatFab');
+  const panel = document.getElementById('lobbyChatPanel');
+  const minBtn = document.getElementById('lobbyChatMinimize');
+  const send  = document.getElementById('lobbyChatSend');
+  const input = document.getElementById('lobbyChatInput');
+  if (!fab || !panel || !send || !input || !minBtn) return;
+
+  lobbyChatInited = true;
+
+  function openPanel() {
+    lobbyChatOpen = true;
+    panel.classList.remove('hidden');
+    lobbyChatUnread = 0;
+    updateLobbyChatBadge();
+    scrollLobbyChatBottom();
+    input.focus();
+  }
+
+  function closePanel() {
+    lobbyChatOpen = false;
+    panel.classList.add('hidden');
+  }
+
+  fab.addEventListener('click', () => {
+    if (panel.classList.contains('hidden')) openPanel();
+    else closePanel();
+  });
+  minBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePanel();
+  });
+
+  function postLobbyChat() {
+    const text = input.value.trim();
+    if (!text || !currentUser || !lobbyChatChannel) return;
+    const ts = Date.now();
+    const payload = { type: 'chat', uid: currentUser.id, text, ts, nick: currentUser.nickname };
+    appendLobbyChatMessage(currentUser.id, text, ts, currentUser.nickname, true);
+    input.value = '';
+    lobbyChatChannel.send({ type: 'broadcast', event: 'msg', payload });
+    scrollLobbyChatBottom();
+  }
+
+  send.addEventListener('click', postLobbyChat);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      postLobbyChat();
+    }
+  });
+
+  const chName = `lobby_chat:${lobbyCode}`;
+  lobbyChatChannel = supabaseClient.channel(chName, { config: { broadcast: { self: false } } });
+  lobbyChatChannel
+    .on('broadcast', { event: 'msg' }, ({ payload }) => {
+      if (!payload || payload.type !== 'chat' || !payload.text) return;
+      appendLobbyChatMessage(payload.uid, payload.text, payload.ts, payload.nick, false);
+      if (!lobbyChatOpen) {
+        lobbyChatUnread++;
+        updateLobbyChatBadge();
+      }
+    })
+    .subscribe();
+}
+
 // ─── ВСПОМОГАТЕЛЬНЫЕ ─────────────────────────────────────────────────────────
 
 function goBack() {
@@ -466,6 +632,7 @@ function goBack() {
 }
 
 function showError(title, text) {
+  document.getElementById('lobbyChatWidget')?.classList.add('hidden');
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('lobbyLayout').classList.add('hidden');
   document.getElementById('errorScreen').classList.remove('hidden');

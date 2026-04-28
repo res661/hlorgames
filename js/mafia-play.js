@@ -15,8 +15,9 @@
   // ── URL-параметры ────────────────────────────────────────────────────────────
   const params   = new URLSearchParams(window.location.search);
   const LOBBY    = params.get('code') || '';
-  const IS_HOST  = params.get('role') === 'host';
-  const MY_SLOT  = parseInt(params.get('slot') ?? '-1');  // 0-based, -1 = хост
+  /** URL — лишь подсказка; истина — host_id в БД (см. resolveLobbyAndUser) */
+  let isHostFlag = params.get('role') === 'host';
+  let mySlot     = parseInt(params.get('slot') ?? '-1', 10);
   const CHANNEL  = `mafia:${LOBBY || 'local'}`;
 
   // ── Константы ────────────────────────────────────────────────────────────────
@@ -53,6 +54,8 @@
   let rtChannel    = null;
   let myNickname   = 'Игрок';
   let myUserId     = null;
+  /** id → ник из строки lobbies.players (обновляется по опросу БД) */
+  let lobbyPlayersMap = {};
 
   // ── DOM ──────────────────────────────────────────────────────────────────────
   const $grid      = () => document.getElementById('mafiaGrid');
@@ -60,8 +63,101 @@
   const $chat      = () => document.getElementById('chatMessages');
   const $timerEl   = () => document.getElementById('timerEl');
 
+  async function fetchProfileQuick(uid) {
+    if (!supabaseClient || !uid) return null;
+    const { data } = await supabaseClient.from('profiles').select('nickname').eq('id', uid).maybeSingle();
+    return data;
+  }
+
+  function rebuildLobbyPlayersMap(players) {
+    lobbyPlayersMap = {};
+    (players || []).forEach((p) => {
+      if (p && p.id != null) lobbyPlayersMap[String(p.id)] = p.nickname;
+    });
+  }
+
+  async function refreshPlayerMapFromDb() {
+    if (!LOBBY || !supabaseClient) return;
+    try {
+      const { data } = await supabaseClient
+        .from('lobbies')
+        .select('players,host_id,host_name')
+        .eq('code', LOBBY)
+        .maybeSingle();
+      if (!data) return;
+      let players = [...(data.players || [])];
+      let host_name = data.host_name;
+      let changed = false;
+      if (myUserId) {
+        const i = players.findIndex((p) => String(p.id) === String(myUserId));
+        if (i >= 0 && players[i].nickname !== myNickname) {
+          players[i] = { ...players[i], nickname: myNickname };
+          changed = true;
+        }
+        if (String(data.host_id) === String(myUserId) && host_name !== myNickname) {
+          host_name = myNickname;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await supabaseClient.from('lobbies').update({ players, host_name }).eq('code', LOBBY);
+        rebuildLobbyPlayersMap(players);
+      } else {
+        rebuildLobbyPlayersMap(data.players);
+      }
+      rerenderChatNicknames();
+    } catch (_) {}
+  }
+
+  function chatSenderName(msg) {
+    const uid = msg.uid != null ? String(msg.uid) : '';
+    if (uid && lobbyPlayersMap[uid]) return lobbyPlayersMap[uid];
+    if (uid && uid === String(myUserId)) return myNickname;
+    return msg.nick || msg.from || 'Игрок';
+  }
+
+  function rerenderChatNicknames() {
+    const wrap = $chat();
+    if (!wrap) return;
+    wrap.querySelectorAll('.mf-msg[data-uid]').forEach((el) => {
+      const uid = el.dataset.uid;
+      const nameEl = el.querySelector('.mf-msg__from');
+      if (!nameEl || !uid) return;
+      const fallback = nameEl.getAttribute('data-nick-fallback') || '';
+      nameEl.textContent = chatSenderName({ uid, nick: fallback });
+    });
+  }
+
+  async function resolveLobbyAndUser() {
+    mySlot = parseInt(params.get('slot') ?? '-1', 10);
+    isHostFlag = params.get('role') === 'host';
+    if (!supabaseClient) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session?.user) {
+      myUserId = session.user.id;
+      const prof = await fetchProfileQuick(myUserId);
+      myNickname = prof?.nickname || session.user.email?.split('@')[0] || 'Игрок';
+    }
+    if (!LOBBY || !myUserId) return;
+    try {
+      const { data: row } = await supabaseClient.from('lobbies').select('host_id,players').eq('code', LOBBY).maybeSingle();
+      if (row) {
+        if (String(row.host_id) === String(myUserId)) {
+          isHostFlag = true;
+          mySlot = -1;
+        } else {
+          isHostFlag = false;
+        }
+        rebuildLobbyPlayersMap(row.players);
+      }
+    } catch (e) {
+      console.warn('[mafia] resolveLobbyAndUser', e);
+    }
+  }
+
   // ── INIT ─────────────────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
+    await resolveLobbyAndUser();
     applySettings();
     renderGrid();
     setupRoleUI();
@@ -71,17 +167,18 @@
     setupChat();
     setupHotkeys();
     initRealtimeChat();
+    setInterval(refreshPlayerMapFromDb, 4000);
     addSysMsg('Добро пожаловать в игру!');
-    if (IS_HOST) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
+    if (isHostFlag) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
   });
 
   // ── ROLE UI ──────────────────────────────────────────────────────────────────
   function setupRoleUI() {
-    if (IS_HOST) {
+    if (isHostFlag) {
       document.getElementById('hostBadge').classList.remove('hidden');
       document.getElementById('btnHostPanel').classList.remove('hidden');
     } else {
-      if (MY_SLOT >= 0 && slots[MY_SLOT]?.role) showMyRole(slots[MY_SLOT].role);
+      if (mySlot >= 0 && slots[mySlot]?.role) showMyRole(slots[mySlot].role);
     }
   }
 
@@ -118,7 +215,7 @@
     const num = ce('div','mf-slot__num'); num.textContent = i+1; div.appendChild(num);
 
     // Кнопка редактирования (только хост)
-    if (IS_HOST) {
+    if (isHostFlag) {
       const eb = ce('button','mf-slot__edit'); eb.textContent = '✎';
       eb.addEventListener('click', e => { e.stopPropagation(); openSlotModal(i); });
       div.appendChild(eb);
@@ -148,7 +245,7 @@
       const nm = ce('div','mf-slot__name'); nm.textContent = s.name || `Слот ${i+1}`; inf.appendChild(nm);
 
       // Роль только хосту
-      if (IS_HOST && s.role) {
+      if (isHostFlag && s.role) {
         const rl = ce('div',`mf-slot__role mf-slot__role--${ROLES_MAP[s.role]||'other'}`);
         rl.textContent = s.role; inf.appendChild(rl);
       }
@@ -171,7 +268,7 @@
       div.appendChild(ov);
     }
 
-    if (IS_HOST) div.addEventListener('click', () => openSlotModal(i));
+    if (isHostFlag) div.addEventListener('click', () => openSlotModal(i));
     return div;
   }
 
@@ -192,7 +289,7 @@
   }
 
   function openSlotModal(i) {
-    if (!IS_HOST) return;
+    if (!isHostFlag) return;
     editIdx = i;
     const s = slots[i];
     document.getElementById('slotModalTitle').textContent = `Слот #${i+1}`;
@@ -348,7 +445,7 @@
         <span class="mf-prow__role mf-slot__role--${rc}">${s.role||''}</span>
         <span class="mf-prow__state mf-prow__state--${s.status}">${cfg?(STATUS_LBL[s.status]||''):''}</span>
       `;
-      row.addEventListener('click', () => { if(IS_HOST) openSlotModal(i); });
+      row.addEventListener('click', () => { if(isHostFlag) openSlotModal(i); });
       list.appendChild(row);
     }
   }
@@ -430,7 +527,7 @@
     const send  = document.getElementById('btnChatSend');
     const go    = () => {
       const text = input.value.trim(); if (!text) return;
-      const msg  = { type:'message', from: myNickname || 'Игрок', text, uid: myUserId };
+      const msg  = { type: 'message', uid: myUserId, nick: myNickname, text };
       addChatMsg(msg, true);
       broadcast(msg);
       input.value = '';
@@ -442,10 +539,14 @@
   function addChatMsg(msg, isMine=false) {
     const wrap = $chat(); if (!wrap) return;
     const div  = ce('div', `mf-msg ${isMine?'mf-msg--mine':''}`);
+    if (msg.uid) div.dataset.uid = msg.uid;
+    const rawFb = msg.nick || msg.from || '';
+    const fallback = escAttr(rawFb);
+    const fromLabel = chatSenderName(msg);
     const time = new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
     div.innerHTML = `
       <div class="mf-msg__head">
-        <span class="mf-msg__from">${esc(msg.from)}</span>
+        <span class="mf-msg__from" data-nick-fallback="${fallback}">${esc(fromLabel)}</span>
         <span class="mf-msg__time">${time}</span>
       </div>
       <div class="mf-msg__text">${esc(msg.text)}</div>
@@ -512,30 +613,14 @@
 
   // ── REALTIME ─────────────────────────────────────────────────────────────────
   function initRealtimeChat() {
-    // Ждём supabase
     const tryInit = (n) => {
       if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         connectChannel();
       } else if (n > 0) {
-        setTimeout(() => tryInit(n-1), 500);
+        setTimeout(() => tryInit(n - 1), 500);
       }
     };
     tryInit(10);
-
-    // Получаем текущего пользователя
-    const waitUser = (n) => {
-      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-        supabaseClient.auth.getSession().then(({ data }) => {
-          if (data?.session?.user) {
-            myUserId   = data.session.user.id;
-            myNickname = data.session.user.user_metadata?.nickname || 'Игрок';
-          }
-        });
-      } else if (n > 0) {
-        setTimeout(() => waitUser(n-1), 600);
-      }
-    };
-    waitUser(8);
   }
 
   function connectChannel() {
@@ -575,12 +660,12 @@
           slots[p.idx] = p.slot;
           saveSlots();
           renderSlot(p.idx);
-          if (IS_HOST) renderHostPlayers();
+          if (isHostFlag) renderHostPlayers();
         }
         break;
       case 'role_assign':
         // Принимаем только если это наш слот
-        if (p.slot === MY_SLOT && !IS_HOST) {
+        if (p.slot === mySlot && !isHostFlag) {
           addRoleCard(p.role, p.playerName);
           showMyRole(p.role);
         }
@@ -668,6 +753,7 @@
   // ── HELPERS ──────────────────────────────────────────────────────────────────
   function ce(tag, cls) { const el = document.createElement(tag); el.className = cls; return el; }
   function esc(str) { return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escAttr(str) { return String(str??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
   function toast(msg, type='') {
     const t = $toast(); if (!t) return;

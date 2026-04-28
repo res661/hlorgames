@@ -124,8 +124,8 @@ async function leaveFromIndicator() {
     try {
       const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', lobby.code).single();
       if (data) {
-        if (typeof currentUser !== 'undefined' && currentUser) {
-          if (data.host_id === currentUser.id) {
+          if (typeof currentUser !== 'undefined' && currentUser) {
+          if (String(data.host_id) === String(currentUser.id)) {
             await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobby.code);
           } else {
             const players = (data.players || []).filter(p => p.id !== currentUser.id);

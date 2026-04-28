@@ -555,7 +555,7 @@ async function joinLobby(code, hasPassword) {
 
     const players   = Array.isArray(lobby.players) ? lobby.players : [];
     const maxP      = lobby.max_players || gameInfo.maxPlayers;
-    const alreadyIn = players.some(p => p.id === currentUser.id);
+    const alreadyIn = players.some(p => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
       if (players.length >= maxP) {
@@ -568,7 +568,7 @@ async function joinLobby(code, hasPassword) {
 
     showToast(`Вхожу в комнату ${code}!`, 'success');
     // Для Мафии — определяем номер слота (позиция в списке) и идём на игровую страницу
-    const mySlotIdx = players.findIndex(p => p.id === currentUser.id);
+    const mySlotIdx = players.findIndex(p => String(p.id) === String(currentUser.id));
     setTimeout(() => {
       if (gameType === 'mafia') {
         window.location.href = `mafia-play.html?code=${code}&role=player&slot=${mySlotIdx}`;
