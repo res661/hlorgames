@@ -194,7 +194,18 @@ function renderLobby(lobby) {
   if (isHost) {
     document.getElementById('settingName').value = lobby.name || '';
     fillMaxPlayersSelect(lobby.game, maxP);
-    document.getElementById('settingType').value = lobby.password ? 'private' : 'public';
+    initTypeSelect();
+    const typeVal = lobby.password ? 'private' : 'public';
+    const typeHidden = document.getElementById('settingType');
+    const typeLabel  = document.getElementById('settingTypeLabel');
+    const typeDropdown = document.getElementById('settingTypeDropdown');
+    if (typeHidden) { typeHidden.value = typeVal; }
+    if (typeLabel) { typeLabel.textContent = typeVal === 'private' ? '🔒 По паролю' : '🌍 Публичное'; }
+    if (typeDropdown) {
+      typeDropdown.querySelectorAll('.custom-select__item').forEach(el => {
+        el.classList.toggle('active', el.dataset.value === typeVal);
+      });
+    }
     document.getElementById('settingPassword').value = lobby.password || '';
     togglePasswordField();
   }
@@ -379,22 +390,59 @@ async function saveSettings() {
 
 function fillMaxPlayersSelect(game, currentMax) {
   const gameInfo = GAMES_INFO[game] || { min: 4, max: 12 };
-  const sel = document.getElementById('settingMaxPlayers');
-  if (sel.dataset.filled === game) return;
-  sel.innerHTML = '';
+  const hidden   = document.getElementById('settingMaxPlayers');
+  const dropdown = document.getElementById('settingMaxPlayersDropdown');
+  const label    = document.getElementById('settingMaxPlayersLabel');
+  const btn      = document.getElementById('settingMaxPlayersBtn');
+  const wrap     = document.getElementById('settingMaxPlayersWrap');
+  if (!dropdown || wrap.dataset.filled === game) return;
+
+  dropdown.innerHTML = '';
   for (let i = gameInfo.min; i <= gameInfo.max; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${i} игроков`;
-    if (i === currentMax) opt.selected = true;
-    sel.appendChild(opt);
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'custom-select__item' + (i === currentMax ? ' active' : '');
+    item.textContent = `${i} игроков`;
+    item.dataset.value = i;
+    item.onclick = () => {
+      hidden.value = i;
+      label.textContent = `${i} игроков`;
+      dropdown.querySelectorAll('.custom-select__item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      wrap.classList.remove('open');
+    };
+    dropdown.appendChild(item);
   }
-  sel.dataset.filled = game;
+  hidden.value = currentMax;
+  label.textContent = `${currentMax} игроков`;
+  wrap.dataset.filled = game;
+
+  btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); };
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); }, { once: false });
 }
 
-document.addEventListener('change', (e) => {
-  if (e.target.id === 'settingType') togglePasswordField();
-});
+function initTypeSelect() {
+  const wrap     = document.getElementById('settingTypeWrap');
+  const hidden   = document.getElementById('settingType');
+  const label    = document.getElementById('settingTypeLabel');
+  const btn      = document.getElementById('settingTypeBtn');
+  const dropdown = document.getElementById('settingTypeDropdown');
+  if (!wrap || wrap.dataset.init) return;
+  wrap.dataset.init = '1';
+
+  dropdown.querySelectorAll('.custom-select__item').forEach(item => {
+    item.onclick = () => {
+      hidden.value = item.dataset.value;
+      label.textContent = item.textContent;
+      dropdown.querySelectorAll('.custom-select__item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      wrap.classList.remove('open');
+      togglePasswordField();
+    };
+  });
+  btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); };
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); });
+}
 
 function togglePasswordField() {
   const type  = document.getElementById('settingType')?.value;

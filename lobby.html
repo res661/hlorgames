@@ -139,15 +139,29 @@
 
           <div class="form-group">
             <label class="form-label">Макс. игроков</label>
-            <select class="form-input" id="settingMaxPlayers"></select>
+            <div class="custom-select" id="settingMaxPlayersWrap">
+              <button type="button" class="custom-select__btn" id="settingMaxPlayersBtn">
+                <span id="settingMaxPlayersLabel">8 игроков</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="custom-select__dropdown" id="settingMaxPlayersDropdown"></div>
+            </div>
+            <input type="hidden" id="settingMaxPlayers" value="8" />
           </div>
 
           <div class="form-group">
             <label class="form-label">Тип лобби</label>
-            <select class="form-input" id="settingType">
-              <option value="public">🌍 Публичное</option>
-              <option value="private">🔒 По паролю</option>
-            </select>
+            <div class="custom-select" id="settingTypeWrap">
+              <button type="button" class="custom-select__btn" id="settingTypeBtn">
+                <span id="settingTypeLabel">🌍 Публичное</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="custom-select__dropdown" id="settingTypeDropdown">
+                <button type="button" class="custom-select__item active" data-value="public">🌍 Публичное</button>
+                <button type="button" class="custom-select__item" data-value="private">🔒 По паролю</button>
+              </div>
+            </div>
+            <input type="hidden" id="settingType" value="public" />
           </div>
 
           <div class="form-group" id="passwordGroup" style="display:none">
