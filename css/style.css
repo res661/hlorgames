@@ -965,85 +965,110 @@ section { padding: 80px 24px; }
 .btn--danger-solid { background: var(--red); color: white; border: none; }
 .btn--danger-solid:hover { background: #dc2626; }
 
-/* ── LOBBY INDICATOR (minimal) ── */
+/* ── LOBBY INDICATOR ── */
 .lobby-indicator {
   position: fixed;
   bottom: 20px; right: 20px;
   background: var(--bg-card-2);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 8px 8px 12px;
+  flex-direction: column;
   z-index: 9999;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  transform: translateY(20px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  transform: translateY(24px) scale(0.96);
   opacity: 0;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease;
-  min-width: 260px;
-  max-width: 320px;
+  transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease;
+  width: 220px;
+  overflow: hidden;
 }
-.lobby-indicator--visible { transform: translateY(0); opacity: 1; }
+.lobby-indicator--visible { transform: translateY(0) scale(1); opacity: 1; }
+
+/* Цветная полоска сверху */
+.lobby-indicator__bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, #a78bfa 100%);
+}
 
 .lobby-indicator__pulse {
+  position: absolute;
+  top: 13px; left: 13px;
   width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 6px var(--green);
+  box-shadow: 0 0 7px var(--green);
   animation: indicatorPulse 2s infinite;
-  flex-shrink: 0;
 }
 @keyframes indicatorPulse {
   0%,100% { opacity:1; transform:scale(1); }
-  50%     { opacity:0.4; transform:scale(1.5); }
+  50%     { opacity:0.35; transform:scale(1.7); }
 }
 
-/* для совместимости — не используются но не ломать */
-.lobby-indicator__bar {}
-.lobby-indicator__body { display:contents; }
-
-.lobby-indicator__content { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-.lobby-indicator__icon { font-size: 1.2rem; flex-shrink: 0; }
-.lobby-indicator__text { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.lobby-indicator__label { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-.lobby-indicator__name { font-size: 0.9rem; font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.lobby-indicator__btns { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
-
-.lobby-indicator__goto {
-  background: var(--accent);
-  border: none; color: #fff;
-  font-size: 0.75rem; font-weight: 700;
-  padding: 6px 12px;
-  border-radius: var(--radius);
-  cursor: pointer; font-family: var(--font);
-  white-space: nowrap;
-  transition: background 0.15s;
+/* Основная часть */
+.lobby-indicator__body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
 }
-.lobby-indicator__goto:hover { background: var(--accent-2); }
 
-.lobby-indicator__leave {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.2);
-  color: #f87171;
-  font-size: 0.75rem; font-weight: 600;
-  padding: 6px 10px;
-  border-radius: var(--radius);
-  cursor: pointer; font-family: var(--font);
-  white-space: nowrap;
-  transition: background 0.15s;
+.lobby-indicator__content { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+.lobby-indicator__icon {
+  font-size: 1.5rem;
+  width: 40px; height: 40px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
 }
-.lobby-indicator__leave:hover { background: rgba(239,68,68,0.18); }
+
+.lobby-indicator__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lobby-indicator__label {
+  font-size: 0.6rem; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700;
+}
+.lobby-indicator__name {
+  font-size: 0.9rem; font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .lobby-indicator__close {
   background: none; border: none;
-  color: var(--text-dim); font-size: 0.7rem;
+  color: var(--text-dim); font-size: 0.68rem;
   cursor: pointer; padding: 4px; line-height: 1;
   border-radius: 4px; flex-shrink: 0;
   transition: all 0.15s;
 }
-.lobby-indicator__close:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+.lobby-indicator__close:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+/* Кнопки снизу */
+.lobby-indicator__btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.lobby-indicator__goto {
+  background: none; border: none;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  color: #60a5fa;
+  font-size: 0.8rem; font-weight: 700;
+  padding: 11px 8px;
+  cursor: pointer; font-family: var(--font);
+  text-align: center; transition: background 0.15s, color 0.15s;
+}
+.lobby-indicator__goto:hover { background: rgba(59,130,246,0.1); color: #93c5fd; }
+
+.lobby-indicator__leave {
+  background: none; border: none; color: #f87171;
+  font-size: 0.8rem; font-weight: 700;
+  padding: 11px 8px;
+  cursor: pointer; font-family: var(--font);
+  text-align: center; transition: background 0.15s;
+}
+.lobby-indicator__leave:hover { background: rgba(239,68,68,0.1); }
 
 /* ── LOBBY CONFIRM MODAL ── */
 .lobby-confirm-overlay {

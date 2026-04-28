@@ -234,8 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
   // Ждём пока supabase инициализируется, затем грузим
-  setTimeout(loadStats, 600);
-  setTimeout(loadStats, 2500); // второй попытка если первая не успела
+  function tryLoadStats(attempts) {
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+      loadStats();
+    } else if (attempts > 0) {
+      setTimeout(() => tryLoadStats(attempts - 1), 500);
+    }
+  }
+  setTimeout(() => tryLoadStats(8), 300);
 
   document.getElementById('lobbyModalClose').addEventListener('click', closeLobbyModal);
   document.getElementById('lobbyModal').addEventListener('click', (e) => {
