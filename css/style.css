@@ -289,11 +289,11 @@ input { font-family: inherit; }
 }
 
 .hero__subtitle {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--text-muted);
   line-height: 1.7;
-  margin: 0 auto 38px;
-  max-width: 520px;
+  margin: 0 auto 34px;
+  max-width: 100%;
 }
 
 .hero__actions {
@@ -301,25 +301,28 @@ input { font-family: inherit; }
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 56px;
+  margin-bottom: 32px;
+  width: 100%;
 }
 
 /* Stats strip */
 .hero__stats {
-  display: inline-flex;
+  display: flex;
   align-items: stretch;
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--bg-card);
-  margin-bottom: 64px;
+  margin-bottom: 40px;
 }
 .stat {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 14px 32px;
+  flex: 1;
+  padding: 16px 24px;
   gap: 2px;
 }
 .stat svg { color: var(--text-dim); margin-bottom: 2px; }
@@ -1046,7 +1049,7 @@ section { padding: 80px 24px; }
   justify-content: space-between;
   gap: 32px;
   width: 100%;
-  max-width: 760px;
+  max-width: 100%;
   margin: 0 auto;
   background: linear-gradient(135deg, #1e1018 0%, #2a1520 50%, #1e1225 100%);
   border: 1px solid rgba(232,93,93,0.2);
