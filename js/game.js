@@ -267,15 +267,39 @@ function fmtTimeAgo(iso) {
 // ─── ФОРМА СОЗДАНИЯ ЛОББИ ────────────────────────────────────────────────────
 
 function setupCreateForm() {
-  // Заполняем select с количеством игроков
-  const sel = document.getElementById('lobbyMaxPlayers');
-  sel.innerHTML = '';
-  for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${i} игроков`;
-    if (i === gameInfo.defaultMax) opt.selected = true;
-    sel.appendChild(opt);
+  // Кастомный select
+  const dropdown = document.getElementById('lobbyMaxPlayersDropdown');
+  const btn      = document.getElementById('lobbyMaxPlayersBtn');
+  const label    = document.getElementById('lobbyMaxPlayersLabel');
+  const hidden   = document.getElementById('lobbyMaxPlayers');
+  const wrap     = document.getElementById('lobbyMaxPlayersWrap');
+
+  if (dropdown && btn) {
+    dropdown.innerHTML = '';
+    for (let i = gameInfo.minPlayers; i <= gameInfo.maxPlayers; i++) {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'custom-select__item' + (i === gameInfo.defaultMax ? ' active' : '');
+      item.textContent = `${i} игроков`;
+      item.dataset.value = i;
+      item.onclick = () => {
+        hidden.value = i;
+        label.textContent = `${i} игроков`;
+        dropdown.querySelectorAll('.custom-select__item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        wrap.classList.remove('open');
+      };
+      dropdown.appendChild(item);
+    }
+    hidden.value = gameInfo.defaultMax;
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      wrap.classList.toggle('open');
+    };
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) wrap.classList.remove('open');
+    });
   }
 
   updateCreateFormVisibility();
