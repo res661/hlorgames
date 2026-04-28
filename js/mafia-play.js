@@ -102,7 +102,7 @@
     try {
       const { data } = await supabaseClient
         .from('lobbies')
-        .select('players,host_id,host_name,presenter_id,max_players,host_plays,name,status,game')
+        .select('players,host_id,host_name,presenter_id,max_players,name,status,game')
         .eq('code', LOBBY)
         .maybeSingle();
       if (!data) return;
@@ -363,7 +363,7 @@
     try {
       const { data: row } = await supabaseClient
         .from('lobbies')
-        .select('host_id,players,presenter_id,max_players,host_plays,name,status,game')
+        .select('host_id,players,presenter_id,max_players,name,status,game')
         .eq('code', LOBBY)
         .maybeSingle();
       if (row) {

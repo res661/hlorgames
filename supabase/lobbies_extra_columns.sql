@@ -1,5 +1,6 @@
--- Выполни в Supabase → SQL Editor (один раз).
--- Расширяет таблицу public.lobbies под чат и отдельного ведущего в мафии.
+-- Выполни в Supabase → SQL Editor.
+-- Если таблицы lobbies ещё нет — сначала: supabase/lobbies_schema.sql
+-- Если таблица уже есть — только эти ALTER:
 
 alter table public.lobbies
   add column if not exists presenter_id uuid;

@@ -363,7 +363,6 @@ async function handleCreateLobby(e) {
       max_players: maxPlayers,
       password:    password || null,
       players:     [{ id: currentUser.id, nickname: currentUser.nickname, ready: false, slot: 0 }],
-      host_plays:  true,
     });
 
     if (error) throw error;
