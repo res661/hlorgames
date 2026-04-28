@@ -302,7 +302,15 @@ async function startGame() {
   try {
     await supabaseClient.from('lobbies').update({ status: 'active' }).eq('code', lobbyCode);
     showToast('Игра началась! 🎮', 'success');
-    await loadLobby();
+
+    // Определяем игру и ведём хоста на игровую страницу
+    const game = lobbyData?.game || 'mafia';
+    if (game === 'mafia') {
+      clearInterval(pollInterval);
+      window.location.href = `mafia-play.html?code=${lobbyCode}&role=host`;
+    } else {
+      await loadLobby();
+    }
   } catch (err) {
     showToast('Ошибка: ' + err.message, 'error');
   }

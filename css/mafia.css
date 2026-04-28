@@ -1,0 +1,540 @@
+/* =============================================
+   MAFIA PLAY PAGE — CSS
+   ============================================= */
+
+:root {
+  --mf-bg:      #07090f;
+  --mf-card:    #0f1120;
+  --mf-border:  rgba(255,255,255,0.07);
+  --mf-accent:  #3b82f6;
+  --mf-red:     #ef4444;
+  --mf-green:   #10b981;
+  --mf-yellow:  #f59e0b;
+  --mf-text:    #e8eaed;
+  --mf-muted:   #6b7280;
+  --mf-dim:     #374151;
+}
+
+body.mafia-body {
+  background: var(--mf-bg);
+  background-image: none;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =============================================
+   TOPBAR
+   ============================================= */
+.mafia-topbar {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: rgba(7,9,15,0.95);
+  border-bottom: 1px solid var(--mf-border);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  gap: 16px;
+  z-index: 50;
+  position: relative;
+}
+
+.mafia-topbar__left  { display: flex; align-items: center; gap: 12px; }
+.mafia-topbar__center { position: absolute; left: 50%; transform: translateX(-50%); }
+.mafia-topbar__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.mafia-logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--mf-text);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.mafia-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--mf-border);
+  flex-shrink: 0;
+}
+
+.mafia-room-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--mf-text);
+  letter-spacing: 0.02em;
+}
+
+/* Phase bar */
+.mafia-phase {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.mafia-phase__icon { font-size: 1rem; }
+.mafia-phase__text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--mf-text);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.mafia-timer {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--mf-accent);
+  min-width: 50px;
+  letter-spacing: 0.05em;
+}
+.mafia-timer.urgent { color: var(--mf-red); animation: timerBlink 0.5s infinite; }
+@keyframes timerBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Role badge */
+.mafia-my-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+.mafia-my-role__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mf-muted);
+}
+.mafia-my-role__value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--mf-text);
+}
+
+/* Buttons */
+.mafia-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.mafia-btn--ghost {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--mf-border);
+  color: var(--mf-muted);
+}
+.mafia-btn--ghost:hover { background: rgba(255,255,255,0.09); color: var(--mf-text); }
+.mafia-btn--accent {
+  background: var(--mf-accent);
+  color: #fff;
+}
+.mafia-btn--accent:hover { background: #2563eb; }
+.mafia-btn--danger {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.25);
+  color: #f87171;
+}
+.mafia-btn--danger:hover { background: rgba(239,68,68,0.18); }
+
+/* =============================================
+   GRID
+   ============================================= */
+.mafia-main {
+  flex: 1;
+  overflow: hidden;
+  padding: 12px;
+  display: flex;
+  align-items: stretch;
+}
+
+.mafia-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  align-content: start;
+  overflow-y: auto;
+}
+
+/* ── SLOT ── */
+.mf-slot {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #050709;
+  border: 1px solid var(--mf-border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.mf-slot:hover {
+  border-color: rgba(59,130,246,0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* Статусы */
+.mf-slot--alive {
+  border-color: rgba(16,185,129,0.3);
+  box-shadow: inset 0 0 0 1px rgba(16,185,129,0.15);
+}
+.mf-slot--dead {
+  filter: grayscale(0.7) brightness(0.4);
+  border-color: rgba(239,68,68,0.3);
+}
+.mf-slot--dead::after {
+  content: '💀';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  background: radial-gradient(circle, rgba(239,68,68,0.2) 0%, transparent 70%);
+  z-index: 5;
+  pointer-events: none;
+  animation: deadPulse 3s infinite alternate;
+}
+@keyframes deadPulse {
+  0%   { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1;   transform: scale(1.06); }
+}
+.mf-slot--extinct {
+  border-style: dashed;
+  border-color: var(--mf-dim);
+  background: #0a0b0f;
+}
+.mf-slot--highlighted {
+  border-color: var(--mf-accent) !important;
+  box-shadow: 0 0 20px rgba(59,130,246,0.3) !important;
+  animation: slotPulse 1.5s infinite;
+}
+@keyframes slotPulse {
+  0%,100% { box-shadow: 0 0 14px rgba(59,130,246,0.25); }
+  50%     { box-shadow: 0 0 28px rgba(59,130,246,0.5); }
+}
+
+/* Номер слота */
+.mf-slot__num {
+  position: absolute;
+  top: 8px; left: 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  z-index: 5;
+}
+
+/* Кнопка редактирования (только хост) */
+.mf-slot__edit {
+  position: absolute;
+  top: 7px; right: 8px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 6;
+  font-family: 'Inter', sans-serif;
+}
+.mf-slot:hover .mf-slot__edit { opacity: 1; }
+.mf-slot__edit:hover { background: rgba(59,130,246,0.3); border-color: rgba(59,130,246,0.5); color: #fff; }
+
+/* Видео */
+.mf-slot__video {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 112%; height: 100%;
+  transform: translate(-50%, -50%);
+  border: none;
+  pointer-events: none;
+}
+
+/* Плейсхолдер */
+.mf-slot__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 6px;
+  color: var(--mf-dim);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mf-slot__placeholder-icon { font-size: 1.6rem; opacity: 0.4; }
+
+/* Нижний оверлей */
+.mf-slot__overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  z-index: 4;
+}
+
+.mf-slot__info { display: flex; flex-direction: column; gap: 2px; }
+.mf-slot__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* Роль (видна только хосту) */
+.mf-slot__role {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mf-slot__role--mafia   { color: #f87171; }
+.mf-slot__role--civil   { color: #86efac; }
+.mf-slot__role--sheriff { color: #fde68a; }
+.mf-slot__role--doctor  { color: #93c5fd; }
+.mf-slot__role--maniac  { color: #c084fc; }
+.mf-slot__role--other   { color: var(--mf-muted); }
+
+/* Статус */
+.mf-slot__status {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.mf-slot__status--alive  { color: #6ee7b7; }
+.mf-slot__status--dead   { color: #fca5a5; }
+.mf-slot__status--extinct{ color: #6b7280; }
+
+/* Голосование */
+.mf-slot__votes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 3px 5px;
+}
+.mf-vote-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  width: 20px; height: 20px;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1rem; line-height: 1;
+  transition: all 0.15s;
+}
+.mf-vote-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.mf-vote-count {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  min-width: 14px;
+  text-align: center;
+}
+
+/* Сообщение на слоте */
+.mf-slot__msg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(7,9,15,0.95);
+  border: 1px solid var(--mf-accent);
+  box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  z-index: 20;
+  pointer-events: none;
+  width: 80%;
+  line-height: 1.4;
+  animation: msgIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.mf-slot__msg.fade-out { animation: msgOut 0.8s ease forwards; }
+@keyframes msgIn  { from{opacity:0;transform:translate(-50%,-40%) scale(0.85)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+@keyframes msgOut { from{opacity:1;transform:translate(-50%,-50%) scale(1)} to{opacity:0;transform:translate(-50%,-60%) scale(1.08)} }
+
+/* =============================================
+   HOST PANEL (sidebar)
+   ============================================= */
+.mafia-panel-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 80;
+}
+.mafia-panel-overlay.hidden { display: none; }
+
+.mafia-panel {
+  position: fixed;
+  top: 54px; right: 0; bottom: 0;
+  width: 300px;
+  background: #0b0d18;
+  border-left: 1px solid var(--mf-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  overflow: hidden;
+  box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+  transform: translateX(0);
+  transition: transform 0.25s ease;
+}
+.mafia-panel.hidden { display: none; }
+
+.mafia-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--mf-border);
+  flex-shrink: 0;
+}
+.mafia-panel__title { font-size: 0.9rem; font-weight: 700; color: var(--mf-text); }
+.mafia-panel__close {
+  background: none; border: none;
+  color: var(--mf-muted); cursor: pointer;
+  padding: 4px; border-radius: 6px;
+  transition: all 0.15s; line-height: 1;
+}
+.mafia-panel__close:hover { background: rgba(255,255,255,0.07); color: var(--mf-text); }
+
+.mafia-panel__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--mf-border);
+  flex-shrink: 0;
+}
+.mafia-panel__tab {
+  flex: 1; padding: 10px 8px;
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--mf-muted);
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; font-family: 'Inter',sans-serif;
+  transition: all 0.15s;
+}
+.mafia-panel__tab:hover { color: var(--mf-text); }
+.mafia-panel__tab.active { color: var(--mf-accent); border-bottom-color: var(--mf-accent); }
+
+.mafia-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.mafia-panel__content.hidden { display: none; }
+.mafia-panel__content.active { display: flex; }
+.mafia-panel__hint { font-size: 0.76rem; color: var(--mf-muted); margin-bottom: 12px; }
+
+/* Admin player rows */
+.mf-player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--mf-border);
+  border-radius: 8px;
+  margin-bottom: 5px;
+  transition: background 0.15s;
+}
+.mf-player-row:hover { background: rgba(255,255,255,0.04); }
+.mf-player-row__num { font-size: 0.72rem; font-weight: 700; color: var(--mf-dim); width: 18px; text-align: center; flex-shrink: 0; }
+.mf-player-row__name { flex: 1; font-size: 0.8rem; font-weight: 600; color: var(--mf-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-player-row__role { font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
+.mf-player-row__state { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+.mf-player-row__state--alive  { color: #6ee7b7; }
+.mf-player-row__state--dead   { color: #fca5a5; }
+.mf-player-row__state--extinct{ color: var(--mf-dim); }
+.mf-player-row__edit { background: rgba(255,255,255,0.05); border: 1px solid var(--mf-border); color: var(--mf-muted); font-size: 0.68rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; flex-shrink: 0; font-family: 'Inter',sans-serif; transition: all 0.12s; }
+.mf-player-row__edit:hover { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #93c5fd; }
+
+/* Control groups */
+.mafia-ctrl-group { margin-bottom: 18px; }
+.mafia-ctrl-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--mf-muted); margin-bottom: 8px; }
+
+.mafia-phase-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mafia-phase-btn {
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--mf-border);
+  border-radius: 8px;
+  color: var(--mf-muted);
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; font-family: 'Inter',sans-serif;
+  transition: all 0.15s;
+}
+.mafia-phase-btn:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--mf-text); }
+.mafia-phase-btn.active { background: rgba(59,130,246,0.15); border-color: var(--mf-accent); color: #93c5fd; }
+
+.mafia-timer-row { display: flex; gap: 6px; align-items: center; }
+.mafia-input {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--mf-border);
+  border-radius: 6px;
+  color: var(--mf-text);
+  font-size: 0.85rem;
+  font-family: 'Inter',sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.mafia-input:focus { border-color: var(--mf-accent); }
+
+.mafia-action-btns { display: flex; flex-direction: column; gap: 6px; }
+.mafia-action-btns .mafia-btn { width: 100%; justify-content: center; }
+
+/* Phase backgrounds */
+body.mafia-body.phase-night { background: #050609; }
+body.mafia-body.phase-night .mafia-grid { filter: brightness(0.82); }
+body.mafia-body.phase-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,0.3); }
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 1100px) {
+  .mafia-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 750px) {
+  .mafia-grid { grid-template-columns: repeat(2, 1fr); }
+  .mafia-topbar__center { display: none; }
+  .mafia-panel { width: 280px; }
+}
+@media (max-width: 480px) {
+  .mafia-grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .mafia-main { padding: 6px; }
+}
