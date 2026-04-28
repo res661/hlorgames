@@ -411,41 +411,58 @@ function renderActiveLobbies(lobbies) {
     return;
   }
 
-  wrap.innerHTML = lobbies.map(l => {
-    const players    = Array.isArray(l.players) ? l.players.length : 0;
-    const maxP       = l.max_players || gameInfo.maxPlayers;
-    const pct        = Math.round((players / maxP) * 100);
-    const hasPass    = !!l.password;
-    const name       = l.name || `Лобби ${l.code}`;
-    const hostName   = l.host_name || 'Игрок';
-    const timeAgo    = getTimeAgo(l.created_at);
-    const isFull     = players >= maxP;
-
-    return `
-      <div class="g-lobby-card ${isFull ? 'g-lobby-card--full' : ''}">
-        <div class="g-lobby-card__top">
-          <div class="g-lobby-name">${esc(name)}</div>
-          <div class="g-lobby-code">${esc(l.code)}</div>
-        </div>
-        <div class="g-lobby-host">👤 ${esc(hostName)}</div>
-        <div class="g-lobby-fill">
-          <div class="g-fill-bar">
-            <div class="g-fill-bar__inner" style="width:${pct}%"></div>
-          </div>
-          <span class="g-fill-text">${players}/${maxP}</span>
-        </div>
-        <div class="g-lobby-footer">
-          <span class="g-lobby-time">${timeAgo}</span>
-          ${hasPass ? '<svg class="g-locked-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' : ''}
-          <button class="btn btn--primary g-join-btn ${isFull ? 'disabled' : ''}"
-            onclick="joinLobby('${esc(l.code)}', ${hasPass})"
-            ${isFull ? 'disabled' : ''}>
-            ${isFull ? 'Полная' : 'Войти'}
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  wrap.innerHTML = `
+    <table class="g-lobby-table">
+      <thead>
+        <tr>
+          <th>Название</th>
+          <th>Хост</th>
+          <th>Игроки</th>
+          <th>Код</th>
+          <th>Создано</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lobbies.map(l => {
+          const players  = Array.isArray(l.players) ? l.players.length : 0;
+          const maxP     = l.max_players || gameInfo.maxPlayers;
+          const pct      = Math.round((players / maxP) * 100);
+          const hasPass  = !!l.password;
+          const name     = l.name || `Лобби ${l.code}`;
+          const hostName = l.host_name || 'Игрок';
+          const timeAgo  = getTimeAgo(l.created_at);
+          const isFull   = players >= maxP;
+          return `
+            <tr class="g-lobby-row ${isFull ? 'g-lobby-row--full' : ''}">
+              <td class="g-lobby-row__name">
+                ${hasPass ? '<svg class="g-locked-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' : ''}
+                ${esc(name)}
+              </td>
+              <td>${esc(hostName)}</td>
+              <td>
+                <div class="g-fill-inline">
+                  <div class="g-fill-bar">
+                    <div class="g-fill-bar__inner" style="width:${pct}%"></div>
+                  </div>
+                  <span class="g-fill-text">${players}/${maxP}</span>
+                </div>
+              </td>
+              <td><span class="g-lobby-code">${esc(l.code)}</span></td>
+              <td class="g-lobby-row__time">${timeAgo}</td>
+              <td>
+                <button class="btn btn--primary g-join-btn ${isFull ? 'disabled' : ''}"
+                  onclick="joinLobby('${esc(l.code)}', ${hasPass})"
+                  ${isFull ? 'disabled' : ''}>
+                  ${isFull ? 'Полная' : 'Войти'}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderPastLobbies(lobbies) {
