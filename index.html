@@ -22,39 +22,7 @@
       <nav class="navbar__links" id="navLinks">
         <a href="index.html" class="nav-link active">Главная</a>
 
-        <!-- Игры с дропдауном -->
-        <div class="nav-dropdown-wrap" id="gamesDropdownWrap">
-          <a href="#games" class="nav-link nav-link--has-dropdown" id="gamesNavLink">
-            Игры
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </a>
-          <div class="nav-dropdown" id="gamesDropdown">
-            <a href="game.html?g=mafia" class="nav-dropdown__item">
-              <div class="nav-dropdown__icon nav-dropdown__icon--mafia">🕵️</div>
-              <div class="nav-dropdown__info">
-                <div class="nav-dropdown__name">Мафия</div>
-                <div class="nav-dropdown__desc">Дедукция и роли · 4–12 игроков</div>
-              </div>
-              <span class="nav-dropdown__badge nav-dropdown__badge--live">Играть</span>
-            </a>
-            <a href="#games" class="nav-dropdown__item nav-dropdown__item--soon">
-              <div class="nav-dropdown__icon nav-dropdown__icon--bunker">🏚️</div>
-              <div class="nav-dropdown__info">
-                <div class="nav-dropdown__name">Бункер</div>
-                <div class="nav-dropdown__desc">Выживание · 4–16 игроков</div>
-              </div>
-              <span class="nav-dropdown__badge nav-dropdown__badge--soon">Скоро</span>
-            </a>
-            <a href="#games" class="nav-dropdown__item nav-dropdown__item--soon">
-              <div class="nav-dropdown__icon nav-dropdown__icon--alias">🗣️</div>
-              <div class="nav-dropdown__info">
-                <div class="nav-dropdown__name">Алиас</div>
-                <div class="nav-dropdown__desc">Слова на скорость · 4–20 игроков</div>
-              </div>
-              <span class="nav-dropdown__badge nav-dropdown__badge--soon">Скоро</span>
-            </a>
-          </div>
-        </div>
+        <a href="#games" class="nav-link">Игры</a>
 
         <a href="#how-it-works" class="nav-link">Как играть</a>
       </nav>
@@ -119,6 +87,38 @@
         </div>
 
       </div>
+
+      <!-- Featured game card -->
+      <a href="game.html?g=mafia" class="hero__featured">
+        <div class="hero__featured-left">
+          <span class="hero__featured-label">Доступно сейчас</span>
+          <div class="hero__featured-title">
+            <span class="hero__featured-emoji">🕵️</span>
+            Мафия
+          </div>
+          <p class="hero__featured-desc">Классическая игра на дедукцию — мирные жители против мафии. Роли, ночные убийства, дневные голосования.</p>
+          <div class="hero__featured-meta">
+            <span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+              4–12 игроков
+            </span>
+            <span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              30–60 минут
+            </span>
+          </div>
+        </div>
+        <div class="hero__featured-right">
+          <div class="hero__featured-cta">
+            Играть сейчас
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="hero__featured-coming">
+            <span>🏚️ Бункер — скоро</span>
+            <span>🗣️ Алиас — скоро</span>
+          </div>
+        </div>
+      </a>
 
     </section>
 
