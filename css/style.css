@@ -492,7 +492,8 @@ section { padding: 80px 24px; }
 .game-card--soon { opacity: 0.45; pointer-events: none; }
 
 .game-card__header { display: flex; align-items: center; justify-content: space-between; }
-.game-card__emoji { font-size: 2.2rem; }
+.game-card__emoji { font-size: 2.2rem; display: flex; align-items: center; }
+.game-icon { display: inline-flex; align-items: center; justify-content: center; }
 .game-card__status {
   font-size: 0.68rem; font-weight: 700; padding: 4px 10px;
   border-radius: var(--radius-full); letter-spacing: 0.07em; text-transform: uppercase;

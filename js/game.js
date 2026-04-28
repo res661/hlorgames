@@ -8,7 +8,7 @@
 const GAMES = {
   mafia: {
     name:       'Мафия',
-    emoji:      '🕵️',
+    emoji:      `<svg viewBox="0 0 36 36" fill="none" width="32" height="32"><circle cx="18" cy="18" r="16" fill="rgba(232,93,93,0.15)" stroke="rgba(232,93,93,0.4)" stroke-width="1.5"/><circle cx="18" cy="13" r="5.5" fill="#f87171"/><path d="M7 29c0-5.523 4.477-8.5 11-8.5s11 2.977 11 8.5" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/><path d="M11 12l-4-2.8M25 12l4-2.8" stroke="#fca5a5" stroke-width="1.3" stroke-linecap="round"/></svg>`,
     color:      '#7c4dff',
     desc:       'Классическая игра на дедукцию. Мирные жители против мафии — роли, ночные убийства, дневные голосования.',
     meta:       '👥 4–12 игроков · ⏱ 30–60 мин',
@@ -25,7 +25,7 @@ const GAMES = {
   },
   bunker: {
     name:       'Бункер',
-    emoji:      '🏚️',
+    emoji:      `<svg viewBox="0 0 36 36" fill="none" width="32" height="32"><circle cx="18" cy="18" r="16" fill="rgba(89,181,124,0.1)" stroke="rgba(89,181,124,0.3)" stroke-width="1.5"/><path d="M18 7L29 17H7L18 7Z" fill="#6ee7b7" opacity="0.9"/><rect x="9" y="17" width="20" height="11" rx="1" fill="#34d399" opacity="0.7"/><rect x="15" y="21" width="6" height="7" rx="1" fill="rgba(89,181,124,0.35)" stroke="#6ee7b7" stroke-width="1"/></svg>`,
     color:      '#f59e0b',
     desc:       'Конец света. В бункере ограниченные места. Каждый игрок — уникальный персонаж с профессией, навыком и тайной.',
     meta:       '👥 4–16 игроков · ⏱ 20–40 мин',
@@ -42,7 +42,7 @@ const GAMES = {
   },
   alias: {
     name:       'Алиас',
-    emoji:      '🗣️',
+    emoji:      `<svg viewBox="0 0 36 36" fill="none" width="32" height="32"><circle cx="18" cy="18" r="16" fill="rgba(155,127,232,0.1)" stroke="rgba(155,127,232,0.3)" stroke-width="1.5"/><rect x="8" y="10" width="16" height="11" rx="3.5" fill="#a78bfa" opacity="0.8"/><path d="M11 21l-3 4" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="15" x2="20" y2="15" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.7"/><line x1="12" y1="18" x2="18" y2="18" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.5"/><circle cx="26" cy="24" r="5" fill="#7c3aed" opacity="0.85"/><text x="26" y="27.5" text-anchor="middle" font-size="6.5" fill="white" font-weight="bold" font-family="Inter,sans-serif">A</text></svg>`,
     color:      '#22c55e',
     desc:       'Объясняй слова — только словами, жестами или мимикой. Команды соревнуются кто назовёт больше слов за время.',
     meta:       '👥 4–20 игроков · ⏱ 15–30 мин',
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const heroTitle = document.getElementById('heroTitle');
   const heroDesc  = document.getElementById('heroDesc');
   const heroMeta  = document.getElementById('heroMeta');
-  if (heroEmoji) heroEmoji.textContent = gameInfo.emoji;
+  if (heroEmoji) heroEmoji.innerHTML = gameInfo.emoji;
   if (heroTitle) heroTitle.textContent = gameInfo.name;
   if (heroDesc)  heroDesc.textContent  = gameInfo.desc;
   if (heroMeta)  heroMeta.textContent  = gameInfo.meta;
