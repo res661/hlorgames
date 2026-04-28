@@ -1,553 +1,678 @@
 /**
  * MAFIA-PLAY.JS
- * Игровая страница Мафии — три уровня доступа:
- *   HOST   — полный контроль: роли, фазы, таймер, редактирование слотов
- *   PLAYER — только видит сетку и может голосовать, видит свою роль
- *   (определяется через URL: ?role=host или ?role=player&slot=N)
+ * Полная игровая страница Мафии с:
+ *  - Ролями HOST / PLAYER
+ *  - Realtime-чатом через Supabase Broadcast
+ *  - Приватными сообщениями о ролях (только своему игроку)
+ *  - Хост-слотом (ведущий не в сетке)
+ *  - Управлением фазами, таймером, рандомными событиями
+ *  - Горячей клавишей «admin» → суперадмин
  */
 
 (function () {
   'use strict';
 
-  // ── URL параметры ──────────────────────────────────────────────
-  const params    = new URLSearchParams(window.location.search);
-  const urlRole   = params.get('role') || 'player';   // 'host' | 'player'
-  const urlSlot   = parseInt(params.get('slot') ?? '-1'); // номер слота игрока (0-based)
-  const IS_HOST   = urlRole === 'host';
+  // ── URL-параметры ────────────────────────────────────────────────────────────
+  const params   = new URLSearchParams(window.location.search);
+  const LOBBY    = params.get('code') || '';
+  const IS_HOST  = params.get('role') === 'host';
+  const MY_SLOT  = parseInt(params.get('slot') ?? '-1');  // 0-based, -1 = хост
+  const CHANNEL  = `mafia:${LOBBY || 'local'}`;
 
-  // ── Константы ─────────────────────────────────────────────────
-  const TOTAL_SLOTS = 12;
-  const ROLE_CLASSES = {
-    'Мафия':     'mafia',
-    'Шериф':     'sheriff',
-    'Доктор':    'doctor',
-    'Маньяк':    'maniac',
-    'Мирный':    'civil',
+  // ── Константы ────────────────────────────────────────────────────────────────
+  const TOTAL     = 12;
+  const ROLES_MAP = { 'Мафия':'mafia','Шериф':'sheriff','Доктор':'doctor','Маньяк':'maniac','Любовница':'other','Комиссар':'sheriff','Мирный':'civil' };
+  const ROLES_INFO = {
+    'Мирный':    'Найди мафию голосованием. Победа — исключить всех мафиози.',
+    'Мафия':     'Ночью выбираете жертву. Победа — сравняться по числу с мирными.',
+    'Шериф':     'Ночью проверяешь одного игрока. Узнаёшь — мирный или нет.',
+    'Доктор':    'Ночью лечишь одного игрока. Можно спасти себя, но только раз.',
+    'Маньяк':    'Действуешь один. Победа — остаться последним живым.',
+    'Любовница': 'Ночью блокируешь одного игрока — он не может действовать.',
+    'Комиссар':  'Можешь арестовать игрока ночью — он пропускает день.',
   };
-  const STATUS_LABELS = { alive: 'ЖИВ', dead: 'МЁРТВ', extinct: 'ВЫБЫЛ' };
+  const STATUS_LBL = { alive:'ЖИВ', dead:'МЁРТВ', extinct:'ВЫБЫЛ' };
   const PHASES = {
-    day:   { icon: '☀️', text: 'ДЕНЬ — Обсуждение',       css: 'phase-day'  },
-    night: { icon: '🌙', text: 'НОЧЬ — Мафия действует',  css: 'phase-night'},
-    vote:  { icon: '🗳️', text: 'ГОЛОСОВАНИЕ',              css: 'phase-vote' },
-    wait:  { icon: '⏳', text: 'Ожидание игроков...',      css: 'phase-wait' },
+    day:   { icon:'☀️', text:'ДЕНЬ — Обсуждение',       css:'ph-day'   },
+    night: { icon:'🌙', text:'НОЧЬ — Мафия действует',  css:'ph-night' },
+    vote:  { icon:'🗳️', text:'ГОЛОСОВАНИЕ',              css:'ph-vote'  },
+    wait:  { icon:'⏳', text:'Ожидание игроков...',      css:'ph-wait'  },
   };
 
-  // ── Состояние ─────────────────────────────────────────────────
-  let activeSlots   = 12;
-  let gridColumns   = 4;
-  let currentPhase  = 'wait';
-  let timerInterval = null;
-  let randomEventQueued = false;
-  let editingSlot   = null;
-  let slots         = loadSlots();
+  // ── Состояние ────────────────────────────────────────────────────────────────
+  let slots        = loadSlots();
+  let activeSlots  = 12;
+  let gridCols     = 4;
+  let phase        = 'wait';
+  let timerInt     = null;
+  let randQueued   = false;
+  let editIdx      = null;
+  let chatOpen     = false;
+  let hostOpen     = false;
+  let unread       = 0;
+  let rtChannel    = null;
+  let myNickname   = 'Игрок';
+  let myUserId     = null;
 
-  // ── DOM ───────────────────────────────────────────────────────
-  const grid         = document.getElementById('mafiaGrid');
-  const phaseIcon    = document.getElementById('phaseIcon');
-  const phaseText    = document.getElementById('phaseText');
-  const timerEl      = document.getElementById('timerEl');
-  const roomNameEl   = document.getElementById('roomName');
-  const myRoleWrap   = document.getElementById('myRoleWrap');
-  const myRoleValue  = document.getElementById('myRoleValue');
-  const hostTopCtrl  = document.getElementById('hostTopControls');
-  const adminPanel   = document.getElementById('adminPanel');
-  const adminOverlay = document.getElementById('adminPanelOverlay');
+  // ── DOM ──────────────────────────────────────────────────────────────────────
+  const $grid      = () => document.getElementById('mafiaGrid');
+  const $toast     = () => document.getElementById('toast');
+  const $chat      = () => document.getElementById('chatMessages');
+  const $timerEl   = () => document.getElementById('timerEl');
 
-  // ── Инициализация ─────────────────────────────────────────────
-  function init() {
-    applyStoredSettings();
+  // ── INIT ─────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    applySettings();
     renderGrid();
     setupRoleUI();
-    setupAdminPanel();
+    setupSidebars();
     setupSlotModal();
+    setupHostControls();
+    setupChat();
     setupHotkeys();
-  }
+    initRealtimeChat();
+    addSysMsg('Добро пожаловать в игру!');
+    if (IS_HOST) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
+  });
 
-  // ── Роль-based UI ─────────────────────────────────────────────
+  // ── ROLE UI ──────────────────────────────────────────────────────────────────
   function setupRoleUI() {
     if (IS_HOST) {
-      hostTopCtrl.classList.remove('hidden');
-      document.getElementById('btnAdminPanel').onclick = openPanel;
+      document.getElementById('hostBadge').classList.remove('hidden');
+      document.getElementById('btnHostPanel').classList.remove('hidden');
     } else {
-      // Показываем роль игрока если слот назначен
-      if (urlSlot >= 0 && urlSlot < TOTAL_SLOTS) {
-        const slot = slots[urlSlot];
-        if (slot?.role) {
-          myRoleWrap.classList.remove('hidden');
-          myRoleValue.textContent = slot.role;
-          const cls = ROLE_CLASSES[slot.role] || 'other';
-          myRoleValue.className = `mafia-my-role__value mf-slot__role--${cls}`;
-        }
-      }
+      if (MY_SLOT >= 0 && slots[MY_SLOT]?.role) showMyRole(slots[MY_SLOT].role);
     }
   }
 
-  // ── Сетка ─────────────────────────────────────────────────────
+  function showMyRole(role) {
+    const wrap = document.getElementById('myRoleWrap');
+    const val  = document.getElementById('myRoleVal');
+    wrap.classList.remove('hidden');
+    val.textContent = role;
+    const cls = ROLES_MAP[role] || 'other';
+    val.className = `mf-role-badge__val mf-slot__role--${cls}`;
+  }
+
+  // ── GRID ─────────────────────────────────────────────────────────────────────
   function renderGrid() {
-    grid.innerHTML = '';
-    grid.style.gridTemplateColumns = `repeat(${gridColumns}, 1fr)`;
-    for (let i = 0; i < activeSlots; i++) {
-      grid.appendChild(createSlot(i));
-    }
+    const g = $grid();
+    g.innerHTML = '';
+    g.style.gridTemplateColumns = `repeat(${gridCols},1fr)`;
+    for (let i = 0; i < activeSlots; i++) g.appendChild(makeSlot(i));
   }
 
   function renderSlot(i) {
-    const existing = grid.querySelector(`[data-idx="${i}"]`);
-    const updated  = createSlot(i);
-    if (existing) existing.replaceWith(updated);
-    else renderGrid();
+    const cur = $grid().querySelector(`[data-i="${i}"]`);
+    if (cur) cur.replaceWith(makeSlot(i)); else renderGrid();
   }
 
-  function createSlot(i) {
+  function makeSlot(i) {
     const s   = slots[i];
+    const cfg = !!(s.name || s.vdoUrl);
     const div = document.createElement('div');
-    div.className = 'mf-slot';
-    div.dataset.idx = i;
-
-    const configured = !!(s.name || s.vdoUrl);
-    if (configured) div.classList.add(`mf-slot--${s.status}`);
+    div.className = 'mf-slot' + (cfg ? ` mf-slot--${s.status}` : '');
+    div.dataset.i = i;
 
     // Номер
-    const num = document.createElement('div');
-    num.className = 'mf-slot__num';
-    num.textContent = `${i + 1}`;
-    div.appendChild(num);
+    const num = ce('div','mf-slot__num'); num.textContent = i+1; div.appendChild(num);
 
     // Кнопка редактирования (только хост)
     if (IS_HOST) {
-      const editBtn = document.createElement('button');
-      editBtn.className = 'mf-slot__edit';
-      editBtn.textContent = '✎ Изм.';
-      editBtn.addEventListener('click', e => { e.stopPropagation(); openSlotEditor(i); });
-      div.appendChild(editBtn);
+      const eb = ce('button','mf-slot__edit'); eb.textContent = '✎';
+      eb.addEventListener('click', e => { e.stopPropagation(); openSlotModal(i); });
+      div.appendChild(eb);
     }
 
-    // Видео или плейсхолдер
+    // Видео / плейсхолдер
     if (s.vdoUrl && s.status !== 'extinct') {
       const iframe = document.createElement('iframe');
       iframe.className = 'mf-slot__video';
-      iframe.src = normalizeVdo(s.vdoUrl);
+      iframe.src = vdoUrl(s.vdoUrl);
       iframe.allow = 'autoplay; camera; microphone; fullscreen';
-      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('allowfullscreen','');
       div.appendChild(iframe);
     } else {
-      const ph = document.createElement('div');
-      ph.className = 'mf-slot__placeholder';
-      ph.innerHTML = configured && s.status === 'extinct'
-        ? `<span class="mf-slot__placeholder-icon">🚫</span><span>ВЫБЫЛ</span>`
-        : `<span class="mf-slot__placeholder-icon">📷</span><span>${s.name || `Слот ${i+1}`}</span>`;
+      const ph = ce('div','mf-slot__ph');
+      ph.innerHTML = cfg && s.status === 'extinct'
+        ? `<span class="mf-slot__ph-icon">🚫</span><span>ВЫБЫЛ</span>`
+        : `<span class="mf-slot__ph-icon">📷</span><span>${esc(s.name) || `Слот ${i+1}`}</span>`;
       div.appendChild(ph);
     }
 
     // Нижний оверлей
-    if (configured) {
-      const ov = document.createElement('div');
-      ov.className = 'mf-slot__overlay';
+    if (cfg) {
+      const ov = ce('div','mf-slot__ov');
+      const inf = ce('div','mf-slot__info');
 
-      const info = document.createElement('div');
-      info.className = 'mf-slot__info';
+      const nm = ce('div','mf-slot__name'); nm.textContent = s.name || `Слот ${i+1}`; inf.appendChild(nm);
 
-      const nameEl = document.createElement('div');
-      nameEl.className = 'mf-slot__name';
-      nameEl.textContent = s.name || `Слот ${i+1}`;
-      info.appendChild(nameEl);
-
-      // Роль — только хосту
+      // Роль только хосту
       if (IS_HOST && s.role) {
-        const roleEl = document.createElement('div');
-        const cls = ROLE_CLASSES[s.role] || 'other';
-        roleEl.className = `mf-slot__role mf-slot__role--${cls}`;
-        roleEl.textContent = s.role;
-        info.appendChild(roleEl);
+        const rl = ce('div',`mf-slot__role mf-slot__role--${ROLES_MAP[s.role]||'other'}`);
+        rl.textContent = s.role; inf.appendChild(rl);
       }
 
-      // Статус
-      const statusEl = document.createElement('div');
-      statusEl.className = `mf-slot__status mf-slot__status--${s.status}`;
-      statusEl.textContent = STATUS_LABELS[s.status] || '';
-      info.appendChild(statusEl);
+      const st = ce('div',`mf-slot__status mf-slot__status--${s.status}`);
+      st.textContent = STATUS_LBL[s.status]||''; inf.appendChild(st);
 
-      ov.appendChild(info);
+      ov.appendChild(inf);
 
       // Голосование
-      const votes = document.createElement('div');
-      votes.className = 'mf-slot__votes';
-
-      const btnMinus = document.createElement('button');
-      btnMinus.className = 'mf-vote-btn';
-      btnMinus.innerHTML = '−';
-      btnMinus.addEventListener('click', e => {
-        e.stopPropagation();
-        if (s.votes > 0) { s.votes--; countEl.textContent = s.votes; saveSlots(); }
-      });
-
-      const countEl = document.createElement('span');
-      countEl.className = 'mf-vote-count';
-      countEl.textContent = s.votes || 0;
-
-      const btnPlus = document.createElement('button');
-      btnPlus.className = 'mf-vote-btn';
-      btnPlus.innerHTML = '+';
-      btnPlus.addEventListener('click', e => {
-        e.stopPropagation();
-        s.votes++;
-        countEl.textContent = s.votes;
-        saveSlots();
-      });
-
-      votes.appendChild(btnMinus);
-      votes.appendChild(countEl);
-      votes.appendChild(btnPlus);
+      const votes = ce('div','mf-slot__votes');
+      const minus = ce('button','mf-vote-btn'); minus.innerHTML = '−';
+      const cnt   = ce('span','mf-vote-count');  cnt.textContent = s.votes||0;
+      const plus  = ce('button','mf-vote-btn'); plus.innerHTML = '+';
+      minus.addEventListener('click', e => { e.stopPropagation(); if(s.votes>0){s.votes--;cnt.textContent=s.votes;saveSlots();} });
+      plus.addEventListener('click',  e => { e.stopPropagation(); s.votes++;cnt.textContent=s.votes;saveSlots(); });
+      votes.append(minus, cnt, plus);
       ov.appendChild(votes);
 
       div.appendChild(ov);
     }
 
-    // Клик по слоту — хост открывает редактор
-    if (IS_HOST) div.addEventListener('click', () => openSlotEditor(i));
-
+    if (IS_HOST) div.addEventListener('click', () => openSlotModal(i));
     return div;
   }
 
-  // ── Слот editor ───────────────────────────────────────────────
+  // ── SLOT MODAL ───────────────────────────────────────────────────────────────
   function setupSlotModal() {
     document.getElementById('btnCloseSlot').onclick = closeSlotModal;
     document.getElementById('slotModal').addEventListener('click', e => {
       if (e.target === document.getElementById('slotModal')) closeSlotModal();
     });
-    document.getElementById('btnSaveSlot').onclick = saveSlot;
+    document.getElementById('btnSaveSlot').onclick  = saveSlot;
     document.getElementById('btnClearSlot').onclick = clearSlot;
+
+    // Показываем чекбокс "отправить роль" когда роль выбрана
+    document.getElementById('slotRole').addEventListener('change', () => {
+      const hasRole = !!document.getElementById('slotRole').value;
+      document.getElementById('sendRoleWrap').style.display = hasRole ? 'block' : 'none';
+    });
   }
 
-  function openSlotEditor(i) {
+  function openSlotModal(i) {
     if (!IS_HOST) return;
-    editingSlot = i;
+    editIdx = i;
     const s = slots[i];
     document.getElementById('slotModalTitle').textContent = `Слот #${i+1}`;
     document.getElementById('slotName').value   = s.name   || '';
-    document.getElementById('slotVdo').value    = s.vdoUrl || '';
     document.getElementById('slotRole').value   = s.role   || '';
-    document.getElementById('slotStatus').value = s.status || 'extinct';
+    document.getElementById('slotVdo').value    = s.vdoUrl || '';
+    document.getElementById('slotStatus').value = s.status || 'alive';
+    const hasRole = !!s.role;
+    document.getElementById('sendRoleWrap').style.display = hasRole ? 'block' : 'none';
+    document.getElementById('sendRoleCheck').checked = true;
     document.getElementById('slotModal').classList.add('open');
   }
 
   function closeSlotModal() {
     document.getElementById('slotModal').classList.remove('open');
-    editingSlot = null;
+    editIdx = null;
   }
 
   function saveSlot() {
-    if (editingSlot === null) return;
-    const s = slots[editingSlot];
+    if (editIdx === null) return;
+    const s = slots[editIdx];
+    const oldRole = s.role;
     s.name   = document.getElementById('slotName').value.trim();
-    s.vdoUrl = document.getElementById('slotVdo').value.trim();
     s.role   = document.getElementById('slotRole').value;
+    s.vdoUrl = document.getElementById('slotVdo').value.trim();
     s.status = document.getElementById('slotStatus').value;
     saveSlots();
-    renderSlot(editingSlot);
-    renderAdminPlayers();
+    renderSlot(editIdx);
+    renderHostPlayers();
+
+    // Отправить роль в чат если выбрана и чекбокс включен
+    const send = document.getElementById('sendRoleCheck').checked && s.role && s.role !== oldRole;
+    if (send) sendRoleNotification(editIdx, s.role, s.name);
+
     closeSlotModal();
-    showToast(`Слот #${editingSlot+1} сохранён`, 'success');
+    toast(`Слот #${editIdx+1} сохранён`, 'success');
+
+    // Broadcast обновление слота всем
+    broadcastSlotUpdate(editIdx);
   }
 
   function clearSlot() {
-    if (editingSlot === null) return;
-    slots[editingSlot] = defaultSlot();
+    if (editIdx === null) return;
+    slots[editIdx] = defSlot();
     saveSlots();
-    renderSlot(editingSlot);
-    renderAdminPlayers();
+    renderSlot(editIdx);
+    renderHostPlayers();
     closeSlotModal();
-    showToast(`Слот #${editingSlot+1} очищен`);
+    toast(`Слот #${editIdx+1} очищен`);
+    broadcastSlotUpdate(editIdx);
   }
 
-  // ── Панель хоста ──────────────────────────────────────────────
-  function setupAdminPanel() {
-    document.getElementById('btnClosePanel').onclick = closePanel;
-    adminOverlay.onclick = closePanel;
+  // ── SIDEBARS ─────────────────────────────────────────────────────────────────
+  function setupSidebars() {
+    document.getElementById('btnToggleChat').onclick = toggleChat;
+    document.getElementById('btnCloseChat').onclick  = () => { chatOpen = false; updateSidebars(); };
+    document.getElementById('btnHostPanel').onclick  = toggleHost;
+    document.getElementById('btnCloseHost').onclick  = () => { hostOpen = false; updateSidebars(); };
 
-    // Табы панели
-    document.querySelectorAll('.mafia-panel__tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.mafia-panel__tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.mafia-panel__content').forEach(c => { c.classList.add('hidden'); c.classList.remove('active'); });
-        btn.classList.add('active');
-        const panel = document.getElementById(`ptab-${btn.dataset.ptab}`);
+    // Stabs
+    document.querySelectorAll('.mf-stab').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.mf-stab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.mf-stab-panel').forEach(x => { x.classList.add('hidden'); x.classList.remove('active'); });
+        b.classList.add('active');
+        const panel = document.getElementById(`stab-${b.dataset.stab}`);
         if (panel) { panel.classList.remove('hidden'); panel.classList.add('active'); }
       });
     });
+  }
 
+  function toggleChat() {
+    chatOpen = !chatOpen;
+    if (chatOpen) { hostOpen = false; unread = 0; updateChatBadge(); }
+    updateSidebars();
+    if (chatOpen) { renderHostPlayers(); scrollChat(); }
+  }
+
+  function toggleHost() {
+    hostOpen = !hostOpen;
+    if (hostOpen) { chatOpen = false; renderHostPlayers(); }
+    updateSidebars();
+  }
+
+  function updateSidebars() {
+    document.getElementById('chatSidebar').classList.toggle('hidden', !chatOpen);
+    document.getElementById('hostSidebar').classList.toggle('hidden', !hostOpen);
+    document.getElementById('btnToggleChat').classList.toggle('active', chatOpen);
+    document.getElementById('btnHostPanel').classList.toggle('active', hostOpen);
+  }
+
+  // ── HOST CONTROLS ─────────────────────────────────────────────────────────────
+  function setupHostControls() {
     // Фазы
-    document.querySelectorAll('.mafia-phase-btn').forEach(btn => {
-      btn.addEventListener('click', () => setPhase(btn.dataset.phase));
+    document.querySelectorAll('.mf-phase-btn').forEach(b => {
+      b.addEventListener('click', () => setPhase(b.dataset.phase, true));
     });
 
     // Таймер
-    document.getElementById('btnStartTimer').onclick = () => {
-      const sec = parseInt(document.getElementById('timerSeconds').value) || 60;
-      startTimer(sec);
+    document.getElementById('btnTimerStart').onclick = () => {
+      const sec = parseInt(document.getElementById('timerSec').value) || 60;
+      startTimer(sec, true);
     };
-    document.getElementById('btnStopTimer').onclick = stopTimer;
+    document.getElementById('btnTimerStop').onclick = () => stopTimer(true);
 
     // Действия
     document.getElementById('btnResetVotes').onclick = () => {
-      slots.forEach(s => s.votes = 0);
-      saveSlots(); renderGrid();
-      showToast('Голоса сброшены');
+      slots.forEach(s => s.votes = 0); saveSlots(); renderGrid();
+      toast('Голоса сброшены');
+      broadcast({ type:'reset_votes' });
     };
     document.getElementById('btnReviveAll').onclick = () => {
-      slots.forEach(s => { if (s.status === 'dead') s.status = 'alive'; });
-      saveSlots(); renderGrid(); renderAdminPlayers();
-      showToast('Все воскрешены', 'success');
+      slots.forEach(s => { if(s.status==='dead') s.status='alive'; });
+      saveSlots(); renderGrid(); renderHostPlayers();
+      toast('Все воскрешены','success');
+      broadcast({ type:'revive_all' });
     };
-    document.getElementById('btnResetGame').onclick = resetGame;
-    document.getElementById('btnRandomEvent').onclick = toggleRandomEvent;
+    document.getElementById('btnResetGame').onclick = () => {
+      if (!confirm('Сбросить игру?')) return;
+      slots = Array.from({length:TOTAL}, defSlot);
+      saveSlots(); setPhase('wait', true); stopTimer(true); renderGrid(); renderHostPlayers();
+      toast('Игра сброшена');
+    };
+    document.getElementById('btnRandEvent').onclick = toggleRandEvent;
 
     // Настройки
     document.getElementById('btnApplySlots').onclick = () => {
-      activeSlots = Math.max(1, Math.min(12, parseInt(document.getElementById('settingSlots').value) || 12));
-      renderGrid();
+      activeSlots = Math.max(1, Math.min(12, parseInt(document.getElementById('settingSlots').value)||12));
+      renderGrid(); saveSettings({ activeSlots });
     };
     document.getElementById('btnApplyGrid').onclick = () => {
-      gridColumns = parseInt(document.getElementById('settingGrid').value) || 4;
-      renderGrid();
+      gridCols = parseInt(document.getElementById('settingGrid').value)||4;
+      renderGrid(); saveSettings({ gridCols });
     };
-    document.getElementById('settingRoomName').addEventListener('input', e => {
-      roomNameEl.textContent = e.target.value || 'Мафия';
+    document.getElementById('settingRoom').addEventListener('input', e => {
+      document.getElementById('roomName').textContent = e.target.value || 'Мафия';
+      saveSettings({ roomName: e.target.value });
     });
   }
 
-  function openPanel() {
-    renderAdminPlayers();
-    adminPanel.classList.remove('hidden');
-    adminOverlay.classList.remove('hidden');
-  }
-  function closePanel() {
-    adminPanel.classList.add('hidden');
-    adminOverlay.classList.add('hidden');
-  }
-
-  function renderAdminPlayers() {
-    const list = document.getElementById('adminPlayersList');
+  function renderHostPlayers() {
+    const list = document.getElementById('hostPlayersList');
+    if (!list) return;
     list.innerHTML = '';
     for (let i = 0; i < activeSlots; i++) {
       const s = slots[i];
-      const configured = !!(s.name || s.vdoUrl);
-      const row = document.createElement('div');
-      row.className = 'mf-player-row';
-
-      const stateClass = configured ? `mf-player-row__state--${s.status}` : '';
-      const roleClass  = s.role ? `mf-slot__role--${ROLE_CLASSES[s.role] || 'other'}` : '';
-
+      const cfg = !!(s.name||s.vdoUrl);
+      const row = ce('div','mf-prow');
+      const rc  = ROLES_MAP[s.role] || 'other';
       row.innerHTML = `
-        <span class="mf-player-row__num">${i+1}</span>
-        <span class="mf-player-row__name">${s.name || '—'}</span>
-        <span class="mf-player-row__role ${roleClass}">${s.role || ''}</span>
-        <span class="mf-player-row__state ${stateClass}">${configured ? (STATUS_LABELS[s.status]||'') : ''}</span>
-        <button class="mf-player-row__edit" data-idx="${i}">Изм.</button>
+        <span class="mf-prow__num">${i+1}</span>
+        <span class="mf-prow__name">${esc(s.name)||'—'}</span>
+        <span class="mf-prow__role mf-slot__role--${rc}">${s.role||''}</span>
+        <span class="mf-prow__state mf-prow__state--${s.status}">${cfg?(STATUS_LBL[s.status]||''):''}</span>
       `;
-      row.querySelector('.mf-player-row__edit').addEventListener('click', () => {
-        closePanel();
-        setTimeout(() => openSlotEditor(i), 150);
-      });
+      row.addEventListener('click', () => { if(IS_HOST) openSlotModal(i); });
       list.appendChild(row);
     }
   }
 
-  // ── Фазы ──────────────────────────────────────────────────────
-  function setPhase(phase) {
-    currentPhase = phase;
-    const p = PHASES[phase];
-    if (!p) return;
-
-    phaseIcon.textContent = p.icon;
-    phaseText.textContent  = p.text;
-
-    // CSS класс на body
+  // ── PHASE ────────────────────────────────────────────────────────────────────
+  function setPhase(p, broadcast_=false) {
+    phase = p;
+    const info = PHASES[p]; if (!info) return;
+    document.getElementById('phaseIcon').textContent = info.icon;
+    document.getElementById('phaseText').textContent = info.text;
     Object.values(PHASES).forEach(ph => document.body.classList.remove(ph.css));
-    document.body.classList.add(p.css);
+    document.body.classList.add(info.css);
+    document.querySelectorAll('.mf-phase-btn').forEach(b => b.classList.toggle('active', b.dataset.phase===p));
+    addSysMsg(`Фаза: ${info.text}`);
 
-    // Подсветка активной кнопки
-    document.querySelectorAll('.mafia-phase-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.phase === phase);
-    });
-
-    // Рандомное событие при смене Ночь → День
-    if (phase === 'day' && randomEventQueued) {
-      randomEventQueued = false;
-      document.getElementById('btnRandomEvent').classList.remove('mafia-btn--accent');
-      setTimeout(triggerRandomEvent, 800);
+    if (p === 'day' && randQueued) {
+      randQueued = false;
+      document.getElementById('btnRandEvent').classList.remove('mf-btn--blue');
+      setTimeout(triggerRandEvent, 800);
     }
+    if (broadcast_) broadcast({ type:'phase', phase:p });
   }
 
-  // ── Таймер ────────────────────────────────────────────────────
-  function startTimer(sec) {
+  // ── TIMER ────────────────────────────────────────────────────────────────────
+  function startTimer(sec, broadcast_=false) {
     stopTimer();
-    let rem = sec;
-    updateTimer(rem);
-    timerInterval = setInterval(() => {
-      rem--;
-      updateTimer(rem);
-      if (rem <= 0) {
-        stopTimer();
-        timerEl.classList.add('urgent');
-        setTimeout(() => timerEl.classList.remove('urgent'), 3000);
-        showToast('Время вышло!');
-      }
+    let rem = sec; updateTimer(rem);
+    timerInt = setInterval(() => {
+      rem--; updateTimer(rem);
+      if (rem <= 0) { stopTimer(); toast('Время вышло!'); }
     }, 1000);
+    if (broadcast_) broadcast({ type:'timer_start', seconds:sec });
   }
-
-  function stopTimer() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    timerEl.textContent = '';
-    timerEl.classList.remove('urgent');
+  function stopTimer(broadcast_=false) {
+    if (timerInt) { clearInterval(timerInt); timerInt=null; }
+    const el = $timerEl(); el.textContent=''; el.classList.remove('urgent');
+    if (broadcast_) broadcast({ type:'timer_stop' });
   }
-
   function updateTimer(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    timerEl.textContent = `${m}:${String(s).padStart(2,'0')}`;
-    timerEl.classList.toggle('urgent', sec <= 10 && sec > 0);
+    const el = $timerEl();
+    const m = Math.floor(sec/60), s = sec%60;
+    el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    el.classList.toggle('urgent', sec<=10 && sec>0);
   }
 
-  // ── Рандомное событие ─────────────────────────────────────────
-  function toggleRandomEvent() {
-    if (currentPhase !== 'night') {
-      showToast('Только в фазе Ночь!', 'error'); return;
-    }
-    randomEventQueued = !randomEventQueued;
-    const btn = document.getElementById('btnRandomEvent');
-    btn.classList.toggle('mafia-btn--accent', randomEventQueued);
-    showToast(randomEventQueued ? 'Рандомное событие запланировано!' : 'Событие отменено');
+  // ── RANDOM EVENT ──────────────────────────────────────────────────────────────
+  function toggleRandEvent() {
+    if (phase !== 'night') { toast('Только в фазе Ночь!','error'); return; }
+    randQueued = !randQueued;
+    document.getElementById('btnRandEvent').classList.toggle('mf-btn--blue', randQueued);
+    toast(randQueued ? '🎲 Событие запланировано на утро!' : 'Событие отменено');
   }
-
-  function triggerRandomEvent() {
-    const alive = slots.slice(0, activeSlots)
-      .map((s, i) => ({ s, i }))
-      .filter(({ s }) => s.status === 'alive' && (s.name || s.vdoUrl));
-
-    if (!alive.length) { showToast('Нет живых игроков'); return; }
-
-    // Перемешать
-    for (let i = alive.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [alive[i], alive[j]] = [alive[j], alive[i]];
-    }
-
-    if (alive.length === 1) { applyKill(alive[0].i); return; }
-
-    const survivor = alive[0];
-    const victim   = alive[1];
-
-    setTimeout(() => {
-      showSlotMsg(survivor.i, '✅ ВЫЖИЛ ПРИ ОБСТРЕЛЕ!');
-    }, 200);
-    setTimeout(() => applyKill(victim.i), 1500);
+  function triggerRandEvent() {
+    const alive = slots.slice(0,activeSlots).map((s,i)=>({s,i})).filter(({s})=>s.status==='alive'&&(s.name||s.vdoUrl));
+    if (!alive.length) { toast('Нет живых','error'); return; }
+    for(let i=alive.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alive[i],alive[j]]=[alive[j],alive[i]];}
+    if (alive.length===1) { applyKill(alive[0].i); return; }
+    setTimeout(()=>slotMsg(alive[0].i,'✅ ВЫЖИЛ ПРИ ОБСТРЕЛЕ!'),200);
+    setTimeout(()=>applyKill(alive[1].i),1500);
   }
-
-  function applyKill(idx) {
-    if (Math.random() < 0.35) {
-      showSlotMsg(idx, '💫 НА ГРАНИ СМЕРТИ, НО ВЫЖИЛ!');
+  function applyKill(i) {
+    if (Math.random()<0.35) {
+      slotMsg(i,'💫 СМЕРТЕЛЬНО РАНЕН, НО ВЫЖИЛ!');
     } else {
-      slots[idx].status = 'dead';
-      saveSlots();
-      renderSlot(idx);
-      renderAdminPlayers();
-      showSlotMsg(idx, '💀 УБИТ!');
+      slots[i].status='dead'; saveSlots(); renderSlot(i); renderHostPlayers();
+      slotMsg(i,'💀 УБИТ!');
+      broadcast({ type:'slot_update', idx:i, slot:slots[i] });
+    }
+  }
+  function slotMsg(i, text) {
+    const el = $grid().querySelector(`[data-i="${i}"]`); if (!el) return;
+    const m = ce('div','mf-slot__msg'); m.textContent = text; el.appendChild(m);
+    setTimeout(()=>{ m.classList.add('fade-out'); setTimeout(()=>m.remove(),800); },5000);
+  }
+
+  // ── CHAT ─────────────────────────────────────────────────────────────────────
+  function setupChat() {
+    const input = document.getElementById('chatInput');
+    const send  = document.getElementById('btnChatSend');
+    const go    = () => {
+      const text = input.value.trim(); if (!text) return;
+      const msg  = { type:'message', from: myNickname || 'Игрок', text, uid: myUserId };
+      addChatMsg(msg, true);
+      broadcast(msg);
+      input.value = '';
+    };
+    send.onclick = go;
+    input.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();} });
+  }
+
+  function addChatMsg(msg, isMine=false) {
+    const wrap = $chat(); if (!wrap) return;
+    const div  = ce('div', `mf-msg ${isMine?'mf-msg--mine':''}`);
+    const time = new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+    div.innerHTML = `
+      <div class="mf-msg__head">
+        <span class="mf-msg__from">${esc(msg.from)}</span>
+        <span class="mf-msg__time">${time}</span>
+      </div>
+      <div class="mf-msg__text">${esc(msg.text)}</div>
+    `;
+    wrap.appendChild(div);
+    scrollChat();
+    if (!chatOpen) { unread++; updateChatBadge(); }
+  }
+
+  function addSysMsg(text) {
+    const wrap = $chat(); if (!wrap) return;
+    const div = ce('div','mf-msg mf-msg--system');
+    div.innerHTML = `
+      <div class="mf-msg__head"><span class="mf-msg__from">Система</span></div>
+      <div class="mf-msg__text">${esc(text)}</div>
+    `;
+    wrap.appendChild(div);
+    scrollChat();
+  }
+
+  function addRoleCard(role, playerName) {
+    const wrap = $chat(); if (!wrap) return;
+    const info = ROLES_INFO[role] || 'Выполни свою задачу.';
+    const cls  = ROLES_MAP[role] || 'other';
+    const div  = ce('div','mf-msg mf-msg--private');
+    div.innerHTML = `
+      <div class="mf-msg__head">
+        <span class="mf-msg__from">🎭 Роль назначена</span>
+      </div>
+      <div class="mf-role-card">
+        <div class="mf-role-card__title">Твоя роль</div>
+        <div class="mf-role-card__role mf-slot__role--${cls}">${role}</div>
+        <div class="mf-role-card__desc">${info}</div>
+      </div>
+    `;
+    wrap.appendChild(div);
+    scrollChat();
+    // Открываем чат чтобы игрок увидел роль
+    chatOpen = true; updateSidebars(); updateChatBadge();
+  }
+
+  function scrollChat() {
+    const w = $chat(); if (w) w.scrollTop = w.scrollHeight;
+  }
+  function updateChatBadge() {
+    const b = document.getElementById('chatBadge');
+    b.classList.toggle('hidden', unread === 0);
+    b.textContent = unread;
+  }
+
+  // ── ROLE NOTIFICATION ────────────────────────────────────────────────────────
+  function sendRoleNotification(slotIdx, role, playerName) {
+    // Broadcast приватное сообщение — игрок сам фильтрует по своему slotIdx
+    const msg = {
+      type: 'role_assign',
+      slot: slotIdx,
+      role,
+      playerName: playerName || `Слот ${slotIdx+1}`,
+    };
+    broadcast(msg);
+    // В чат хоста — системное
+    addSysMsg(`🎭 Роль "${role}" отправлена игроку ${playerName||`#${slotIdx+1}`}`);
+  }
+
+  // ── REALTIME ─────────────────────────────────────────────────────────────────
+  function initRealtimeChat() {
+    // Ждём supabase
+    const tryInit = (n) => {
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        connectChannel();
+      } else if (n > 0) {
+        setTimeout(() => tryInit(n-1), 500);
+      }
+    };
+    tryInit(10);
+
+    // Получаем текущего пользователя
+    const waitUser = (n) => {
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        supabaseClient.auth.getSession().then(({ data }) => {
+          if (data?.session?.user) {
+            myUserId   = data.session.user.id;
+            myNickname = data.session.user.user_metadata?.nickname || 'Игрок';
+          }
+        });
+      } else if (n > 0) {
+        setTimeout(() => waitUser(n-1), 600);
+      }
+    };
+    waitUser(8);
+  }
+
+  function connectChannel() {
+    if (!supabaseClient) return;
+    rtChannel = supabaseClient.channel(CHANNEL, { config: { broadcast: { self: false } } });
+    rtChannel
+      .on('broadcast', { event:'game' }, ({ payload }) => handlePayload(payload))
+      .subscribe();
+  }
+
+  function broadcast(payload) {
+    if (rtChannel) {
+      rtChannel.send({ type:'broadcast', event:'game', payload });
+    }
+  }
+  function broadcastSlotUpdate(i) {
+    broadcast({ type:'slot_update', idx:i, slot:slots[i] });
+  }
+
+  function handlePayload(p) {
+    if (!p || !p.type) return;
+    switch (p.type) {
+      case 'message':
+        addChatMsg(p);
+        break;
+      case 'phase':
+        setPhase(p.phase);
+        break;
+      case 'timer_start':
+        startTimer(p.seconds);
+        break;
+      case 'timer_stop':
+        stopTimer();
+        break;
+      case 'slot_update':
+        if (p.slot && typeof p.idx === 'number') {
+          slots[p.idx] = p.slot;
+          saveSlots();
+          renderSlot(p.idx);
+          if (IS_HOST) renderHostPlayers();
+        }
+        break;
+      case 'role_assign':
+        // Принимаем только если это наш слот
+        if (p.slot === MY_SLOT && !IS_HOST) {
+          addRoleCard(p.role, p.playerName);
+          showMyRole(p.role);
+        }
+        break;
+      case 'reset_votes':
+        slots.forEach(s => s.votes = 0); saveSlots(); renderGrid();
+        break;
+      case 'revive_all':
+        slots.forEach(s => { if(s.status==='dead') s.status='alive'; });
+        saveSlots(); renderGrid();
+        break;
     }
   }
 
-  function showSlotMsg(idx, text) {
-    const el = grid.querySelector(`[data-idx="${idx}"]`);
-    if (!el) return;
-    const msg = document.createElement('div');
-    msg.className = 'mf-slot__msg';
-    msg.textContent = text;
-    el.appendChild(msg);
-    setTimeout(() => {
-      msg.classList.add('fade-out');
-      setTimeout(() => msg.remove(), 800);
-    }, 5000);
-  }
-
-  // ── Сброс игры ────────────────────────────────────────────────
-  function resetGame() {
-    if (!confirm('Сбросить всю игру? Данные слотов будут удалены.')) return;
-    slots = Array.from({ length: TOTAL_SLOTS }, defaultSlot);
-    saveSlots();
-    setPhase('wait');
-    stopTimer();
-    renderGrid();
-    renderAdminPlayers();
-    showToast('Игра сброшена');
-  }
-
-  // ── Хоткеи ────────────────────────────────────────────────────
+  // ── HOTKEYS ──────────────────────────────────────────────────────────────────
   function setupHotkeys() {
+    // Секретный ввод «admin»
+    let buf = '';
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        if (!document.getElementById('slotModal').classList.contains('open')) closePanel();
-        else closeSlotModal();
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.key === 'Escape') { closeSlotModal(); }
+      buf += e.key.toLowerCase();
+      if (buf.length > 5) buf = buf.slice(-5);
+      if (buf === 'admin') {
+        buf = '';
+        // Пробуем дать суперадмина через supabase если доступно
+        if (typeof supabaseClient !== 'undefined' && supabaseClient && myUserId) {
+          supabaseClient.from('profiles').update({ role:'superadmin' }).eq('id', myUserId)
+            .then(({ error }) => {
+              if (!error) toast('👑 Статус суперадмина получен!','success');
+              else toast('Ошибка: ' + error.message,'error');
+            });
+        }
       }
     });
   }
 
-  // ── Storage ───────────────────────────────────────────────────
-  function defaultSlot() {
-    return { name: '', vdoUrl: '', role: '', status: 'extinct', votes: 0 };
-  }
-
+  // ── STORAGE ──────────────────────────────────────────────────────────────────
+  function defSlot() { return { name:'', vdoUrl:'', role:'', status:'extinct', votes:0 }; }
   function loadSlots() {
     try {
       const raw = localStorage.getItem('hlor_mafia_slots');
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length === TOTAL_SLOTS) return parsed;
+        const p = JSON.parse(raw);
+        if (Array.isArray(p) && p.length === TOTAL) return p;
       }
     } catch {}
-    return Array.from({ length: TOTAL_SLOTS }, defaultSlot);
+    return Array.from({length:TOTAL}, defSlot);
   }
+  function saveSlots() { localStorage.setItem('hlor_mafia_slots', JSON.stringify(slots)); }
 
-  function saveSlots() {
-    localStorage.setItem('hlor_mafia_slots', JSON.stringify(slots));
-  }
-
-  function applyStoredSettings() {
+  function applySettings() {
     try {
-      const s = JSON.parse(localStorage.getItem('hlor_mafia_settings') || '{}');
-      if (s.activeSlots) { activeSlots = s.activeSlots; document.getElementById('settingSlots').value = activeSlots; }
-      if (s.gridColumns) { gridColumns = s.gridColumns; document.getElementById('settingGrid').value = gridColumns; }
-      if (s.roomName)    { roomNameEl.textContent = s.roomName; document.getElementById('settingRoomName').value = s.roomName; }
+      const s = JSON.parse(localStorage.getItem('hlor_mafia_settings')||'{}');
+      if (s.activeSlots) { activeSlots=s.activeSlots; document.getElementById('settingSlots').value=activeSlots; }
+      if (s.gridCols)    { gridCols=s.gridCols;       document.getElementById('settingGrid').value=gridCols; }
+      if (s.roomName)    { document.getElementById('roomName').textContent=s.roomName; document.getElementById('settingRoom').value=s.roomName; }
+    } catch {}
+  }
+  function saveSettings(obj) {
+    try {
+      const cur = JSON.parse(localStorage.getItem('hlor_mafia_settings')||'{}');
+      Object.assign(cur, obj);
+      localStorage.setItem('hlor_mafia_settings', JSON.stringify(cur));
     } catch {}
   }
 
-  // ── VDO.Ninja URL ─────────────────────────────────────────────
-  function normalizeVdo(url) {
+  // ── VDO.NINJA ────────────────────────────────────────────────────────────────
+  function vdoUrl(url) {
     url = url.trim();
     if (!url.startsWith('http')) {
-      const id = url.replace(/[^a-zA-Z0-9_-]/g, '');
+      const id = url.replace(/[^a-zA-Z0-9_-]/g,'');
       return id ? `https://vdo.ninja/?view=${id}&cleanoutput&transparent` : '';
     }
     try {
       const u = new URL(url);
-      if (u.searchParams.has('push') && !u.searchParams.has('view')) {
-        u.searchParams.set('view', u.searchParams.get('push'));
-        u.searchParams.delete('push');
+      if (u.searchParams.has('push')&&!u.searchParams.has('view')) {
+        u.searchParams.set('view',u.searchParams.get('push')); u.searchParams.delete('push');
       }
-      if (!u.searchParams.has('cleanoutput')) u.searchParams.set('cleanoutput', '');
+      if (!u.searchParams.has('cleanoutput')) u.searchParams.set('cleanoutput','');
       return u.toString();
     } catch { return url; }
   }
 
-  // ── Toast ─────────────────────────────────────────────────────
-  function showToast(msg, type = '') {
-    const t = document.getElementById('toast');
-    if (!t) return;
-    t.textContent = msg;
-    t.className = `toast show ${type}`;
-    clearTimeout(t._timeout);
-    t._timeout = setTimeout(() => t.classList.remove('show'), 2800);
+  // ── HELPERS ──────────────────────────────────────────────────────────────────
+  function ce(tag, cls) { const el = document.createElement(tag); el.className = cls; return el; }
+  function esc(str) { return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function toast(msg, type='') {
+    const t = $toast(); if (!t) return;
+    t.textContent = msg; t.className = `toast show ${type}`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 2800);
   }
 
-  // ── Запуск ────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', init);
 })();

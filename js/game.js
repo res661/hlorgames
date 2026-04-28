@@ -359,9 +359,13 @@ async function handleCreateLobby(e) {
     if (error) throw error;
 
     showToast(`Комната «${name}» создана!`, 'success');
-    // Переходим на страницу лобби
+    // Мафия → сразу на игровую страницу как хост
     setTimeout(() => {
-      window.location.href = `lobby.html?code=${code}`;
+      if (gameType === 'mafia') {
+        window.location.href = `mafia-play.html?code=${code}&role=host`;
+      } else {
+        window.location.href = `lobby.html?code=${code}`;
+      }
     }, 500);
   } catch (err) {
     console.error('[Game] Ошибка создания лобби:', err);
@@ -563,7 +567,13 @@ async function joinLobby(code, hasPassword) {
     }
 
     showToast(`Вхожу в комнату ${code}!`, 'success');
+    // Для Мафии — определяем номер слота (позиция в списке) и идём на игровую страницу
+    const mySlotIdx = players.findIndex(p => p.id === currentUser.id);
     setTimeout(() => {
+      if (gameType === 'mafia') {
+        window.location.href = `mafia-play.html?code=${code}&role=player&slot=${mySlotIdx}`;
+        return;
+      }
       window.location.href = `lobby.html?code=${code}`;
     }, 400);
   } catch (err) {

@@ -11,18 +11,18 @@
 <body class="mafia-body">
 
   <!-- ===== ТОПБАР ===== -->
-  <header class="mafia-topbar" id="mafiaTopbar">
+  <header class="mafia-topbar">
     <div class="mafia-topbar__left">
       <a href="index.html" class="mafia-logo">
-        <img src="img/logo.png" alt="" style="width:22px;height:22px;object-fit:contain;" />
+        <img src="img/logo.png" alt="" style="width:20px;height:20px;object-fit:contain;"/>
         <span>HLOR GAMES</span>
       </a>
-      <div class="mafia-divider"></div>
-      <div class="mafia-phase" id="phaseBar">
-        <span class="mafia-phase__icon" id="phaseIcon">⏳</span>
-        <span class="mafia-phase__text" id="phaseText">Ожидание...</span>
-      </div>
-      <div class="mafia-timer" id="timerEl"></div>
+      <div class="mafia-vr"></div>
+      <span class="mafia-phase" id="phaseBar">
+        <span id="phaseIcon">⏳</span>
+        <span id="phaseText">Ожидание...</span>
+      </span>
+      <span class="mafia-timer" id="timerEl"></span>
     </div>
 
     <div class="mafia-topbar__center">
@@ -30,127 +30,145 @@
     </div>
 
     <div class="mafia-topbar__right">
-      <!-- Роль текущего игрока (только для игрока) -->
-      <div class="mafia-my-role hidden" id="myRoleWrap">
-        <span class="mafia-my-role__label">Твоя роль</span>
-        <span class="mafia-my-role__value" id="myRoleValue">—</span>
+      <!-- Роль (игрок) -->
+      <div class="mf-role-badge hidden" id="myRoleWrap">
+        <span class="mf-role-badge__label">Роль</span>
+        <span class="mf-role-badge__val" id="myRoleVal">—</span>
       </div>
-
-      <!-- Кнопки управления (только хост) -->
-      <div class="mafia-host-controls hidden" id="hostTopControls">
-        <button class="mafia-btn mafia-btn--ghost" id="btnAdminPanel">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Панель хоста
-        </button>
+      <!-- Хост-метка -->
+      <div class="mf-host-badge hidden" id="hostBadge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Ведущий
       </div>
-
-      <a href="#" onclick="window.history.back()" class="mafia-btn mafia-btn--ghost">← Лобби</a>
+      <!-- Кнопки хоста -->
+      <button class="mf-top-btn hidden" id="btnHostPanel">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Панель
+      </button>
+      <button class="mf-top-btn" id="btnToggleChat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Чат
+        <span class="mf-chat-badge hidden" id="chatBadge">0</span>
+      </button>
+      <a href="javascript:history.back()" class="mf-top-btn">← Назад</a>
     </div>
   </header>
 
-  <!-- ===== СЕТКА КАМЕР ===== -->
-  <main class="mafia-main">
-    <div class="mafia-grid" id="mafiaGrid">
-      <!-- Слоты генерируются через JS -->
-    </div>
-  </main>
+  <!-- ===== ОСНОВНАЯ ЗОНА ===== -->
+  <div class="mafia-workspace" id="workspace">
 
-  <!-- ===== ПАНЕЛЬ ХОСТА (правая боковая) ===== -->
-  <div class="mafia-panel-overlay hidden" id="adminPanelOverlay"></div>
-  <aside class="mafia-panel hidden" id="adminPanel">
-    <div class="mafia-panel__header">
-      <h3 class="mafia-panel__title">Панель хоста</h3>
-      <button class="mafia-panel__close" id="btnClosePanel">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
+    <!-- Сетка камер -->
+    <main class="mafia-main" id="mafiaMain">
+      <div class="mafia-grid" id="mafiaGrid"></div>
+    </main>
 
-    <div class="mafia-panel__tabs">
-      <button class="mafia-panel__tab active" data-ptab="players">Игроки</button>
-      <button class="mafia-panel__tab" data-ptab="phases">Фазы</button>
-      <button class="mafia-panel__tab" data-ptab="settings">Настройки</button>
-    </div>
-
-    <!-- Вкладка: Игроки -->
-    <div class="mafia-panel__content active" id="ptab-players">
-      <p class="mafia-panel__hint">Назначьте роли и VDO-ссылки игрокам</p>
-      <div id="adminPlayersList"></div>
-    </div>
-
-    <!-- Вкладка: Фазы и управление -->
-    <div class="mafia-panel__content hidden" id="ptab-phases">
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Фаза игры</div>
-        <div class="mafia-phase-btns">
-          <button class="mafia-phase-btn" data-phase="day">☀️ День</button>
-          <button class="mafia-phase-btn" data-phase="night">🌙 Ночь</button>
-          <button class="mafia-phase-btn" data-phase="vote">🗳 Голосование</button>
-          <button class="mafia-phase-btn" data-phase="wait">⏳ Ожидание</button>
-        </div>
+    <!-- Правая панель: чат -->
+    <aside class="mf-sidebar mf-sidebar--chat hidden" id="chatSidebar">
+      <div class="mf-sidebar__head">
+        <span class="mf-sidebar__title">Чат</span>
+        <button class="mf-sidebar__close" id="btnCloseChat">✕</button>
       </div>
-
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Таймер (секунды)</div>
-        <div class="mafia-timer-row">
-          <input type="number" class="mafia-input" id="timerSeconds" value="60" min="5" max="600" />
-          <button class="mafia-btn mafia-btn--accent" id="btnStartTimer">Старт</button>
-          <button class="mafia-btn mafia-btn--ghost" id="btnStopTimer">Стоп</button>
-        </div>
-      </div>
-
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Быстрые действия</div>
-        <div class="mafia-action-btns">
-          <button class="mafia-btn mafia-btn--ghost" id="btnResetVotes">Сбросить голоса</button>
-          <button class="mafia-btn mafia-btn--ghost" id="btnReviveAll">Воскресить всех</button>
-          <button class="mafia-btn mafia-btn--danger" id="btnResetGame">Сбросить игру</button>
-        </div>
-      </div>
-
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Ночное событие</div>
-        <button class="mafia-btn mafia-btn--ghost" id="btnRandomEvent" style="width:100%">
-          🎲 Рандомное событие
+      <div class="mf-chat-messages" id="chatMessages"></div>
+      <div class="mf-chat-input-row">
+        <input class="mf-chat-input" id="chatInput" placeholder="Сообщение..." maxlength="200" />
+        <button class="mf-chat-send" id="btnChatSend">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
-        <p style="font-size:0.74rem;color:var(--mf-muted);margin-top:6px;">Только в фазе Ночь. Сработает утром.</p>
       </div>
-    </div>
+    </aside>
 
-    <!-- Вкладка: Настройки -->
-    <div class="mafia-panel__content hidden" id="ptab-settings">
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Название комнаты</div>
-        <input type="text" class="mafia-input" id="settingRoomName" placeholder="Мафия" />
+    <!-- Правая панель: хост-контроль -->
+    <aside class="mf-sidebar mf-sidebar--host hidden" id="hostSidebar">
+      <div class="mf-sidebar__head">
+        <span class="mf-sidebar__title">Панель ведущего</span>
+        <button class="mf-sidebar__close" id="btnCloseHost">✕</button>
       </div>
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Активных слотов</div>
-        <div class="mafia-timer-row">
-          <input type="number" class="mafia-input" id="settingSlots" min="1" max="12" value="12" />
-          <button class="mafia-btn mafia-btn--accent" id="btnApplySlots">Применить</button>
+      <div class="mf-sidebar__body">
+
+        <div class="mf-stabs">
+          <button class="mf-stab active" data-stab="players">Игроки</button>
+          <button class="mf-stab" data-stab="phases">Фазы</button>
+          <button class="mf-stab" data-stab="settings">Настройки</button>
         </div>
-      </div>
-      <div class="mafia-ctrl-group">
-        <div class="mafia-ctrl-label">Сетка</div>
-        <select class="mafia-input" id="settingGrid">
-          <option value="4">4 в ряд (4×3)</option>
-          <option value="3">3 в ряд (3×4)</option>
-          <option value="6">6 в ряд (6×2)</option>
-          <option value="2">2 в ряд (2×6)</option>
-        </select>
-        <button class="mafia-btn mafia-btn--accent" id="btnApplyGrid" style="margin-top:8px;width:100%">Применить сетку</button>
-      </div>
-    </div>
-  </aside>
 
-  <!-- ===== МОДАЛ: Настройка слота (хост) ===== -->
+        <!-- Игроки -->
+        <div class="mf-stab-panel active" id="stab-players">
+          <p class="mf-hint">Нажмите на игрока для настройки</p>
+          <div id="hostPlayersList"></div>
+        </div>
+
+        <!-- Фазы -->
+        <div class="mf-stab-panel hidden" id="stab-phases">
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Фаза игры</div>
+            <div class="mf-phase-grid">
+              <button class="mf-phase-btn" data-phase="day">☀️ День</button>
+              <button class="mf-phase-btn" data-phase="night">🌙 Ночь</button>
+              <button class="mf-phase-btn" data-phase="vote">🗳 Голосование</button>
+              <button class="mf-phase-btn" data-phase="wait">⏳ Ожидание</button>
+            </div>
+          </div>
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Таймер (сек)</div>
+            <div class="mf-row">
+              <input type="number" class="mf-input" id="timerSec" value="60" min="5" max="600"/>
+              <button class="mf-btn mf-btn--blue" id="btnTimerStart">▶</button>
+              <button class="mf-btn mf-btn--dim"  id="btnTimerStop">■</button>
+            </div>
+          </div>
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Действия</div>
+            <div class="mf-col">
+              <button class="mf-btn mf-btn--dim" id="btnResetVotes">Сбросить голоса</button>
+              <button class="mf-btn mf-btn--dim" id="btnReviveAll">Воскресить всех</button>
+              <button class="mf-btn mf-btn--red"  id="btnResetGame">Сбросить игру</button>
+            </div>
+          </div>
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Ночное событие</div>
+            <button class="mf-btn mf-btn--dim" id="btnRandEvent" style="width:100%">🎲 Рандомное событие</button>
+          </div>
+        </div>
+
+        <!-- Настройки -->
+        <div class="mf-stab-panel hidden" id="stab-settings">
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Название комнаты</div>
+            <input class="mf-input" id="settingRoom" placeholder="Мафия"/>
+          </div>
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Активных слотов</div>
+            <div class="mf-row">
+              <input type="number" class="mf-input" id="settingSlots" value="12" min="1" max="12"/>
+              <button class="mf-btn mf-btn--blue" id="btnApplySlots">OK</button>
+            </div>
+          </div>
+          <div class="mf-ctrl">
+            <div class="mf-ctrl__label">Сетка</div>
+            <select class="mf-input" id="settingGrid">
+              <option value="4">4 в ряд</option>
+              <option value="3">3 в ряд</option>
+              <option value="6">6 в ряд</option>
+              <option value="2">2 в ряд</option>
+            </select>
+            <button class="mf-btn mf-btn--blue" id="btnApplyGrid" style="width:100%;margin-top:6px">Применить сетку</button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ===== МОДАЛ: Настройка слота ===== -->
   <div class="modal-overlay" id="slotModal">
-    <div class="modal" style="max-width:480px">
+    <div class="modal" style="max-width:460px">
       <button class="modal__close" id="btnCloseSlot">✕</button>
       <h3 class="modal__title" id="slotModalTitle">Слот #1</h3>
 
       <div class="form-group">
         <label class="form-label">Имя игрока</label>
-        <input type="text" class="form-input" id="slotName" placeholder="Имя..." maxlength="30" />
+        <input class="form-input" id="slotName" placeholder="Имя..." maxlength="30"/>
       </div>
       <div class="form-group">
         <label class="form-label">Роль</label>
@@ -162,12 +180,13 @@
           <option value="Доктор">💊 Доктор</option>
           <option value="Маньяк">🔪 Маньяк</option>
           <option value="Любовница">💋 Любовница</option>
+          <option value="Комиссар">🎖 Комиссар</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">VDO.Ninja ссылка</label>
-        <input type="text" class="form-input" id="slotVdo" placeholder="https://vdo.ninja/?view=ID" />
-        <span class="form-hint">Вставьте ссылку или просто ID стрима</span>
+        <input class="form-input" id="slotVdo" placeholder="https://vdo.ninja/?view=ID"/>
+        <span class="form-hint">Или просто вставьте Stream ID</span>
       </div>
       <div class="form-group">
         <label class="form-label">Статус</label>
@@ -177,8 +196,16 @@
           <option value="extinct">Выбыл</option>
         </select>
       </div>
-      <div class="form-error" id="slotError"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
+
+      <!-- Отправить роль в чат (только если роль выбрана) -->
+      <div class="mf-send-role-wrap" id="sendRoleWrap" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--mf-muted);cursor:pointer">
+          <input type="checkbox" id="sendRoleCheck" checked/>
+          Отправить роль игроку в чат
+        </label>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn--primary" style="flex:1" id="btnSaveSlot">Сохранить</button>
         <button class="btn btn--ghost" id="btnClearSlot">Очистить</button>
       </div>
