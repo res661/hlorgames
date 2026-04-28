@@ -208,7 +208,10 @@ async function loadStats() {
 
 // ─── СЕКРЕТНЫЙ ТРИГГЕР АДМИН-ПАНЕЛИ ──────────────────────────────────────────
 
-let _adminBuf = '';
+// Секретный переключатель — "admin" на клавиатуре
+let _adminBuf      = '';
+let _adminUnlocked = false; // локальный флаг видимости кнопки
+
 document.addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
     _adminBuf = '';
@@ -216,14 +219,51 @@ document.addEventListener('keydown', (e) => {
   }
   _adminBuf += e.key.toLowerCase();
   if (_adminBuf.length > 5) _adminBuf = _adminBuf.slice(-5);
+
   if (_adminBuf === 'admin') {
     _adminBuf = '';
-    if (currentUser && ['admin', 'superadmin'].includes(currentUser.role)) {
-      window.location.href = 'admin.html';
-    } else if (!currentUser) {
+    if (!currentUser) {
       showToast('Сначала войди в аккаунт', 'error');
+      return;
+    }
+
+    _adminUnlocked = !_adminUnlocked;
+
+    if (_adminUnlocked) {
+      // Добавляем кнопку "Админ панель" в дропдаун если её нет
+      const dropdown = document.getElementById('userDropdown');
+      if (dropdown && !dropdown.querySelector('#secretAdminBtn')) {
+        const divider = document.createElement('div');
+        divider.className = 'user-dropdown__divider';
+
+        const btn = document.createElement('button');
+        btn.id = 'secretAdminBtn';
+        btn.className = 'user-dropdown__item';
+        btn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Админ панель
+        `;
+        btn.onclick = () => { window.location.href = 'admin.html'; };
+
+        // Вставляем перед кнопкой Выйти
+        const logoutBtn = dropdown.querySelector('.user-dropdown__item--danger');
+        if (logoutBtn) {
+          dropdown.insertBefore(divider, logoutBtn);
+          dropdown.insertBefore(btn, logoutBtn);
+        } else {
+          dropdown.appendChild(divider);
+          dropdown.appendChild(btn);
+        }
+      }
+      showToast('🔑 Режим администратора включён', 'success');
     } else {
-      showToast('Нет доступа к панели администратора', 'error');
+      // Убираем кнопку и divider
+      const btn = document.getElementById('secretAdminBtn');
+      if (btn) {
+        btn.previousElementSibling?.remove(); // divider
+        btn.remove();
+      }
+      showToast('Режим администратора выключен');
     }
   }
 });
