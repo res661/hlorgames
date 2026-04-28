@@ -2,10 +2,10 @@
    LOBBY PAGE — CSS
    ============================================= */
 
-:root { --game-color: #3b82f6; }
+:root { --game-color: var(--lime, #c8ff4e); }
 
 body.lobby-body {
-  background: var(--bg, #0b0e1a);
+  background: var(--bg, #080b08);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -506,7 +506,7 @@ body.lobby-body {
   align-items: center;
   justify-content: space-between;
   padding: 11px 14px;
-  background: var(--bg, #0b0e1a);
+  background: var(--bg, #080b08);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius, 6px);
   color: #e8eaed;
@@ -517,14 +517,14 @@ body.lobby-body {
   transition: border-color 0.18s;
   text-align: left;
 }
-.custom-select__btn svg { color: #7a8599; flex-shrink: 0; transition: transform 0.2s ease; }
-.custom-select.open .custom-select__btn { border-color: var(--game-color); }
+.custom-select__btn svg { color: var(--text-muted, #6b7870); flex-shrink: 0; transition: transform 0.2s ease; }
+.custom-select.open .custom-select__btn { border-color: var(--lime, #c8ff4e); box-shadow: 0 0 0 1px rgba(200,255,78,0.12); }
 .custom-select.open .custom-select__btn svg { transform: rotate(180deg); }
 
 .custom-select__dropdown {
   position: absolute;
   top: calc(100% + 6px); left: 0; right: 0;
-  background: #131726;
+  background: var(--bg-card-2, #141914);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius, 6px);
   padding: 4px;
@@ -538,20 +538,20 @@ body.lobby-body {
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
 .custom-select__dropdown::-webkit-scrollbar { width: 4px; }
-.custom-select__dropdown::-webkit-scrollbar-thumb { background: #1e2a40; border-radius: 2px; }
+.custom-select__dropdown::-webkit-scrollbar-thumb { background: #1a2a1a; border-radius: 2px; }
 .custom-select.open .custom-select__dropdown { opacity: 1; transform: translateY(0); pointer-events: all; }
 
 .custom-select__item {
   width: 100%; text-align: left;
   padding: 9px 12px;
   background: none; border: none; border-radius: 4px;
-  color: #7a8599; font-size: 0.875rem; font-family: inherit;
+  color: var(--text-muted, #6b7870); font-size: 0.875rem; font-family: inherit;
   cursor: pointer; transition: background 0.12s, color 0.12s; display: block;
 }
-.custom-select__item:hover { background: rgba(255,255,255,0.06); color: #e8eaed; }
+.custom-select__item:hover { background: rgba(200,255,78,0.08); color: var(--text, #f0f2ed); }
 .custom-select__item.active {
-  background: color-mix(in srgb, var(--game-color) 15%, transparent);
-  color: var(--game-color); font-weight: 600;
+  background: rgba(200,255,78,0.14);
+  color: var(--lime, #c8ff4e); font-weight: 600;
 }
 
 /* ── RESPONSIVE ── */
