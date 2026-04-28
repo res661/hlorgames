@@ -3,7 +3,7 @@
    ============================================= */
 
 body.admin-body {
-  background: #0b0b10;
+  background: var(--bg, #07080f);
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -20,7 +20,7 @@ body.admin-body {
 .admin-sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border-right: 1px solid rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
@@ -84,8 +84,8 @@ body.admin-body {
 }
 
 .admin-nav__item.active {
-  background: rgba(124,77,255,0.12);
-  color: #a78bfa;
+  background: rgba(59,130,246,0.1);
+  color: #93c5fd;
   border-left-color: var(--accent);
 }
 
@@ -108,19 +108,22 @@ body.admin-body {
 
 .a-user-avatar {
   width: 30px; height: 30px;
-  border-radius: 50%;
-  background: var(--accent);
+  border-radius: var(--radius, 6px);
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.8rem;
-  color: white;
+  color: var(--accent, #3b82f6);
   flex-shrink: 0;
 }
 
 .a-user-avatar--admin {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.3);
+  color: #f59e0b;
 }
 
 .a-user-name {
@@ -146,7 +149,7 @@ body.admin-body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0b0b10;
+  background: var(--bg, #07080f);
 }
 
 /* ── TOPBAR ── */
@@ -156,7 +159,7 @@ body.admin-body {
   align-items: center;
   gap: 1rem;
   padding: 0.9rem 1.5rem;
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   position: sticky;
   top: 0;
@@ -208,7 +211,7 @@ body.admin-body {
 }
 
 .a-stat-card {
-  background: #16161f;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: var(--radius);
   padding: 1.25rem 1rem;
@@ -221,9 +224,9 @@ body.admin-body {
   box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 
-.a-stat-card--green  { border-color: rgba(34,197,94,0.25); }
-.a-stat-card--purple { border-color: rgba(124,77,255,0.25); }
-.a-stat-card--gold   { border-color: rgba(251,191,36,0.25); }
+.a-stat-card--green  { border-color: rgba(16,185,129,0.2); }
+.a-stat-card--purple { border-color: rgba(59,130,246,0.2); }
+.a-stat-card--gold   { border-color: rgba(245,158,11,0.2); }
 
 .a-stat-icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
 
@@ -243,7 +246,7 @@ body.admin-body {
 /* ── CARD ── */
 
 .a-card {
-  background: #16161f;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: var(--radius);
   overflow: hidden;
@@ -348,11 +351,11 @@ body.admin-body {
 .a-btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 
 .a-btn-accent {
-  background: rgba(124,77,255,0.15);
-  color: #a78bfa;
-  border-color: rgba(124,77,255,0.3);
+  background: rgba(59,130,246,0.1);
+  color: #93c5fd;
+  border-color: rgba(59,130,246,0.25);
 }
-.a-btn-accent:hover { background: rgba(124,77,255,0.25); }
+.a-btn-accent:hover { background: rgba(59,130,246,0.18); }
 
 .a-btn-danger {
   background: rgba(239,68,68,0.12);
@@ -403,7 +406,7 @@ body.admin-body {
 
 .a-self-tag {
   font-size: 0.7rem;
-  color: #a78bfa;
+  color: #93c5fd;
   font-weight: 500;
   margin-left: 0.25rem;
 }
@@ -432,17 +435,17 @@ body.admin-body {
   line-height: 1.6;
 }
 
-.a-link { color: #a78bfa; text-decoration: underline; }
-.a-link:hover { color: #c4b5fd; }
+.a-link { color: #93c5fd; text-decoration: underline; }
+.a-link:hover { color: #bfdbfe; }
 
 .a-code {
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius, 6px);
   padding: 0.875rem 1rem;
   font-family: 'Courier New', monospace;
   font-size: 0.82rem;
-  color: #a78bfa;
+  color: #93c5fd;
   white-space: pre;
   overflow-x: auto;
   line-height: 1.6;

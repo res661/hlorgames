@@ -3,7 +3,7 @@
    ============================================= */
 
 :root {
-  --game-color: #7c4dff;
+  --game-color: #3b82f6;
 }
 
 .game-main {
@@ -117,8 +117,8 @@
 }
 
 .g-join-inline:focus-within {
-  border-color: rgba(124,77,255,0.5);
-  box-shadow: 0 0 0 3px rgba(124,77,255,0.1);
+  border-color: rgba(59,130,246,0.45);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
 }
 
 .g-join-code-input {
@@ -265,7 +265,7 @@
 }
 #myLobbiesList::-webkit-scrollbar { width: 4px; }
 #myLobbiesList::-webkit-scrollbar-track { background: transparent; }
-#myLobbiesList::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+#myLobbiesList::-webkit-scrollbar-thumb { background: #1e2a40; border-radius: 2px; }
 
 /* ── SIDEBAR (CREATE FORM) ── */
 
@@ -280,7 +280,7 @@
 .g-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 1.5rem;
 }
 
@@ -376,7 +376,7 @@
   font-size: 0.8rem;
   width: 200px;
   height: 34px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238888aa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a8599' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: 0.6rem center;
   background-color: var(--bg-card-2);
@@ -385,8 +385,8 @@
 .g-search-input:focus {
   background-color: var(--bg-card);
   outline: none;
-  border-color: rgba(124,77,255,0.5);
-  box-shadow: 0 0 0 3px rgba(124,77,255,0.1);
+  border-color: rgba(59,130,246,0.45);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
 }
 
 .g-online-dot {

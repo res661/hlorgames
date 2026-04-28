@@ -2,10 +2,10 @@
    LOBBY PAGE — CSS
    ============================================= */
 
-:root { --game-color: #7c4dff; }
+:root { --game-color: #3b82f6; }
 
 body.lobby-body {
-  background: #0b0b10;
+  background: var(--bg, #07080f);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -16,8 +16,8 @@ body.lobby-body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 56px;
-  background: rgba(13,13,18,0.95);
-  backdrop-filter: blur(16px);
+  background: rgba(7,8,15,0.95);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: center;
@@ -31,18 +31,18 @@ body.lobby-body {
 .lobby-topbar__right { display: flex; align-items: center; gap: 0.75rem; }
 
 .lb-back-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text-muted, #8888aa);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-muted, #7a8599);
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.35rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius, 6px);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
-.lb-back-btn:hover { background: rgba(255,255,255,0.1); color: #f0f0f5; }
+.lb-back-btn:hover { background: rgba(255,255,255,0.08); color: #e8eaed; }
 
 .lb-game-badge {
   display: flex;
@@ -57,9 +57,9 @@ body.lobby-body {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius, 6px);
   padding: 0.25rem 0.7rem;
 }
 
@@ -85,18 +85,18 @@ body.lobby-body {
 .lb-copy-btn:hover { opacity: 1; }
 
 .lb-copy-link-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #8888aa;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #7a8599;
   font-size: 0.8rem;
   font-weight: 600;
   padding: 0.35rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius, 6px);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
-.lb-copy-link-btn:hover { background: rgba(255,255,255,0.1); color: #f0f0f5; }
+.lb-copy-link-btn:hover { background: rgba(255,255,255,0.08); color: #e8eaed; }
 
 .lb-leave-btn {
   background: rgba(239,68,68,0.1);
@@ -133,7 +133,7 @@ body.lobby-body {
 
 .lb-loading-spinner {
   width: 36px; height: 36px;
-  border: 3px solid rgba(124,77,255,0.15);
+  border: 3px solid rgba(59,130,246,0.12);
   border-top-color: var(--game-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -171,9 +171,9 @@ body.lobby-body {
 /* ── PLAYERS COLUMN ── */
 
 .lb-players-col {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -215,9 +215,9 @@ body.lobby-body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.65rem 0.85rem;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
+  border-radius: var(--radius, 6px);
   transition: border-color 0.2s;
   position: relative;
 }
@@ -314,13 +314,13 @@ body.lobby-body {
 
 .lb-ready-btn {
   flex: 1;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #f0f0f5;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #e8eaed;
   font-weight: 600;
   font-size: 0.875rem;
   padding: 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--radius, 6px);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
@@ -338,7 +338,7 @@ body.lobby-body {
   flex: 1;
   font-size: 0.875rem;
   padding: 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--radius, 6px);
   font-weight: 700;
 }
 
@@ -358,9 +358,9 @@ body.lobby-body {
 }
 
 .lb-info-card {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   padding: 1.5rem;
   text-align: center;
 }
@@ -384,9 +384,9 @@ body.lobby-body {
 }
 
 .lb-details {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   overflow: hidden;
 }
 
@@ -404,9 +404,9 @@ body.lobby-body {
 .lb-detail-val { color: #f0f0f5; font-weight: 500; text-align: right; }
 
 .lb-share {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   padding: 1.25rem;
   text-align: center;
 }
@@ -441,9 +441,9 @@ body.lobby-body {
 }
 
 .lb-waiting-card {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   padding: 2rem 1.5rem;
   text-align: center;
 }
@@ -464,9 +464,9 @@ body.lobby-body {
 }
 
 .lb-host-settings {
-  background: #111118;
+  background: var(--bg-card, #0d0f1a);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  border-radius: var(--radius, 6px);
   padding: 1.25rem;
 }
 
@@ -484,18 +484,18 @@ body.lobby-body {
 }
 
 .lb-danger-btn {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.2);
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.18);
   color: #f87171;
   font-weight: 600;
   font-size: 0.85rem;
   padding: 0.6rem;
-  border-radius: 10px;
+  border-radius: var(--radius, 6px);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
-.lb-danger-btn:hover { background: rgba(239,68,68,0.18); }
+.lb-danger-btn:hover { background: rgba(239,68,68,0.15); }
 
 /* ── RESPONSIVE ── */
 
