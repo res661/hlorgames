@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HlorGames — Играй с друзьями онлайн</title>
+  <title>HLOR GAMES — Играй с друзьями онлайн</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body>
 
@@ -15,7 +15,7 @@
   <header class="navbar" id="navbar">
     <div class="navbar__container">
       <a href="index.html" class="navbar__logo">
-        <img src="img/logo.png" class="logo-icon" alt="HlorGames" style="width:28px;height:28px;object-fit:contain;" />
+        <img src="img/logo.png" class="logo-icon" alt="HlorGames" />
         <span class="logo-text">HLOR GAMES</span>
       </a>
 
@@ -40,63 +40,81 @@
   <main>
     <section class="hero">
       <div class="hero__content">
-        <div class="hero__badge"><span class="hero__badge-dot"></span>Бесплатно &nbsp;·&nbsp; Без скачивания &nbsp;·&nbsp; В браузере</div>
+
+        <div class="hero__badge">
+          <span class="hero__badge-dot"></span>
+          Бесплатно &nbsp;·&nbsp; Без скачивания &nbsp;·&nbsp; В браузере
+        </div>
+
         <h1 class="hero__title">
           Игры для компании<br />
-          <span class="gradient-text">в реальном времени</span>
+          <span class="gradient-text">прямо в браузере</span>
         </h1>
+
         <p class="hero__subtitle">
-          Мафия, Бункер, Алиас — создай лобби за несколько секунд
-          и играй с друзьями онлайн без лишних движений.
+          Мафия, Бункер, Алиас — создай лобби за 10 секунд
+          и играй с друзьями в реальном времени, без установки.
         </p>
+
         <div class="hero__actions">
           <a href="#games" class="btn btn--primary btn--lg">
-            Выбрать игру
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Начать играть
           </a>
+          <a href="#how-it-works" class="btn btn--ghost btn--lg">Как это работает</a>
         </div>
+
         <div class="hero__stats">
           <div class="stat">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
-            <span class="stat__num" id="statPlayers">—</span><span class="stat__label">игроков</span>
+            <span class="stat__num" id="statPlayers">—</span>
+            <span class="stat__label">Игроков</span>
           </div>
           <div class="stat__divider"></div>
           <div class="stat">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"/></svg>
-            <span class="stat__num" id="statSessions">—</span><span class="stat__label">сессий</span>
+            <span class="stat__num" id="statSessions">—</span>
+            <span class="stat__label">Сессий</span>
           </div>
           <div class="stat__divider"></div>
           <div class="stat">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span class="stat__num">3</span><span class="stat__label">игры</span>
+            <span class="stat__num">3</span>
+            <span class="stat__label">Игры</span>
           </div>
         </div>
+
       </div>
-      <div class="hero__visual">
-        <div class="hero__visual-label">Доступные игры</div>
-        <div class="hero__card hero__card--1">
-          <span class="card-emoji">🕵️</span>
-          <div class="card-info">
-            <div class="card-title">Мафия</div>
-            <div class="card-desc">Дедукция, роли, голосования</div>
-          </div>
-          <span class="card-players">4–12</span>
-        </div>
-        <div class="hero__card hero__card--2">
-          <span class="card-emoji">🏚️</span>
-          <div class="card-info">
-            <div class="card-title">Бункер</div>
-            <div class="card-desc">Выживание, убеди остальных</div>
-          </div>
-          <span class="card-players">4–16</span>
-        </div>
-        <div class="hero__card hero__card--3">
-          <span class="card-emoji">🗣️</span>
-          <div class="card-info">
-            <div class="card-title">Алиас</div>
-            <div class="card-desc">Объясняй слова на скорость</div>
-          </div>
-          <span class="card-players">4–20</span>
-        </div>
+
+      <!-- Game preview cards -->
+      <div class="hero__games">
+
+        <a href="game.html?g=mafia" class="hero__game-card hero__game-card--mafia">
+          <div class="hero__game-emoji">🕵️</div>
+          <span class="hero__game-tag">Детектив</span>
+          <div class="hero__game-name">Мафия</div>
+          <div class="hero__game-desc">Дедукция, роли, ночные убийства и дневные голосования</div>
+          <div class="hero__game-players">👥 4–12 игроков</div>
+        </a>
+
+        <a href="#games" class="hero__game-card hero__game-card--bunker hero__game-card--soon">
+          <span class="hero__game-soon-badge">Скоро</span>
+          <div class="hero__game-emoji">🏚️</div>
+          <span class="hero__game-tag">Выживание</span>
+          <div class="hero__game-name">Бункер</div>
+          <div class="hero__game-desc">Убеди остальных взять тебя — места ограничены</div>
+          <div class="hero__game-players">👥 4–16 игроков</div>
+        </a>
+
+        <a href="#games" class="hero__game-card hero__game-card--alias hero__game-card--soon">
+          <span class="hero__game-soon-badge">Скоро</span>
+          <div class="hero__game-emoji">🗣️</div>
+          <span class="hero__game-tag">Слова</span>
+          <div class="hero__game-name">Алиас</div>
+          <div class="hero__game-desc">Объясняй слова на скорость — команды соревнуются</div>
+          <div class="hero__game-players">👥 4–20 игроков</div>
+        </a>
+
       </div>
     </section>
 
@@ -115,12 +133,12 @@
             <div class="game-card__status game-card__status--available">Доступна</div>
           </div>
           <h3 class="game-card__title">Мафия</h3>
-          <p class="game-card__desc">Классическая игра на дедукцию. Мирные жители против мафии. Роли, ночные убийства, дневные голосования.</p>
+          <p class="game-card__desc">Классическая игра на дедукцию. Мирные жители против мафии — роли, ночные убийства и дневные голосования. Кто кого переиграет?</p>
           <div class="game-card__info">
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–12</span>
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 30–60 мин</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–12 игроков</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 30–60 мин</span>
           </div>
-          <a href="game.html?g=mafia" class="btn btn--primary game-card__btn">Играть</a>
+          <a href="game.html?g=mafia" class="btn btn--primary game-card__btn">Играть сейчас</a>
         </div>
 
         <div class="game-card game-card--soon" data-game="bunker">
@@ -129,10 +147,10 @@
             <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Бункер</h3>
-          <p class="game-card__desc">Конец света. В бункере ограниченные места. Каждый игрок — персонаж с профессией, навыком и тайной. Убеди остальных взять тебя.</p>
+          <p class="game-card__desc">Конец света. В бункере ограниченные места. Убеди всех взять тебя — у каждого профессия, навык и тайна.</p>
           <div class="game-card__info">
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–16</span>
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 20–40 мин</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–16 игроков</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 20–40 мин</span>
           </div>
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
@@ -143,10 +161,10 @@
             <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Алиас</h3>
-          <p class="game-card__desc">Объясняй слова — руками, словами, мимикой. Команды соревнуются кто назовёт больше слов за отведённое время.</p>
+          <p class="game-card__desc">Объясняй слова руками, словами, мимикой. Команды соревнуются — кто назовёт больше слов за отведённое время.</p>
           <div class="game-card__info">
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–20</span>
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 15–30 мин</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 4–20 игроков</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 15–30 мин</span>
           </div>
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
@@ -190,7 +208,7 @@
           </div>
           <div class="how-card__num">— ШАГ 03</div>
           <h4 class="how-card__title">Начни игру</h4>
-          <p class="how-card__desc">Хост запускает игру, роли раздаются автоматически — веселье начинается</p>
+          <p class="how-card__desc">Хост запускает — роли раздаются автоматически, начинается веселье</p>
         </div>
 
       </div>
@@ -200,22 +218,22 @@
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
     <div class="footer__container">
-      <span class="logo-text">HLOR GAMES</span>
+      <div class="footer__logo">
+        <img src="img/logo.png" alt="" style="width:22px;height:22px;object-fit:contain;" />
+        HLOR GAMES
+      </div>
       <span class="footer__copy">Made with ♥ by <strong>Res</strong></span>
     </div>
   </footer>
 
-  <!-- ===== МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ===== -->
+  <!-- ===== AUTH MODAL ===== -->
   <div class="modal-overlay" id="authModal">
     <div class="modal">
       <button class="modal__close" id="modalClose">✕</button>
-
       <div class="modal__tabs">
         <button class="modal__tab active" id="tabLogin" onclick="switchTab('login')">Войти</button>
         <button class="modal__tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
       </div>
-
-      <!-- Форма входа -->
       <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label class="form-label">Email</label>
@@ -228,8 +246,6 @@
         <div class="form-error" id="loginError"></div>
         <button type="submit" class="btn btn--primary btn--full">Войти</button>
       </form>
-
-      <!-- Форма регистрации -->
       <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
         <div class="form-group">
           <label class="form-label">Никнейм</label>
@@ -255,7 +271,6 @@
     <div class="modal modal--profile">
       <button class="modal__close" id="profileModalClose">✕</button>
       <h3 class="modal__title">Настройки профиля</h3>
-
       <div class="profile-avatar-section">
         <div class="profile-avatar-big" id="profileAvatarBig">?</div>
         <div class="profile-avatar-actions">
@@ -264,7 +279,6 @@
         <p class="profile-avatar-hint">Выбери аватар</p>
         <div class="profile-emoji-grid" id="profileEmojiGrid"></div>
       </div>
-
       <div class="form-group">
         <label class="form-label">Никнейм</label>
         <input type="text" class="form-input" id="profileNickname" placeholder="Твой ник" maxlength="20" />
@@ -273,7 +287,6 @@
         <label class="form-label">Email</label>
         <input type="email" class="form-input" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed" />
       </div>
-
       <div class="form-error" id="profileError"></div>
       <div class="profile-success hidden" id="profileSuccess">✓ Сохранено!</div>
       <button class="btn btn--primary btn--full" onclick="saveProfile()">Сохранить</button>
@@ -283,7 +296,6 @@
   <!-- ===== ТОСТ ===== -->
   <div class="toast" id="toast"></div>
 
-  <!-- Supabase JS SDK через CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
