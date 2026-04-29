@@ -237,6 +237,7 @@ body.lobby-body {
 }
 .lb-slot--empty.lb-slot--pickable {
   opacity: 0.88;
+  cursor: pointer;
 }
 
 .lb-slot--host-bench {

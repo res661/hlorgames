@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initLobby() {
   await loadLobby();
   attachLobbyRealtime();
-  pollInterval = setInterval(loadLobby, 12500);
+  pollInterval = setInterval(loadLobby, 8000);
 }
 
 function detachLobbyRealtime() {
@@ -285,6 +285,50 @@ async function syncMyLobbyIdentity(data) {
   } catch {
     return data;
   }
+}
+
+async function claimLobbySeatNext() {
+  if (!currentUser || !lobbyData || !supabaseClient) return;
+  if (String(lobbyData.host_id) === String(currentUser.id)) {
+    showToast('Ведущий не занимает место за столом — только игроки.', 'info');
+    return;
+  }
+  if (lobbyData.status !== 'waiting') {
+    showToast('Игра уже идёт — места не меняют так.', 'error');
+    return;
+  }
+  const seatT = lobbySeatTotal(lobbyData);
+  let players = [...(lobbyData.players || [])];
+  players = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(lobbyData));
+  const me = players.find((p) => String(p.id) === String(currentUser.id));
+  if (!me) {
+    showToast('Тебя нет в составе комнаты.', 'error');
+    return;
+  }
+  if (me.slot != null) {
+    showToast(`Ты уже за столом — место ${me.slot + 1}.`, 'info');
+    return;
+  }
+  const taken = new Set();
+  players.forEach((p) => {
+    if (p.slot != null && typeof p.slot === 'number' && p.slot >= 0 && p.slot < seatT) taken.add(p.slot);
+  });
+  let target = -1;
+  for (let j = 0; j < seatT; j++) {
+    if (!taken.has(j)) {
+      target = j;
+      break;
+    }
+  }
+  if (target < 0) {
+    showToast('Все места заняты.', 'error');
+    return;
+  }
+  const iMe = players.findIndex((p) => String(p.id) === String(currentUser.id));
+  players[iMe] = { ...players[iMe], slot: target };
+  const cleaned = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(lobbyData));
+  await persistLobbyPlayers(cleaned, seatT);
+  showToast(`Место по очереди — №${target + 1}.`, 'success');
 }
 
 // ─── РЕНДЕР ───────────────────────────────────────────────────────────────────
@@ -428,9 +472,11 @@ function renderSlots(lobby) {
           ${kickHtml}
         </div>`;
     } else {
-      const emptySub = isHost ? 'Порядок: кто зашёл 1-й, 2-й…' : 'Подожди свой номер';
+      const iamHostHere = !!(currentUser && String(hostId) === String(currentUser.id));
+      const emptySub = iamHostHere ? 'Порядок: кто зашёл 1-й, 2-й…' : 'Нажми здесь — займёшь следующий номер по очереди';
+      const pickCls = (!iamHostHere && lobby.status === 'waiting') ? ' lb-slot--pickable' : '';
       html += `
-        <div class="lb-slot lb-slot--empty" data-lobby-slot-index="${i}">
+        <div class="lb-slot lb-slot--empty${pickCls}" data-lobby-slot-index="${i}">
           <span class="lb-slot-num">${i + 1}</span>
           <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
           <div class="lb-slot-info">
@@ -466,6 +512,19 @@ function renderSlots(lobby) {
       hostClearSlotFromLobby(idx);
     });
   });
+
+  if (!wrap.dataset.seatDelegation) {
+    wrap.dataset.seatDelegation = '1';
+    wrap.addEventListener('click', (ev) => {
+      const row = ev.target.closest('.lb-slot--empty');
+      if (!row) return;
+      const hostFlag = !!(currentUser && lobbyData && lobbyData.host_id && String(lobbyData.host_id) === String(currentUser.id));
+      if (hostFlag) return;
+      if (!lobbyData || lobby.status !== 'waiting') return;
+      ev.preventDefault();
+      claimLobbySeatNext();
+    });
+  }
 }
 
 async function hostClearSlotFromLobby(slotIndex) {

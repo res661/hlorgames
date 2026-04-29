@@ -14,7 +14,8 @@
 
   // ── URL-параметры ────────────────────────────────────────────────────────────
   const params   = new URLSearchParams(window.location.search);
-  const LOBBY    = params.get('code') || '';
+  /** Как в БД — в одном регистре, чтобы Realtime postgres_changes фильтр совпадал. */
+  const LOBBY    = String(params.get('code') || '').trim().toUpperCase();
   /** URL — лишь подсказка; истина — host_id в БД (см. resolveLobbyAndUser) */
   let isHostFlag = params.get('role') === 'host';
   let mySlot     = parseInt(params.get('slot') ?? '-1', 10);
@@ -287,29 +288,66 @@
     rebuildLobbyPlayersMap(pl);
   }
 
-  async function tryClaimSlot(i) {
-    if (isHostFlag || i < 0 || i >= activeSlots) return;
+  /** Индекс первого свободного места 0 … max−1 по данным комнаты (очередь «кто первый занял — тот ниже номер»). */
+  function getFirstFreeMafiaSlot(max) {
+    const taken = new Set();
+    for (const p of lobbyPlayersRaw) {
+      const ms = Number(p.mafia_slot);
+      if (!Number.isNaN(ms) && ms >= 0 && ms < max) taken.add(ms);
+    }
+    for (let j = 0; j < max; j++) {
+      if (!taken.has(j)) return j;
+    }
+    return -1;
+  }
+
+  async function tryClaimSlot(clickedIndex) {
+    if (isHostFlag || clickedIndex < 0 || clickedIndex >= activeSlots) return;
     if (!myUserId || !LOBBY || !supabaseClient) {
       toast('Войди в аккаунт', 'error');
       return;
     }
-    if (slots[i].vdoUrl || slots[i].role) {
-      toast('Слот занят ведущим', 'error');
-      return;
+    const meRow = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
+    if (meRow != null && meRow.mafia_slot != null && meRow.mafia_slot !== '') {
+      const cur = Number(meRow.mafia_slot);
+      if (!Number.isNaN(cur) && cur >= 0) {
+        toast(`Ты уже за столом — место ${cur + 1}. Перестановкой занимается ведущий.`, 'error');
+        return;
+      }
     }
-    const taken = lobbyPlayersRaw.some(
-      (p) => Number(p.mafia_slot) === i && String(p.id) !== String(myUserId)
+    const foreign = lobbyPlayersRaw.some(
+      (p) =>
+        Number(p.mafia_slot) === clickedIndex && p.id != null && String(p.id) !== String(myUserId)
     );
-    if (taken) {
-      toast('Слот занят', 'error');
+    if (foreign) {
+      toast('Это место занято другим игроком.', 'error');
       return;
     }
-    await upsertPlayerMafiaSlot(i, myUserId);
-    slots[i].linkedUserId = myUserId;
-    slots[i].name = myNickname;
-    saveSlots();
-    renderSlot(i);
-    toast(`Ты за столом в слоте ${i + 1}`, 'success');
+    if (slots[clickedIndex]?.vdoUrl || slots[clickedIndex]?.role) {
+      toast('Этот слот настроен ведущим — выбери обычный.', 'error');
+      return;
+    }
+    let target = getFirstFreeMafiaSlot(activeSlots);
+    if (target < 0) {
+      toast('Все места за столом заняты.', 'error');
+      return;
+    }
+    const takenByOther = lobbyPlayersRaw.some(
+      (p) => Number(p.mafia_slot) === target && String(p.id) !== String(myUserId)
+    );
+    if (takenByOther) {
+      toast('Место только что заняли — пробуй ещё раз.', 'error');
+      return;
+    }
+    await upsertPlayerMafiaSlot(target, myUserId);
+    await refreshPlayerMapFromDb();
+    const hintWrongCell = clickedIndex !== target && !slots[clickedIndex]?.linkedUserId;
+    toast(
+      hintWrongCell
+        ? `По очереди твоё место — №${target + 1} (ещё можно нажать на любую свободную клетку).`
+        : `Ты занял место ${target + 1}.`,
+      'success',
+    );
   }
 
   function updatePresenterForm() {
@@ -476,7 +514,7 @@
     setupHotkeys();
     initGameBroadcast();
     attachLobbyRowRealtime();
-    const LOBBY_DB_POLL_MS = 20000;
+    const LOBBY_DB_POLL_MS = 6000;
     setInterval(refreshPlayerMapFromDb, LOBBY_DB_POLL_MS);
     updatePresenterForm();
     updateHostPanelTabsVisibility();
@@ -609,7 +647,7 @@
       if (!isHostFlag && !cfg && i < activeSlots) {
         const hint = ce('div');
         hint.style.cssText = 'font-size:0.58rem;opacity:0.5;margin-top:4px;text-transform:uppercase';
-        hint.textContent = 'Нажми — занять';
+        hint.textContent = 'Нажми — место по очереди';
         ph.appendChild(hint);
       }
       div.appendChild(ph);
