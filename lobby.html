@@ -138,6 +138,15 @@
         <div class="lb-host-settings hidden" id="hostSettings">
           <h3 class="lb-settings-title">⚙️ Настройки лобби</h3>
 
+          <div class="lb-host-code-block">
+            <label class="form-label">Код лобби</label>
+            <p class="lb-host-code-hint">Делись им с друзьями — они введут его на главной или в «Войти по коду».</p>
+            <div class="lb-host-code-row">
+              <code class="lb-host-code-val" id="hostSettingsLobbyCode">—</code>
+              <button type="button" class="btn btn--ghost lb-host-code-copy" id="hostSettingsCopyCode" title="Копировать код">📋</button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">Название</label>
             <input type="text" class="form-input" id="settingName" maxlength="40" placeholder="Название лобби" />

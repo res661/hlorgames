@@ -65,6 +65,7 @@ function setActiveLobby(code, game, name, extras) {
     LEGACY_LOBBY_KEYS.forEach((k) => localStorage.removeItem(k));
   } catch (_) {}
   localStorage.setItem(LOBBY_KEY, JSON.stringify(payload));
+  syncIndicatorLobbyRealtimeState();
   renderLobbyIndicator();
 }
 
@@ -73,6 +74,7 @@ function clearActiveLobby() {
   try {
     sessionStorage.removeItem(SESSION_DISMISS_KEY);
   } catch (_) {}
+  detachIndicatorLobbyRealtime();
   document.getElementById('lobbyIndicator')?.remove();
 }
 
@@ -132,13 +134,24 @@ function currentUrlCodeUpper() {
   return q ? String(q).toUpperCase() : '';
 }
 
+function syncIndicatorLobbyRealtimeState() {
+  const lobby = getActiveLobby();
+  if (!lobby) {
+    detachIndicatorLobbyRealtime();
+    return;
+  }
+  attachIndicatorLobbyRealtime();
+}
+
 // ─── Рендер ──────────────────────────────────────────────────────────────────
 
 function renderLobbyIndicator() {
   const lobby = getActiveLobby();
   document.getElementById('lobbyIndicator')?.remove();
 
-  if (!lobby) return;
+  if (!lobby) {
+    return;
+  }
 
   try {
     if (sessionStorage.getItem(SESSION_DISMISS_KEY) === lobby.code) return;
@@ -202,24 +215,31 @@ async function goToActiveLobby() {
         .eq('code', code)
         .maybeSingle();
 
-      if (data) {
-        if (data.status === 'ended') {
-          window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
-          return;
-        }
-        if (data.game === 'mafia') {
-          let uid = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
-          if (!uid) {
-            const { data: s } = await supabaseClient.auth.getSession();
-            uid = s?.session?.user?.id ?? null;
-          }
-          const roleQ = uid && String(data.host_id) === String(uid) ? 'host' : 'player';
-          window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
-          return;
-        }
-        window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
+      if (!data) {
+        clearActiveLobby();
+        if (typeof showToast === 'function') showToast('Комнаты уже нет — она закрыта или удалена', 'error');
+        window.location.href = `index.html?t=${bust}`;
         return;
       }
+
+      if (data.status === 'ended') {
+        clearActiveLobby();
+        if (typeof showToast === 'function') showToast('Комната закрыта хостом', 'error');
+        window.location.href = `index.html?t=${bust}`;
+        return;
+      }
+      if (data.game === 'mafia') {
+        let uid = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
+        if (!uid) {
+          const { data: s } = await supabaseClient.auth.getSession();
+          uid = s?.session?.user?.id ?? null;
+        }
+        const roleQ = uid && String(data.host_id) === String(uid) ? 'host' : 'player';
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
+        return;
+      }
+      window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
+      return;
     } catch (_) {}
   }
 
@@ -342,9 +362,60 @@ function escHtml(str) {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(renderLobbyIndicator, 800);
+  setTimeout(() => {
+    syncIndicatorLobbyRealtimeState();
+    renderLobbyIndicator();
+  }, 800);
 });
 
 window.addEventListener('pageshow', () => {
+  syncIndicatorLobbyRealtimeState();
   renderLobbyIndicator();
 });
+
+let indicatorLobbyRtCh = null;
+
+function detachIndicatorLobbyRealtime() {
+  if (indicatorLobbyRtCh && typeof supabaseClient !== 'undefined' && supabaseClient?.removeChannel) {
+    try {
+      supabaseClient.removeChannel(indicatorLobbyRtCh);
+    } catch (_) {}
+    indicatorLobbyRtCh = null;
+  }
+}
+
+function attachIndicatorLobbyRealtime() {
+  detachIndicatorLobbyRealtime();
+  if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+  const lobby = getActiveLobby();
+  const code = lobby ? String(lobby.code || '').trim() : '';
+  if (!code) return;
+  const safe = code.replace(/[^\w.-]/g, '_');
+  const filterCode = code.toUpperCase();
+  try {
+    indicatorLobbyRtCh = supabaseClient
+      .channel(`lobby_ind_rt_${safe}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lobbies',
+          filter: `code=eq.${filterCode}`,
+        },
+        (payload) => {
+          const ended =
+            payload.eventType === 'DELETE' ||
+            (payload.new && payload.new.status === 'ended');
+          if (ended) {
+            detachIndicatorLobbyRealtime();
+            clearActiveLobby();
+            if (typeof showToast === 'function') {
+              showToast('Комната закрыта хостом или удалена', 'error');
+            }
+          }
+        }
+      )
+      .subscribe();
+  } catch (_) {}
+}

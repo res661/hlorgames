@@ -112,6 +112,17 @@ body.mafia-body {
 }
 .mf-check-row input { flex-shrink: 0; }
 
+.mf-room-code-card {
+  padding: 12px 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 77, 255, 0.35);
+  background: linear-gradient(145deg, rgba(18, 12, 32, 0.95), rgba(8, 10, 18, 0.98));
+  box-shadow: 0 0 0 1px rgba(200, 255, 78, 0.06);
+}
+.mf-room-code-chip {
+  border-color: rgba(167, 139, 250, 0.35) !important;
+}
+
 /* Top buttons */
 .mf-top-btn {
   display: flex; align-items: center; gap: 5px;

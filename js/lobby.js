@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Кнопки копирования
   document.getElementById('copyCodeBtn')?.addEventListener('click', () => copyText(lobbyCode, 'Код скопирован!'));
+  document.getElementById('hostSettingsCopyCode')?.addEventListener('click', () => copyText(lobbyCode, 'Код скопирован!'));
   document.getElementById('copyLinkBtn')?.addEventListener('click', () => copyText(window.location.href, 'Ссылка скопирована!'));
 
   // Ждём Supabase
@@ -215,7 +216,18 @@ async function loadLobby() {
 
     if (error || !data) {
       stopLobbyTimers();
+      if (typeof clearActiveLobby === 'function') clearActiveLobby();
       showError('Лобби не найдено', 'Оно было закрыто или код неверный');
+      return;
+    }
+
+    if (data.status === 'ended') {
+      stopLobbyTimers();
+      if (typeof clearActiveLobby === 'function') clearActiveLobby();
+      showError(
+        'Комната закрыта',
+        'Хост завершил лобби. Она уже не активна — обновление пришло в реальном времени.',
+      );
       return;
     }
 
@@ -301,6 +313,8 @@ function renderLobby(lobby) {
   document.getElementById('topbarGame').textContent   = game.name;
   document.getElementById('topbarCode').textContent   = lobby.code;
   document.getElementById('shareLobbyCode').textContent = lobby.code;
+  const hostCodeEl = document.getElementById('hostSettingsLobbyCode');
+  if (hostCodeEl) hostCodeEl.textContent = lobby.code;
 
   // Инфо
   document.getElementById('gameLogoEmoji').textContent = game.emoji;

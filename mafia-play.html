@@ -137,11 +137,11 @@
 
         <!-- Настройки -->
         <div class="mf-stab-panel hidden" id="stab-settings">
-          <div class="mf-ctrl mf-for-room-host hidden" id="mfRoomCodeBlock">
-            <div class="mf-ctrl__label">Код комнаты</div>
-            <p class="mf-hint">Виден только создателю лобби. Отправь друзьям, чтобы вошли по коду.</p>
+          <div class="mf-room-code-card mf-ctrl mf-for-room-host hidden" id="mfRoomCodeBlock">
+            <div class="mf-ctrl__label">Код лобби</div>
+            <p class="mf-hint" style="margin-top:6px;margin-bottom:10px">Видно только создателю. Отправь друзьям — пусть введут код на главной.</p>
             <div class="mf-row" style="gap:8px;align-items:stretch">
-              <code class="mf-input" id="mfRoomCodeDisplay" style="flex:1;font-size:1rem;letter-spacing:0.1em;display:flex;align-items:center">—</code>
+              <code class="mf-input mf-room-code-chip" id="mfRoomCodeDisplay" style="flex:1;font-size:1.08rem;font-weight:800;letter-spacing:0.12em;display:flex;align-items:center">—</code>
               <button type="button" class="mf-btn mf-btn--blue" id="btnCopyRoomCode" title="Копировать код">Копировать</button>
             </div>
           </div>

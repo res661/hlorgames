@@ -596,6 +596,49 @@ body.lobby-body {
   padding: 1.25rem;
 }
 
+.lb-host-code-block {
+  margin-bottom: 1.1rem;
+  padding: 0.9rem 1rem;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(124, 77, 255, 0.28);
+  border-radius: var(--radius, 6px);
+}
+
+.lb-host-code-hint {
+  font-size: 0.74rem;
+  color: #7b7b98;
+  line-height: 1.45;
+  margin: 0.35rem 0 0.65rem;
+}
+
+.lb-host-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.lb-host-code-val {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--game-color, #a78bfa);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  align-items: center;
+  min-height: 2.65rem;
+}
+
+.lb-host-code-copy {
+  flex-shrink: 0;
+  padding: 0.45rem 0.65rem !important;
+  min-width: 2.85rem;
+}
+
 .lb-settings-title {
   font-size: 0.9rem;
   font-weight: 700;

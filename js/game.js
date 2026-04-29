@@ -64,6 +64,40 @@ const GAMES = {
 let gameType   = null;
 let gameInfo   = null;
 let refreshInterval = null;
+let gameLobbiesRealtimeCh = null;
+
+function detachGameLobbiesRealtime() {
+  if (gameLobbiesRealtimeCh && typeof supabaseClient !== 'undefined' && supabaseClient?.removeChannel) {
+    try {
+      supabaseClient.removeChannel(gameLobbiesRealtimeCh);
+    } catch (_) {}
+    gameLobbiesRealtimeCh = null;
+  }
+}
+
+function attachGameLobbiesRealtime() {
+  if (typeof supabaseClient === 'undefined' || !supabaseClient || !gameType) return;
+  detachGameLobbiesRealtime();
+  const chName = `game_lobbies_watch:${String(gameType).replace(/[^\w]/g, '_')}`;
+  try {
+    gameLobbiesRealtimeCh = supabaseClient
+      .channel(chName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lobbies', filter: `game=eq.${gameType}` },
+        () => {
+          loadLobbies();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[Game] Realtime по lobbies недоступен (включи Replication в Supabase)');
+        }
+      });
+  } catch (e) {
+    console.warn('[Game] realtime attach', e);
+  }
+}
 
 /** Уникальные участники лобби (по id), без дублей в массиве players */
 function lobbyParticipantsCount(players) {
@@ -126,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const initPage = () => {
     setupCreateForm();
     loadLobbies();
+    attachGameLobbiesRealtime();
     refreshInterval = setInterval(loadLobbies, 30000);
     refreshGamePageLobbyGuard();
   };

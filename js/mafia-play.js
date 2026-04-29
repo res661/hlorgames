@@ -73,6 +73,7 @@
   let isRoomHost       = false;
 
   let lobbyDbRealtimeCh = null;
+  let roomClosedOverlayShown = false;
 
   function detachLobbyRowRealtime() {
     if (lobbyDbRealtimeCh && supabaseClient?.removeChannel) {
@@ -105,6 +106,43 @@
     } catch (e) {
       console.warn('[mafia] realtime', e);
     }
+  }
+
+  /** Хост закрыл комнату или строка удалена — все на странице уходят с сообщением */
+  function showRoomEndedOverlay(title, subtitle) {
+    if (roomClosedOverlayShown) return;
+    roomClosedOverlayShown = true;
+    try {
+      if (timerInt) clearInterval(timerInt);
+      timerInt = null;
+      const tel = document.getElementById('timerEl');
+      if (tel) tel.textContent = '';
+    } catch (_) {}
+    detachLobbyRowRealtime();
+    if (rtChannel && supabaseClient?.removeChannel) {
+      try {
+        supabaseClient.removeChannel(rtChannel);
+      } catch (_) {}
+      rtChannel = null;
+    }
+    if (typeof clearActiveLobby === 'function') clearActiveLobby();
+
+    document.body.style.overflow = 'hidden';
+    const o = document.createElement('div');
+    o.style.cssText =
+      'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;' +
+      'padding:22px;background:rgba(6,8,14,.93);backdrop-filter:blur(6px)';
+    const href = 'game.html?g=mafia';
+    o.innerHTML = `
+      <div style="max-width:400px;text-align:center;font-family:inherit;color:#eef">
+        <div style="font-size:2.6rem;margin-bottom:10px">${title.indexOf('удал') >= 0 ? '📭' : '🚪'}</div>
+        <h2 style="margin:0 0 10px;font-size:1.2rem;font-weight:800">${esc(title)}</h2>
+        <p style="margin:0 0 20px;font-size:.88rem;line-height:1.5;opacity:.78">${esc(subtitle)}</p>
+        <a href="${href}" style="display:inline-block;padding:10px 18px;border-radius:10px;font-weight:800;
+          text-decoration:none;background:rgba(200,255,78,.92);color:#0a0c0f">На страницу игры</a>
+      </div>
+    `;
+    document.body.appendChild(o);
   }
 
   // ── DOM ──────────────────────────────────────────────────────────────────────
@@ -156,7 +194,17 @@
         .select('players,host_id,host_name,presenter_id,max_players,name,status,game')
         .eq('code', LOBBY)
         .maybeSingle();
-      if (!data) return;
+      if (!data) {
+        showRoomEndedOverlay('Комната недоступна', 'Этого лобби больше нет — либо удалили, либо код неверный.');
+        return;
+      }
+      if (data.status === 'ended') {
+        showRoomEndedOverlay(
+          'Комната закрыта хостом',
+          'Лобби завершено для всех. Окно обновилось автоматически (Realtime).',
+        );
+        return;
+      }
       roomHostId      = data.host_id;
       presenterUserId = data.presenter_id || null;
       lobbyPlayersRaw = Array.isArray(data.players) ? data.players : [];
