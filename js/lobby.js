@@ -51,13 +51,13 @@ let lobbyCode    = null;
 let lobbyData    = null;
 let pollInterval = null;
 let isHost       = false;
-let isReady      = false;
 
 // ─── Слоты за столом (0 … seatT−1); порядок по очереди входа (см. lobby-seat-utils.js) ─
 
+/** Ведущий без места — всегда в коде (без колонки host_plays в БД). */
 function lobbySeatCtx(row) {
   if (!row) return null;
-  return { host_id: row.host_id, host_plays: row.host_plays !== false };
+  return { host_id: row.host_id, host_plays: false };
 }
 
 if (typeof window.LobbySeatUtils === 'undefined') {
@@ -76,15 +76,11 @@ function countLobbyParticipants(players) {
   return dedupeLobbyPlayers(players).length;
 }
 
-function hostPlaysEnabled(lobby) {
-  return lobby && lobby.host_plays !== false;
-}
-
-/** Число мест за столом в лобби: max_players + при «хост играет» */
+/** Число мест за столом = max_players (ведущий в коде всегда без слота). */
 function lobbySeatTotal(lobby) {
   const game = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
   const maxP = lobby.max_players || game.max;
-  return maxP + (hostPlaysEnabled(lobby) ? 1 : 0);
+  return maxP;
 }
 
 async function persistLobbyPlayers(players, maxP) {
@@ -98,12 +94,7 @@ async function persistLobbyPlayers(players, maxP) {
   }
 }
 
-/** Плавающий чат (Supabase broadcast) */
-let lobbyChatChannel     = null;
 let lobbyRealtimeChannel = null;
-let lobbyChatOpen      = false;
-let lobbyChatUnread    = 0;
-let lobbyChatInited    = false;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
@@ -311,11 +302,6 @@ function renderLobby(lobby) {
     startBtn.classList.add('hidden');
   }
 
-  // Кнопка готовности
-  const myPlayer = playersNorm.find(p => String(p.id) === String(currentUser?.id));
-  isReady = myPlayer?.ready || false;
-  updateReadyBtn();
-
   // Настройки — только хосту
   document.getElementById('hostSettings').classList.toggle('hidden', !isHost);
   document.getElementById('waitingCard').classList.toggle('hidden', isHost);
@@ -347,11 +333,9 @@ function renderLobby(lobby) {
   }
 
   // Статус бар
-  const seatedForReady = playersNorm.filter(p => p.slot != null).length;
-  const readyCount = playersNorm.filter(p => p.ready && p.slot != null).length;
   const statusEl   = document.getElementById('statusText');
   if (lobby.status === 'waiting') {
-    statusEl.textContent = `${readyCount} из ${seatedForReady} за столом готовы`;
+    statusEl.textContent = `${seatedCount} за столом · ведущий без слота`;
   } else if (lobby.status === 'active') {
     statusEl.textContent = '🎮 Игра началась!';
   }
@@ -359,17 +343,10 @@ function renderLobby(lobby) {
   // Показываем контент
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('lobbyLayout').classList.remove('hidden');
-
-  document.getElementById('lobbyChatWidget')?.classList.remove('hidden');
-  initLobbyChatOnce();
-  rerenderLobbyChatNicknames();
 }
 
 function renderSlots(lobby) {
-  const game   = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
   const seatT  = lobbySeatTotal(lobby);
-  const maxP   = lobby.max_players || game.max;
-  const hostPlays = hostPlaysEnabled(lobby);
   const hostId = lobby.host_id;
   const players = normalizeLobbySlotsForSave(lobby.players || [], seatT, lobbySeatCtx(lobby));
   const wrap = document.getElementById('playerSlots');
@@ -379,18 +356,14 @@ function renderSlots(lobby) {
 
   for (let i = 0; i < seatT; i++) {
     const p = players.find(x => x.slot === i);
-    const isHostBench = hostPlays && i === maxP;
     if (p) {
       const isMe      = String(p.id) === String(currentUser?.id);
       const isHostP   = String(p.id) === String(hostId);
       const initials  = (p.nickname || '?')[0].toUpperCase();
-      const readyMark = p.ready ? 'lb-slot--ready' : '';
-      const pickable  = false;
       const busyOther = !isMe;
       const cls = [
         'lb-slot',
         'lb-slot--filled',
-        readyMark,
         isMe ? 'lb-slot--me' : '',
         busyOther ? 'lb-slot--locked' : '',
       ].filter(Boolean).join(' ');
@@ -408,23 +381,19 @@ function renderSlots(lobby) {
           <div class="lb-slot-avatar" style="background:${strToColor(p.id || p.nickname)}">${initials}</div>
           <div class="lb-slot-info">
             <span class="lb-slot-name">${esc(p.nickname || 'Игрок')}</span>
-            <span class="lb-slot-status">${isHostBench ? 'Вне сетки камер · ' : ''}${isHostP ? '👑 Хост' : (p.ready ? '✓ Готов' : 'Не готов')}</span>
+            <span class="lb-slot-status">${isHostP ? '👑 Ведущий' : 'Игрок'}</span>
           </div>
           ${clearHtml}
           ${kickHtml}
-          ${p.ready ? '<span class="lb-ready-dot"></span>' : ''}
         </div>`;
     } else {
-      const emptyLabel = isHostBench ? 'Место хоста (+1)' : 'Свободно';
-      const emptySub = isHostBench
-        ? (isHost ? 'Спецместо без окна камеры в мафии' : 'Только если хост играет')
-        : (isHost ? 'Порядок: кто зашёл 1-й, 2-й…' : 'Подожди свой номер');
+      const emptySub = isHost ? 'Порядок: кто зашёл 1-й, 2-й…' : 'Подожди свой номер';
       html += `
-        <div class="lb-slot lb-slot--empty ${isHostBench ? 'lb-slot--host-bench' : ''}" data-lobby-slot-index="${i}">
+        <div class="lb-slot lb-slot--empty" data-lobby-slot-index="${i}">
           <span class="lb-slot-num">${i + 1}</span>
           <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
           <div class="lb-slot-info">
-            <span class="lb-slot-empty-text">${emptyLabel}</span>
+            <span class="lb-slot-empty-text">Свободно</span>
             <span class="lb-slot-status">${emptySub}</span>
           </div>
         </div>`;
@@ -471,61 +440,6 @@ async function hostClearSlotFromLobby(slotIndex) {
 }
 
 // ─── ДЕЙСТВИЯ ────────────────────────────────────────────────────────────────
-
-async function toggleReady() {
-  if (!currentUser || !lobbyData) return;
-  const seatT = lobbySeatTotal(lobbyData);
-  const players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT, lobbySeatCtx(lobbyData));
-  const idx = players.findIndex(p => String(p.id) === String(currentUser.id));
-
-  if (idx === -1) return;
-  if (players[idx].slot == null) {
-    const hid = lobbyData.host_id != null ? String(lobbyData.host_id) : '';
-    const judgesOnlyHost = hid && String(currentUser.id) === hid && lobbyData.host_plays === false;
-    showToast(judgesOnlyHost ? 'Режим «только ведущий»: ты не занимаешь место за столом.' : 'Ожди назначение места по очереди входа.', 'error');
-    return;
-  }
-
-  isReady = !players[idx].ready;
-  players[idx] = { ...players[idx], nickname: currentUser.nickname, ready: isReady };
-  updateReadyBtn();
-
-  try {
-    const cleaned = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(lobbyData));
-    await supabaseClient.from('lobbies').update({ players: cleaned }).eq('code', lobbyCode);
-    await loadLobby();
-  } catch (err) {
-    console.error('[Lobby] Ошибка ready:', err);
-  }
-}
-
-function updateReadyBtn() {
-  const btn = document.getElementById('readyBtn');
-  if (!lobbyData || !currentUser) return;
-  const seatT = lobbySeatTotal(lobbyData);
-  const players = normalizeLobbySlotsForSave(lobbyData.players || [], seatT, lobbySeatCtx(lobbyData));
-  const me = players.find(p => String(p.id) === String(currentUser.id));
-  const hasSeat = me && me.slot != null;
-
-  const judgesOnlySelf = lobbyData.host_plays === false &&
-    lobbyData.host_id && String(currentUser.id) === String(lobbyData.host_id);
-
-  if (lobbyData.status === 'waiting' && me && !hasSeat) {
-    btn.disabled = true;
-    btn.title = judgesOnlySelf ? 'Ведущий без места за столом' : 'Место назначается автоматически по очереди входа';
-  } else {
-    btn.disabled = false;
-    btn.title = '';
-  }
-
-  if (isReady) {
-    btn.textContent = '✓ Готов';
-    btn.classList.add('lb-ready-btn--active');
-  } else {
-    btn.textContent = '○ Не готов';
-    btn.classList.remove('lb-ready-btn--active');
-  }
-}
 
 async function startGame() {
   if (!isHost) return;
@@ -613,21 +527,18 @@ async function saveSettings() {
   const maxPlayers = parseInt(document.getElementById('settingMaxPlayers').value);
   const type       = document.getElementById('settingType').value;
   const password   = type === 'private' ? document.getElementById('settingPassword').value.trim() : null;
-  const hostPlays = false;
-
-  const tmpLobby = { ...lobbyData, max_players: maxPlayers, host_plays: hostPlays };
-  const seatT    = lobbySeatTotal(tmpLobby);
-
-  const ctxRow = { ...lobbyData, host_plays: hostPlays };
-  let players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT, lobbySeatCtx(ctxRow));
+  const tmpLobby = { ...lobbyData, max_players: maxPlayers };
+  const seatT = lobbySeatTotal(tmpLobby);
+  const ctx = lobbySeatCtx(lobbyData);
+  let players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT, ctx);
   players.forEach((p) => {
     if (typeof p.slot === 'number' && p.slot >= seatT) p.slot = null;
   });
-  players = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(ctxRow));
+  players = normalizeLobbySlotsForSave(players, seatT, ctx);
 
   try {
     await supabaseClient.from('lobbies')
-      .update({ name, max_players: maxPlayers, password, host_plays: hostPlays, players })
+      .update({ name, max_players: maxPlayers, password, players })
       .eq('code', lobbyCode);
     showToast('Настройки сохранены', 'success');
     await loadLobby();
@@ -700,169 +611,6 @@ function togglePasswordField() {
   if (group) group.style.display = type === 'private' ? 'block' : 'none';
 }
 
-// ─── ЧАТ ЛОББИ (мини-окно, broadcast) ─────────────────────────────────────────
-
-function lobbyChatDisplayName(uid, hintNick) {
-  if (!uid) return hintNick || 'Игрок';
-  if (currentUser && String(uid) === String(currentUser.id)) return currentUser.nickname || 'Ты';
-  const pl = (lobbyData?.players || []).find(p => String(p.id) === String(uid));
-  return pl?.nickname || hintNick || 'Игрок';
-}
-
-function trimLobbyChatDom() {
-  const wrap = document.getElementById('lobbyChatMsgs');
-  while (wrap && wrap.children.length > 200) wrap.removeChild(wrap.firstChild);
-}
-
-function scrollLobbyChatBottom() {
-  const wrap = document.getElementById('lobbyChatMsgs');
-  if (wrap) requestAnimationFrame(() => { wrap.scrollTop = wrap.scrollHeight; });
-}
-
-function updateLobbyChatBadge() {
-  const b = document.getElementById('lobbyChatBadge');
-  if (!b) return;
-  if (lobbyChatUnread > 0) {
-    b.textContent = lobbyChatUnread > 99 ? '99+' : String(lobbyChatUnread);
-    b.classList.remove('hidden');
-  } else {
-    b.classList.add('hidden');
-  }
-}
-
-function appendLobbyChatMessage(uid, text, ts, hintNick, isMine) {
-  const wrap = document.getElementById('lobbyChatMsgs');
-  if (!wrap) return;
-  const div = document.createElement('div');
-  div.className = 'lb-chat-msg' + (isMine ? ' lb-chat-msg--mine' : '');
-  if (uid) div.dataset.uid = uid;
-  const from = lobbyChatDisplayName(uid, hintNick);
-  const time = new Date(ts || Date.now()).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-  div.innerHTML = `
-    <div class="lb-chat-msg__head">
-      <span class="lb-chat-msg__from">${esc(from)}</span>
-      <span class="lb-chat-msg__time">${time}</span>
-    </div>
-    <div class="lb-chat-msg__text">${esc(text)}</div>
-  `;
-  wrap.appendChild(div);
-  trimLobbyChatDom();
-  scrollLobbyChatBottom();
-}
-
-function rerenderLobbyChatNicknames() {
-  document.querySelectorAll('#lobbyChatMsgs .lb-chat-msg[data-uid]').forEach((el) => {
-    const uid = el.dataset.uid;
-    const fromEl = el.querySelector('.lb-chat-msg__from');
-    if (!fromEl || !uid) return;
-    fromEl.textContent = lobbyChatDisplayName(uid, '');
-  });
-}
-
-async function loadLobbyChatFromDb() {
-  if (!supabaseClient || !lobbyCode) return;
-  try {
-    const { data, error } = await supabaseClient.from('lobbies').select('lobby_chat').eq('code', lobbyCode).maybeSingle();
-    if (error) return;
-    const arr = Array.isArray(data?.lobby_chat) ? data.lobby_chat : [];
-    const wrap = document.getElementById('lobbyChatMsgs');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    arr.forEach((m) => {
-      if (m.kind === 'msg' && m.text) {
-        appendLobbyChatMessage(m.uid, m.text, m.ts, m.nick, String(m.uid) === String(currentUser?.id));
-      }
-    });
-    scrollLobbyChatBottom();
-  } catch (_) {}
-}
-
-async function persistLobbyChatRow(uid, text, nick) {
-  if (!supabaseClient || !lobbyCode) return;
-  try {
-    const { data } = await supabaseClient.from('lobbies').select('lobby_chat').eq('code', lobbyCode).maybeSingle();
-    const arr = Array.isArray(data?.lobby_chat) ? data.lobby_chat : [];
-    arr.push({ kind: 'msg', uid, text, ts: Date.now(), nick: nick || null });
-    await supabaseClient.from('lobbies').update({ lobby_chat: arr.slice(-250) }).eq('code', lobbyCode);
-  } catch (e) {
-    console.warn('[lobby] lobby_chat', e);
-  }
-}
-
-function initLobbyChatOnce() {
-  if (lobbyChatInited || !supabaseClient || !lobbyCode || !currentUser) return;
-
-  const fab   = document.getElementById('lobbyChatFab');
-  const panel = document.getElementById('lobbyChatPanel');
-  const minBtn = document.getElementById('lobbyChatMinimize');
-  const send  = document.getElementById('lobbyChatSend');
-  const input = document.getElementById('lobbyChatInput');
-  if (!fab || !panel || !send || !input || !minBtn) return;
-
-  lobbyChatInited = true;
-
-  function openPanel() {
-    lobbyChatOpen = true;
-    panel.classList.remove('hidden');
-    lobbyChatUnread = 0;
-    updateLobbyChatBadge();
-    scrollLobbyChatBottom();
-    input.focus();
-  }
-
-  function closePanel() {
-    lobbyChatOpen = false;
-    panel.classList.add('hidden');
-  }
-
-  fab.addEventListener('click', () => {
-    if (panel.classList.contains('hidden')) openPanel();
-    else closePanel();
-  });
-  minBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closePanel();
-  });
-
-  function postLobbyChat() {
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
-    const ts = Date.now();
-    const payload = { type: 'chat', uid: currentUser.id, text, ts, nick: currentUser.nickname };
-    appendLobbyChatMessage(currentUser.id, text, ts, currentUser.nickname, true);
-    input.value = '';
-    persistLobbyChatRow(currentUser.id, text, currentUser.nickname);
-    if (lobbyChatChannel) {
-      lobbyChatChannel.send({ type: 'broadcast', event: 'msg', payload });
-    }
-    scrollLobbyChatBottom();
-  }
-
-  send.addEventListener('click', postLobbyChat);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      postLobbyChat();
-    }
-  });
-
-  (async () => {
-    await loadLobbyChatFromDb();
-    const chName = `lobby_chat:${lobbyCode}`;
-    lobbyChatChannel = supabaseClient.channel(chName, { config: { broadcast: { self: false } } });
-    lobbyChatChannel
-      .on('broadcast', { event: 'msg' }, ({ payload }) => {
-        if (!payload || payload.type !== 'chat' || !payload.text) return;
-        appendLobbyChatMessage(payload.uid, payload.text, payload.ts, payload.nick, false);
-        if (!lobbyChatOpen) {
-          lobbyChatUnread++;
-          updateLobbyChatBadge();
-        }
-      })
-      .subscribe();
-  })();
-}
-
 // ─── ВСПОМОГАТЕЛЬНЫЕ ─────────────────────────────────────────────────────────
 
 function goBack() {
@@ -871,7 +619,6 @@ function goBack() {
 }
 
 function showError(title, text) {
-  document.getElementById('lobbyChatWidget')?.classList.add('hidden');
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('lobbyLayout').classList.add('hidden');
   document.getElementById('errorScreen').classList.remove('hidden');

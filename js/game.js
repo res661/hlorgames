@@ -339,8 +339,6 @@ async function handleCreateLobby(e) {
   const maxPlayers = parseInt(document.getElementById('lobbyMaxPlayers').value);
   const password   = document.getElementById('lobbyPassword').value.trim();
   const code       = generateCode();
-  /** Создатель — ведущий, без отдельного места за столом (места только участникам, по очереди входа). */
-  const host_plays = false;
 
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -357,7 +355,7 @@ async function handleCreateLobby(e) {
   try {
     let playersSeed = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
     const seatT = maxPlayers;
-    const ctxRow = { host_id: currentUser.id, host_plays };
+    const ctxRow = { host_id: currentUser.id, host_plays: false };
     if (window.LobbySeatUtils) {
       playersSeed = window.LobbySeatUtils.normalizeLobbySlotsForSave(playersSeed, seatT, ctxRow);
     }
@@ -371,7 +369,6 @@ async function handleCreateLobby(e) {
       status:      'waiting',
       max_players: maxPlayers,
       password:    password || null,
-      host_plays:  host_plays,
       players:     playersSeed,
     });
 
@@ -471,8 +468,7 @@ function renderActiveLobbies(lobbies) {
         ${lobbies.map(l => {
           const players  = lobbyParticipantsCount(l.players);
           const maxP     = l.max_players || gameInfo.maxPlayers;
-          const hostPlays = l.host_plays !== false;
-          const roomCap   = maxP + (hostPlays ? 1 : 0);
+          const roomCap   = maxP;
           const pct      = Math.round((players / roomCap) * 100);
           const hasPass  = !!l.password;
           const name     = l.name || `Лобби ${l.code}`;
@@ -587,8 +583,7 @@ async function joinLobby(code, hasPassword) {
 
     const players   = Array.isArray(lobby.players) ? lobby.players : [];
     const maxP      = lobby.max_players || gameInfo.maxPlayers;
-    const hostPlays = lobby.host_plays !== false;
-    const roomCap   = maxP + (hostPlays ? 1 : 0);
+    const roomCap   = maxP;
     const alreadyIn = players.some(p => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
@@ -599,7 +594,7 @@ async function joinLobby(code, hasPassword) {
       players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
       let nextPlayers = players;
       if (window.LobbySeatUtils) {
-        const ctxRow = { host_id: lobby.host_id, host_plays: lobby.host_plays !== false };
+        const ctxRow = { host_id: lobby.host_id, host_plays: false };
         nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, ctxRow);
       }
       await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', code);

@@ -58,16 +58,13 @@
           <span class="lb-player-count" id="playerCount">0/8</span>
         </div>
 
-        <p class="lb-auto-hint" id="lobbyRealtimeHint">Обновление по сети: без перезагрузки страницы (если включён Realtime в Supabase).</p>
+        <p class="lb-auto-hint" id="lobbyRealtimeHint">Создатель — ведущий без места за столом. Остальные садятся по порядку входа (1-й → слот 1, и т.д.).</p>
 
         <!-- Слоты игроков -->
         <div class="lb-slots" id="playerSlots"></div>
 
         <!-- Кнопки действий -->
         <div class="lb-actions">
-          <button class="btn lb-ready-btn" id="readyBtn" onclick="toggleReady()">
-            ✓ Готов
-          </button>
           <button class="btn btn--primary lb-start-btn hidden" id="startBtn" onclick="startGame()">
             ▶ Начать игру
           </button>
@@ -133,7 +130,7 @@
         <div class="lb-waiting-card" id="waitingCard">
           <div class="lb-waiting-icon">⏳</div>
           <p class="lb-waiting-title">Ожидание хоста</p>
-          <p class="lb-waiting-text">Хост настраивает лобби. Нажми «Готов» когда будешь готов!</p>
+          <p class="lb-waiting-text">Жди, пока хост настроит комнату или начнёт игру. Ник поменяй в профиле (иконка пользователя).</p>
         </div>
 
         <!-- Настройки (для хоста) -->
@@ -229,25 +226,6 @@
         <div class="form-error" id="registerError"></div>
         <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
       </form>
-    </div>
-  </div>
-
-  <!-- Чат лобби: мини-окно справа снизу -->
-  <div id="lobbyChatWidget" class="lb-chat-widget hidden">
-    <button type="button" class="lb-chat-fab" id="lobbyChatFab" aria-label="Открыть чат">
-      <span class="lb-chat-fab__icon">💬</span>
-      <span class="lb-chat-fab__badge hidden" id="lobbyChatBadge">0</span>
-    </button>
-    <div class="lb-chat-panel hidden" id="lobbyChatPanel">
-      <div class="lb-chat-panel__top">
-        <span class="lb-chat-panel__title">Чат лобби</span>
-        <button type="button" class="lb-chat-panel__min" id="lobbyChatMinimize" title="Свернуть">▾</button>
-      </div>
-      <div class="lb-chat-panel__msgs" id="lobbyChatMsgs"></div>
-      <div class="lb-chat-panel__input">
-        <input type="text" id="lobbyChatInput" maxlength="1000" placeholder="Написать сообщение…" autocomplete="off" />
-        <button type="button" class="lb-chat-panel__send" id="lobbyChatSend" aria-label="Отправить">➤</button>
-      </div>
     </div>
   </div>
 
