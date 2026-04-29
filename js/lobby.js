@@ -217,9 +217,13 @@ async function loadLobby() {
 
     lobbyData = await syncMyLobbyIdentity(data);
     renderLobby(lobbyData);
-    // Сохраняем в localStorage для индикатора (код нормализуется в setActiveLobby)
-    if (typeof setActiveLobby === 'function' && data.status === 'waiting') {
-      setActiveLobby(data.code, data.game, data.name || data.code);
+    if (typeof setActiveLobby === 'function' && (data.status === 'waiting' || data.status === 'active')) {
+      const isHm = !!(currentUser && String(data.host_id) === String(currentUser.id));
+      setActiveLobby(data.code, data.game, data.name || data.code, {
+        roomStatus: data.status === 'active' ? 'active' : 'waiting',
+        viewOrigin: 'lobby',
+        isHost: isHm,
+      });
     }
 
   } catch (err) {
@@ -264,6 +268,14 @@ function renderLobby(lobby) {
   const players = Array.isArray(lobby.players) ? lobby.players : [];
 
   isHost = !!(currentUser && String(lobby.host_id) === String(currentUser.id));
+
+  const leaveTop = document.getElementById('leaveLobbyBtn');
+  if (leaveTop) {
+    leaveTop.textContent = isHost ? 'Закрыть комнату' : 'Выйти из комнаты';
+    leaveTop.title = isHost
+      ? 'Завершить игру и закрыть комнату для всех участников'
+      : 'Покинуть комнату только для себя — остальные останутся';
+  }
 
   // Обновляем цвет темы
   document.documentElement.style.setProperty('--game-color', game.color);

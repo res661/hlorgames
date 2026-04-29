@@ -139,7 +139,13 @@
     if (row.status !== 'waiting' && row.status !== 'active') return;
     const inPl = (row.players || []).some((p) => String(p.id) === String(myUserId));
     const isH = String(row.host_id) === String(myUserId);
-    if (inPl || isH) setActiveLobby(String(LOBBY).toUpperCase(), row.game || 'mafia', row.name || LOBBY);
+    if (inPl || isH) {
+      setActiveLobby(String(LOBBY).toUpperCase(), row.game || 'mafia', row.name || LOBBY, {
+        roomStatus: row.status === 'active' ? 'active' : 'waiting',
+        viewOrigin: 'game',
+        isHost: isH,
+      });
+    }
   }
 
   async function refreshPlayerMapFromDb() {
