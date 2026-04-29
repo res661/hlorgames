@@ -158,6 +158,15 @@ async function createLobby() {
     });
 
     if (error) throw error;
+
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(String(code).toUpperCase(), selectedGame, code, {
+        roomStatus: 'waiting',
+        viewOrigin: selectedGame === 'mafia' ? 'game' : 'lobby',
+        isHost: true,
+      });
+    }
+
     closeLobbyModal();
     showToast(`Комната создана! Код: ${code}`, 'success');
   } catch (err) {

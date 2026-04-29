@@ -2,8 +2,8 @@
  * MAFIA-PLAY.JS
  * Полная игровая страница Мафии с:
  *  - Ролями HOST / PLAYER
- *  - Realtime-чатом через Supabase Broadcast
- *  - Приватными сообщениями о ролях (только своему игроку)
+ *  - Приватными уведомлениями о роли (модальное окно + бэйдж над столом)
+ *  - Realtime синхронизацией стола через Supabase Broadcast (без чата)
  *  - Хост-слотом (ведущий не в сетке)
  *  - Управлением фазами, таймером, рандомными событиями
  *  - Горячей клавишей «admin» → суперадмин
@@ -58,9 +58,7 @@
   let timerInt     = null;
   let randQueued   = false;
   let editIdx      = null;
-  let chatOpen     = false;
   let hostOpen     = false;
-  let unread       = 0;
   let rtChannel    = null;
   let myNickname   = 'Игрок';
   let myUserId     = null;
@@ -148,7 +146,6 @@
   // ── DOM ──────────────────────────────────────────────────────────────────────
   const $grid      = () => document.getElementById('mafiaGrid');
   const $toast     = () => document.getElementById('toast');
-  const $chat      = () => document.getElementById('chatMessages');
   const $timerEl   = () => document.getElementById('timerEl');
 
   async function fetchProfileQuick(uid) {
@@ -236,7 +233,6 @@
       syncMafiaLobbyIndicator(data);
       applyLobbySlotBindings();
       renderGrid();
-      rerenderChatNicknames();
       updatePresenterForm();
       updateHostPanelTabsVisibility();
       refreshTopBarBadges();
@@ -316,46 +312,6 @@
     toast(`Ты за столом в слоте ${i + 1}`, 'success');
   }
 
-  async function loadMafiaChatHistory() {
-    if (!LOBBY || !supabaseClient) return;
-    try {
-      const { data, error } = await supabaseClient.from('lobbies').select('mafia_chat').eq('code', LOBBY).maybeSingle();
-      if (error) return;
-      const arr = Array.isArray(data?.mafia_chat) ? data.mafia_chat : [];
-      const wrap = $chat();
-      if (!wrap) return;
-      wrap.innerHTML = '';
-      arr.forEach((m) => {
-        if (m.kind === 'sys') {
-          const div = ce('div', 'mf-msg mf-msg--system');
-          div.innerHTML = `<div class="mf-msg__head"><span class="mf-msg__from">Система</span></div><div class="mf-msg__text">${esc(m.text)}</div>`;
-          wrap.appendChild(div);
-        } else if (m.text) {
-          addChatMsg({ uid: m.uid, nick: m.nick, text: m.text }, String(m.uid) === String(myUserId));
-        }
-      });
-      scrollChat();
-    } catch (_) {}
-  }
-
-  async function persistMafiaChatMessage(msg) {
-    if (!LOBBY || !supabaseClient || !msg?.text) return;
-    try {
-      const { data } = await supabaseClient.from('lobbies').select('mafia_chat').eq('code', LOBBY).maybeSingle();
-      const arr = Array.isArray(data?.mafia_chat) ? data.mafia_chat : [];
-      arr.push({
-        kind: 'msg',
-        uid: msg.uid,
-        text: msg.text,
-        ts: Date.now(),
-        nick: msg.nick || null,
-      });
-      await supabaseClient.from('lobbies').update({ mafia_chat: arr.slice(-250) }).eq('code', LOBBY);
-    } catch (e) {
-      console.warn('[mafia] mafia_chat column?', e);
-    }
-  }
-
   function updatePresenterForm() {
     const codeBlock = document.getElementById('mfRoomCodeBlock');
     if (codeBlock) codeBlock.classList.toggle('hidden', !isRoomHost);
@@ -433,24 +389,6 @@
     document.getElementById('btnHostPanel')?.classList.toggle('hidden', !(isHostFlag || isRoomHost));
   }
 
-  function chatSenderName(msg) {
-    const uid = msg.uid != null ? String(msg.uid) : '';
-    if (uid && lobbyPlayersMap[uid]) return lobbyPlayersMap[uid];
-    if (uid && uid === String(myUserId)) return myNickname;
-    return msg.nick || msg.from || 'Игрок';
-  }
-
-  function rerenderChatNicknames() {
-    const wrap = $chat();
-    if (!wrap) return;
-    wrap.querySelectorAll('.mf-msg[data-uid]').forEach((el) => {
-      const uid = el.dataset.uid;
-      const nameEl = el.querySelector('.mf-msg__from');
-      if (!nameEl || !uid) return;
-      const fallback = nameEl.getAttribute('data-nick-fallback') || '';
-      nameEl.textContent = chatSenderName({ uid, nick: fallback });
-    });
-  }
 
   async function resolveLobbyAndUser() {
     mySlot = parseInt(params.get('slot') ?? '-1', 10);
@@ -486,30 +424,64 @@
     }
   }
 
+  /** Модальное окно роли игроку (ведущий шлёт по сети через broadcast или меняешь слот) */
+  function setupRoleRevealModal() {
+    const overlay = document.getElementById('roleRevealOverlay');
+    const dismiss = document.getElementById('roleRevealDismiss');
+    if (!overlay || !dismiss) return;
+    dismiss.addEventListener('click', closeRoleReveal);
+    overlay.querySelector('.mf-role-reveal__backdrop')?.addEventListener('click', closeRoleReveal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || overlay.classList.contains('hidden')) return;
+      closeRoleReveal();
+    });
+  }
+
+  function closeRoleReveal() {
+    const overlay = document.getElementById('roleRevealOverlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (!roomClosedOverlayShown) document.body.style.overflow = '';
+  }
+
+  function openRoleReveal(role, subtitle) {
+    const overlay = document.getElementById('roleRevealOverlay');
+    const rn = document.getElementById('roleRevealRoleName');
+    const dh = document.getElementById('roleRevealHint');
+    if (!overlay || !rn) return;
+    const cls = ROLES_MAP[role] || 'other';
+    rn.textContent = role;
+    rn.className = `mf-role-reveal__name mf-slot__role--${cls}`;
+    if (dh) dh.textContent = subtitle || ROLES_INFO[role] || '';
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    try {
+      document.getElementById('roleRevealDismiss')?.focus();
+    } catch (_) {}
+  }
+
   // ── INIT ─────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
     applySettings();
     await resolveLobbyAndUser();
     renderGrid();
-    await loadMafiaChatHistory();
+    setupRoleRevealModal();
     setupRoleUI();
     setupSidebars();
     setupSlotModal();
     setupHostControls();
     setupPresenterControls();
-    setupChat();
     setupHotkeys();
-    initRealtimeChat();
+    initGameBroadcast();
     attachLobbyRowRealtime();
     const LOBBY_DB_POLL_MS = 20000;
     setInterval(refreshPlayerMapFromDb, LOBBY_DB_POLL_MS);
     updatePresenterForm();
     updateHostPanelTabsVisibility();
     refreshTopBarBadges();
-    if ($chat() && !$chat().children.length) {
-      addSysMsg('Добро пожаловать в игру!');
-      if (isHostFlag) addSysMsg('Ты — ведущий. Назначай роли и управляй игрой через панель.');
-    }
+    if (isHostFlag) toast('Панель «Ведущий» — назначай роли в слоте; игрокам роль покажется отдельным окном.', 'success');
     updateLobbyModerationUI();
   });
 
@@ -748,7 +720,7 @@
     renderSlot(editIdx);
     renderHostPlayers();
 
-    // Отправить роль в чат если выбрана и чекбокс включен
+    // Показ игроку через broadcast (если включено)
     const send = document.getElementById('sendRoleCheck').checked && s.role && s.role !== oldRole;
     if (send) sendRoleNotification(editIdx, s.role, s.name);
 
@@ -773,23 +745,20 @@
 
   // ── SIDEBARS ─────────────────────────────────────────────────────────────────
   function setupSidebars() {
-    document.getElementById('btnToggleChat').onclick = toggleChat;
-    document.getElementById('btnCloseChat').onclick  = () => { chatOpen = false; updateSidebars(); };
     document.getElementById('btnLeaveLobby')?.addEventListener('click', () => {
       if (typeof leaveFromIndicator === 'function') leaveFromIndicator();
       else toast('Нет модуля выхода из комнаты', 'error');
     });
-    document.getElementById('btnHostPanel').onclick  = () => {
+    document.getElementById('btnHostPanel').onclick = () => {
       if (!isHostFlag && !isRoomHost) return;
       toggleHost();
     };
-    document.getElementById('btnCloseHost').onclick  = () => { hostOpen = false; updateSidebars(); };
+    document.getElementById('btnCloseHost').onclick = () => { hostOpen = false; updateSidebars(); };
 
-    // Stabs
-    document.querySelectorAll('.mf-stab').forEach(b => {
+    document.querySelectorAll('.mf-stab').forEach((b) => {
       b.addEventListener('click', () => {
-        document.querySelectorAll('.mf-stab').forEach(x => x.classList.remove('active'));
-        document.querySelectorAll('.mf-stab-panel').forEach(x => { x.classList.add('hidden'); x.classList.remove('active'); });
+        document.querySelectorAll('.mf-stab').forEach((x) => x.classList.remove('active'));
+        document.querySelectorAll('.mf-stab-panel').forEach((x) => { x.classList.add('hidden'); x.classList.remove('active'); });
         b.classList.add('active');
         const panel = document.getElementById(`stab-${b.dataset.stab}`);
         if (panel) { panel.classList.remove('hidden'); panel.classList.add('active'); }
@@ -797,17 +766,9 @@
     });
   }
 
-  function toggleChat() {
-    chatOpen = !chatOpen;
-    if (chatOpen) { hostOpen = false; unread = 0; updateChatBadge(); }
-    updateSidebars();
-    if (chatOpen) { renderHostPlayers(); scrollChat(); }
-  }
-
   function toggleHost() {
     hostOpen = !hostOpen;
     if (hostOpen) {
-      chatOpen = false;
       updateHostPanelTabsVisibility();
       if (isHostFlag) renderHostPlayers();
     }
@@ -815,10 +776,10 @@
   }
 
   function updateSidebars() {
-    document.getElementById('chatSidebar').classList.toggle('hidden', !chatOpen);
-    document.getElementById('hostSidebar').classList.toggle('hidden', !hostOpen);
-    document.getElementById('btnToggleChat').classList.toggle('active', chatOpen);
-    document.getElementById('btnHostPanel').classList.toggle('active', hostOpen);
+    const hostSb = document.getElementById('hostSidebar');
+    if (hostSb) hostSb.classList.toggle('hidden', !hostOpen);
+    const btnHp = document.getElementById('btnHostPanel');
+    if (btnHp) btnHp.classList.toggle('active', !!hostOpen);
   }
 
   // ── HOST CONTROLS ─────────────────────────────────────────────────────────────
@@ -964,8 +925,6 @@
     Object.values(PHASES).forEach(ph => document.body.classList.remove(ph.css));
     document.body.classList.add(info.css);
     document.querySelectorAll('.mf-phase-btn').forEach(b => b.classList.toggle('active', b.dataset.phase===p));
-    addSysMsg(`Фаза: ${info.text}`);
-
     if (p === 'day' && randQueued) {
       randQueued = false;
       document.getElementById('btnRandEvent').classList.remove('mf-btn--blue');
@@ -1026,99 +985,18 @@
     setTimeout(()=>{ m.classList.add('fade-out'); setTimeout(()=>m.remove(),800); },5000);
   }
 
-  // ── CHAT ─────────────────────────────────────────────────────────────────────
-  function setupChat() {
-    const input = document.getElementById('chatInput');
-    const send  = document.getElementById('btnChatSend');
-    const go    = () => {
-      const text = input.value.trim(); if (!text) return;
-      const msg  = { type: 'message', uid: myUserId, nick: myNickname, text };
-      addChatMsg(msg, true);
-      broadcast(msg);
-      persistMafiaChatMessage(msg);
-      input.value = '';
-    };
-    send.onclick = go;
-    input.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();} });
-  }
-
-  function addChatMsg(msg, isMine=false) {
-    const wrap = $chat(); if (!wrap) return;
-    const div  = ce('div', `mf-msg ${isMine?'mf-msg--mine':''}`);
-    if (msg.uid) div.dataset.uid = msg.uid;
-    const rawFb = msg.nick || msg.from || '';
-    const fallback = escAttr(rawFb);
-    const fromLabel = chatSenderName(msg);
-    const time = new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
-    div.innerHTML = `
-      <div class="mf-msg__head">
-        <span class="mf-msg__from" data-nick-fallback="${fallback}">${esc(fromLabel)}</span>
-        <span class="mf-msg__time">${time}</span>
-      </div>
-      <div class="mf-msg__text">${esc(msg.text)}</div>
-    `;
-    wrap.appendChild(div);
-    scrollChat();
-    if (!chatOpen) { unread++; updateChatBadge(); }
-  }
-
-  function addSysMsg(text) {
-    const wrap = $chat(); if (!wrap) return;
-    const div = ce('div','mf-msg mf-msg--system');
-    div.innerHTML = `
-      <div class="mf-msg__head"><span class="mf-msg__from">Система</span></div>
-      <div class="mf-msg__text">${esc(text)}</div>
-    `;
-    wrap.appendChild(div);
-    scrollChat();
-  }
-
-  function addRoleCard(role, playerName) {
-    const wrap = $chat(); if (!wrap) return;
-    const info = ROLES_INFO[role] || 'Выполни свою задачу.';
-    const cls  = ROLES_MAP[role] || 'other';
-    const div  = ce('div','mf-msg mf-msg--private');
-    div.innerHTML = `
-      <div class="mf-msg__head">
-        <span class="mf-msg__from">🎭 Роль назначена</span>
-      </div>
-      <div class="mf-role-card">
-        <div class="mf-role-card__title">Твоя роль</div>
-        <div class="mf-role-card__role mf-slot__role--${cls}">${role}</div>
-        <div class="mf-role-card__desc">${info}</div>
-      </div>
-    `;
-    wrap.appendChild(div);
-    scrollChat();
-    // Открываем чат чтобы игрок увидел роль
-    chatOpen = true; updateSidebars(); updateChatBadge();
-  }
-
-  function scrollChat() {
-    const w = $chat(); if (w) w.scrollTop = w.scrollHeight;
-  }
-  function updateChatBadge() {
-    const b = document.getElementById('chatBadge');
-    b.classList.toggle('hidden', unread === 0);
-    b.textContent = unread;
-  }
-
-  // ── ROLE NOTIFICATION ────────────────────────────────────────────────────────
   function sendRoleNotification(slotIdx, role, playerName) {
-    // Broadcast приватное сообщение — игрок сам фильтрует по своему slotIdx
-    const msg = {
+    broadcast({
       type: 'role_assign',
       slot: slotIdx,
       role,
-      playerName: playerName || `Слот ${slotIdx+1}`,
-    };
-    broadcast(msg);
-    // В чат хоста — системное
-    addSysMsg(`🎭 Роль "${role}" отправлена игроку ${playerName||`#${slotIdx+1}`}`);
+      playerName: playerName || `Слот ${slotIdx + 1}`,
+    });
+    toast(`Роль «${role}» отправлена (${playerName || 'слот ' + (slotIdx + 1)})`, 'success');
   }
 
-  // ── REALTIME ─────────────────────────────────────────────────────────────────
-  function initRealtimeChat() {
+  // ── СИНХРОНИМАЦИЯ СТОЛА (Broadcast, без чата) ───────────────────────────────
+  function initGameBroadcast() {
     const tryInit = (n) => {
       if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         connectChannel();
@@ -1149,9 +1027,6 @@
   function handlePayload(p) {
     if (!p || !p.type) return;
     switch (p.type) {
-      case 'message':
-        addChatMsg(p);
-        break;
       case 'phase':
         setPhase(p.phase);
         break;
@@ -1174,9 +1049,8 @@
         }
         break;
       case 'role_assign':
-        // Принимаем только если это наш слот
         if (p.slot === mySlot && !isHostFlag) {
-          addRoleCard(p.role, p.playerName);
+          openRoleReveal(p.role, '');
           showMyRole(p.role);
         }
         break;
@@ -1273,8 +1147,6 @@
   // ── HELPERS ──────────────────────────────────────────────────────────────────
   function ce(tag, cls) { const el = document.createElement(tag); el.className = cls; return el; }
   function esc(str) { return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function escAttr(str) { return String(str??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-
   function toast(msg, type='') {
     const t = $toast(); if (!t) return;
     t.textContent = msg; t.className = `toast show ${type}`;

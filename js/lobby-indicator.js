@@ -361,12 +361,20 @@ function escHtml(str) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    syncIndicatorLobbyRealtimeState();
-    renderLobbyIndicator();
-  }, 800);
-});
+function bootLobbyIndicatorUi() {
+  syncIndicatorLobbyRealtimeState();
+  renderLobbyIndicator();
+}
+
+function scheduleLobbyIndicatorBoot() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => bootLobbyIndicatorUi(), { once: true });
+  } else {
+    queueMicrotask(() => bootLobbyIndicatorUi());
+  }
+}
+
+scheduleLobbyIndicatorBoot();
 
 window.addEventListener('pageshow', () => {
   syncIndicatorLobbyRealtimeState();

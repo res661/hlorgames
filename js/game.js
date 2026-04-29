@@ -459,6 +459,13 @@ async function handleCreateLobby(e) {
   btn.textContent = 'Создаём...';
 
   if (!supabaseClient) {
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(String(code).toUpperCase(), gameType, name, {
+        roomStatus: 'waiting',
+        viewOrigin: gameType === 'mafia' ? 'game' : 'lobby',
+        isHost: true,
+      });
+    }
     showToast(`Комната создана! Код: ${code}`, 'success');
     setTimeout(() => window.location.href = `lobby.html?code=${code}`, 500);
     btn.disabled = false;
@@ -487,6 +494,14 @@ async function handleCreateLobby(e) {
     });
 
     if (error) throw error;
+
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(String(code).toUpperCase(), gameType, name, {
+        roomStatus: 'waiting',
+        viewOrigin: gameType === 'mafia' ? 'game' : 'lobby',
+        isHost: true,
+      });
+    }
 
     showToast(`Комната «${name}» создана!`, 'success');
     // Мафия → сразу на игровую страницу как хост

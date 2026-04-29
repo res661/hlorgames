@@ -49,11 +49,6 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Панель
       </button>
-      <button class="mf-top-btn" id="btnToggleChat">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Чат
-        <span class="mf-chat-badge hidden" id="chatBadge">0</span>
-      </button>
       <button type="button" class="mf-top-btn mf-top-btn--leave" id="btnLeaveLobby" title="Выйти из комнаты (как у плашки внизу)">Выйти</button>
       <a href="javascript:history.back()" class="mf-top-btn">← Назад</a>
     </div>
@@ -66,21 +61,6 @@
     <main class="mafia-main" id="mafiaMain">
       <div class="mafia-grid" id="mafiaGrid"></div>
     </main>
-
-    <!-- Правая панель: чат -->
-    <aside class="mf-sidebar mf-sidebar--chat hidden" id="chatSidebar">
-      <div class="mf-sidebar__head">
-        <span class="mf-sidebar__title">Чат</span>
-        <button class="mf-sidebar__close" id="btnCloseChat">✕</button>
-      </div>
-      <div class="mf-chat-messages" id="chatMessages"></div>
-      <div class="mf-chat-input-row">
-        <input class="mf-chat-input" id="chatInput" placeholder="Сообщение..." maxlength="200" />
-        <button class="mf-chat-send" id="btnChatSend">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-    </aside>
 
     <!-- Правая панель: хост-контроль -->
     <aside class="mf-sidebar mf-sidebar--host hidden" id="hostSidebar">
@@ -243,11 +223,11 @@
         </select>
       </div>
 
-      <!-- Отправить роль в чат (только если роль выбрана) -->
+      <!-- При сохранении — показать игроку отдельное окно «твоя роль» по сети -->
       <div class="mf-send-role-wrap" id="sendRoleWrap" style="display:none">
         <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--mf-muted);cursor:pointer">
           <input type="checkbox" id="sendRoleCheck" checked/>
-          Отправить роль игроку в чат
+          Показать игроку всплывающее окно с ролью (через сеть)
         </label>
       </div>
 
@@ -258,12 +238,23 @@
     </div>
   </div>
 
+  <!-- Полноэкранное подтверждение роли (вместо чата) -->
+  <div class="mf-role-reveal hidden" id="roleRevealOverlay" aria-hidden="true">
+    <div class="mf-role-reveal__backdrop"></div>
+    <div class="mf-role-reveal__box">
+      <p class="mf-role-reveal__eyebrow">Тебе назначили роль</p>
+      <div class="mf-role-reveal__name" id="roleRevealRoleName">—</div>
+      <p class="mf-role-reveal__desc" id="roleRevealHint"></p>
+      <button type="button" class="mf-btn mf-role-reveal__ok" id="roleRevealDismiss">Понятно</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/shared.js"></script>
-  <script src="js/lobby-indicator.js?v=3"></script>
+  <script src="js/lobby-indicator.js?v=4"></script>
   <script src="js/mafia-play.js"></script>
 </body>
 </html>
