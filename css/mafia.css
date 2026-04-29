@@ -41,6 +41,11 @@ body.mafia-body {
 }
 .mf-lobby-roster-name { color: var(--mf-text); flex: 1; min-width: 0; }
 .mf-lobby-roster-kick { flex-shrink: 0; font-size: 0.72rem !important; padding: 5px 10px !important; }
+.mf-lobby-roster-top {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--mf-brd);
+}
 
 /* ── TOPBAR ── */
 .mafia-topbar {

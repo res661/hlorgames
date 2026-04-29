@@ -288,7 +288,7 @@
       updatePresenterForm();
       updateHostPanelTabsVisibility();
       refreshTopBarBadges();
-      updateLobbyModerationUI();
+      renderHostPlayers();
       ensureLobbyRowRealtimeAttached();
     } catch (_) {}
   }
@@ -938,35 +938,83 @@
     updateLobbyModerationUI();
   }
 
+  function rosterPlayerLabel(p) {
+    if (!p || p.id == null) return 'Игрок';
+    const id = String(p.id);
+    const fromRow = typeof p.nickname === 'string' && p.nickname.trim() ? p.nickname.trim() : '';
+    const fromMap =
+      lobbyPlayersMap && lobbyPlayersMap[id] != null ? String(lobbyPlayersMap[id]).trim() : '';
+    const raw = fromRow || fromMap;
+    return raw || 'Игрок';
+  }
+
+  /** Сколько других пользователей в массиве players (не считая текущего). */
+  function countLobbyPeersForRoster() {
+    if (!Array.isArray(lobbyPlayersRaw)) return 0;
+    return lobbyPlayersRaw.filter((p) => p && p.id != null && String(p.id) !== String(myUserId)).length;
+  }
+
+  function buildLobbyRosterRowsHtml() {
+    if (!Array.isArray(lobbyPlayersRaw)) return '';
+    const rows = lobbyPlayersRaw.filter((p) => p && p.id != null && String(p.id) !== String(myUserId));
+    return rows
+      .map((p) => {
+        const nick = rosterPlayerLabel(p);
+        const lb = typeof p.slot === 'number' ? ` · лобби #${p.slot + 1}` : '';
+        const ms =
+          p.mafia_slot != null && p.mafia_slot !== '' && !Number.isNaN(Number(p.mafia_slot))
+            ? ` · сетка #${Number(p.mafia_slot) + 1}`
+            : '';
+        return `
+        <div class="mf-lobby-roster-row">
+          <span class="mf-lobby-roster-name">${esc(nick)}${lb}${ms}</span>
+          <button type="button" class="mf-btn mf-btn--dim mf-lobby-roster-kick" data-kick-lobby-player="${encodeURIComponent(String(p.id))}">Выгнать</button>
+        </div>`;
+      })
+      .join('');
+  }
+
+  function bindLobbyRosterKickButtons(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-kick-lobby-player]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uidRaw = decodeURIComponent(btn.getAttribute('data-kick-lobby-player') || '');
+        const player = lobbyPlayersRaw.find((p) => String(p.id) === String(uidRaw));
+        kickLobbyMember(uidRaw, rosterPlayerLabel(player || { id: uidRaw }));
+      });
+    });
+  }
+
   function updateLobbyModerationUI() {
+    const canModerate = !!(isRoomHost || isHostFlag);
     const block = document.getElementById('mfLobbyModBlock');
     const list = document.getElementById('mfLobbyRosterList');
-    if (!block || !list) return;
-    const show = (isRoomHost || isHostFlag) && Array.isArray(lobbyPlayersRaw) && lobbyPlayersRaw.length > 0;
-    block.classList.toggle('hidden', !show);
-    if (!show) return;
-    list.innerHTML = '';
-    lobbyPlayersRaw.forEach((p) => {
-      if (!p || p.id == null || String(p.id) === String(myUserId)) return;
-      const row = document.createElement('div');
-      row.className = 'mf-lobby-roster-row';
-      const lb = typeof p.slot === 'number' ? ` · лобби #${p.slot + 1}` : '';
-      const ms =
-        p.mafia_slot != null && p.mafia_slot !== '' && !Number.isNaN(Number(p.mafia_slot))
-          ? ` · сетка #${Number(p.mafia_slot) + 1}`
-          : '';
-      row.innerHTML = `<span class="mf-lobby-roster-name">${esc(p.nickname || 'Игрок')}${lb}${ms}</span>`;
-      const bt = document.createElement('button');
-      bt.type = 'button';
-      bt.className = 'mf-btn mf-btn--dim mf-lobby-roster-kick';
-      bt.textContent = 'Выгнать';
-      bt.onclick = (e) => {
-        e.stopPropagation();
-        kickLobbyMember(p.id, p.nickname);
-      };
-      row.appendChild(bt);
-      list.appendChild(row);
+    const wrapMain = document.getElementById('mfLobbyRosterWrapMain');
+    const listMain = document.getElementById('mfLobbyRosterListMain');
+    const emptyHint = document.getElementById('mfLobbyRosterEmptyMain');
+
+    const rowsHtml = buildLobbyRosterRowsHtml();
+    const othersCount = countLobbyPeersForRoster();
+
+    if (wrapMain) {
+      wrapMain.classList.toggle('hidden', !canModerate);
+    }
+    if (emptyHint) {
+      emptyHint.classList.toggle('hidden', !canModerate || othersCount > 0);
+    }
+
+    [list, listMain].forEach((el) => {
+      if (!el) return;
+      el.innerHTML =
+        rowsHtml ||
+        (canModerate ? '<p class="mf-hint" style="margin:6px 0 0">Пока некого исключить — в списке лобби только ты.</p>' : '');
+      bindLobbyRosterKickButtons(el);
     });
+
+    const showLegacyBlock =
+      canModerate && Array.isArray(lobbyPlayersRaw) && lobbyPlayersRaw.length > 0 && othersCount > 0;
+    if (block) block.classList.toggle('hidden', !showLegacyBlock);
   }
 
   async function kickLobbyMember(uid, nickname) {

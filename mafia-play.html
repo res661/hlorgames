@@ -78,7 +78,14 @@
 
           <!-- Игроки -->
         <div class="mf-stab-panel active mf-for-game-master" id="stab-players">
-          <p class="mf-hint">Нажмите на игрока для настройки</p>
+          <div class="mf-lobby-roster-top hidden" id="mfLobbyRosterWrapMain">
+            <div class="mf-ctrl__label">Зашли в комнату</div>
+            <p class="mf-hint">Список из лобби (Supabase); обновляется при входе новых игроков.</p>
+            <div id="mfLobbyRosterListMain"></div>
+            <p class="mf-hint mf-lobby-roster-empty-hint hidden" id="mfLobbyRosterEmptyMain">Пока только ты — отправь код друзьям (вкладка «Настройки» там же).</p>
+          </div>
+          <div class="mf-ctrl__label" style="margin-top:.5rem">Слоты стола</div>
+          <p class="mf-hint">Нажми на строку или на клетку в сетке — настройки слота</p>
           <div id="hostPlayersList"></div>
         </div>
 
@@ -255,6 +262,6 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=4"></script>
-  <script src="js/mafia-play.js?v=6"></script>
+  <script src="js/mafia-play.js?v=7"></script>
 </body>
 </html>
