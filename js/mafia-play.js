@@ -309,6 +309,10 @@
   }
 
   function updatePresenterForm() {
+    const codeBlock = document.getElementById('mfRoomCodeBlock');
+    if (codeBlock) codeBlock.classList.toggle('hidden', !isRoomHost);
+    const codeDisp = document.getElementById('mfRoomCodeDisplay');
+    if (codeDisp) codeDisp.textContent = (LOBBY || '—').toUpperCase();
     const block = document.getElementById('presenterRoomBlock');
     if (block) block.classList.toggle('hidden', !isRoomHost);
     const chk = document.getElementById('chkSeparatePresenter');
@@ -482,6 +486,16 @@
       });
     }
     document.getElementById('btnSavePresenter')?.addEventListener('click', savePresenterSettings);
+    document.getElementById('btnCopyRoomCode')?.addEventListener('click', async () => {
+      const c = String(LOBBY || '').trim().toUpperCase();
+      if (!c) return;
+      try {
+        await navigator.clipboard.writeText(c);
+        toast('Код скопирован', 'success');
+      } catch (_) {
+        toast(c, 'success');
+      }
+    });
   }
 
   async function savePresenterSettings() {
@@ -588,10 +602,12 @@
 
       const nm = ce('div','mf-slot__name'); nm.textContent = s.name || `Слот ${i+1}`; inf.appendChild(nm);
 
-      // Роль только хосту
-      if (isHostFlag && s.role) {
+      // Роль: ведущему всегда на слотах; себе на своём слоте (остальным чужих ролей не показываем)
+      const showRoleOv = !!(s.role && (isHostFlag || i === mySlot));
+      if (showRoleOv) {
         const rl = ce('div',`mf-slot__role mf-slot__role--${ROLES_MAP[s.role]||'other'}`);
-        rl.textContent = s.role; inf.appendChild(rl);
+        rl.textContent = s.role;
+        inf.appendChild(rl);
       }
 
       const st = ce('div',`mf-slot__status mf-slot__status--${s.status}`);
@@ -711,6 +727,10 @@
   function setupSidebars() {
     document.getElementById('btnToggleChat').onclick = toggleChat;
     document.getElementById('btnCloseChat').onclick  = () => { chatOpen = false; updateSidebars(); };
+    document.getElementById('btnLeaveLobby')?.addEventListener('click', () => {
+      if (typeof leaveFromIndicator === 'function') leaveFromIndicator();
+      else toast('Нет модуля выхода из комнаты', 'error');
+    });
     document.getElementById('btnHostPanel').onclick  = () => {
       if (!isHostFlag && !isRoomHost) return;
       toggleHost();
@@ -791,6 +811,7 @@
       slots = Array.from({length:TOTAL}, defSlot);
       saveSlots(); setPhase('wait', true); stopTimer(true); renderGrid(); renderHostPlayers();
       toast('Игра сброшена');
+      broadcast({ type: 'slots_full_sync', snapshot: slots.map((x) => ({ ...x })) });
     };
     document.getElementById('btnRandEvent').onclick = () => {
       if (!isHostFlag) return;
@@ -1062,9 +1083,9 @@
 
   function connectChannel() {
     if (!supabaseClient) return;
-    rtChannel = supabaseClient.channel(CHANNEL, { config: { broadcast: { self: false } } });
+    rtChannel = supabaseClient.channel(CHANNEL);
     rtChannel
-      .on('broadcast', { event:'game' }, ({ payload }) => handlePayload(payload))
+      .on('broadcast', { event: 'game' }, ({ payload }) => handlePayload(payload))
       .subscribe();
   }
 
@@ -1098,6 +1119,10 @@
           saveSlots();
           renderSlot(p.idx);
           if (isHostFlag) renderHostPlayers();
+          if (!isHostFlag && p.idx === mySlot) {
+            if (slots[p.idx]?.role) showMyRole(slots[p.idx].role);
+            else document.getElementById('myRoleWrap')?.classList.add('hidden');
+          }
         }
         break;
       case 'role_assign':
@@ -1113,6 +1138,14 @@
       case 'revive_all':
         slots.forEach(s => { if(s.status==='dead') s.status='alive'; });
         saveSlots(); renderGrid();
+        break;
+      case 'slots_full_sync':
+        if (Array.isArray(p.snapshot) && p.snapshot.length === TOTAL && !isHostFlag) {
+          slots = p.snapshot.map((x) => ({ ...defSlot(), ...x }));
+          saveSlots();
+          renderGrid();
+          setupRoleUI();
+        }
         break;
     }
   }

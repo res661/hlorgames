@@ -724,11 +724,9 @@
   .game-hero__title { font-size: 1.6rem; }
   .game-content     { padding: 1rem; gap: 1.5rem; }
 
-  /* Скрываем менее важные колонки на мобиле */
+  /* Скрываем «Создано» на мобиле (остались: название, хост, игроки, кнопка) */
   .g-lobby-table th:nth-child(4),
-  .g-lobby-table td:nth-child(4),
-  .g-lobby-table th:nth-child(5),
-  .g-lobby-table td:nth-child(5) { display: none; }
+  .g-lobby-table td:nth-child(4) { display: none; }
 
   .g-past-table th:nth-child(3),
   .g-past-table td:nth-child(3),

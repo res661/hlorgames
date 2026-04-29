@@ -8,7 +8,8 @@
  * · Если последнее обновление было со страницы игры и игра активна — отдельный текст («покинул экран игры»).
  */
 
-const LOBBY_KEY = 'hlor_active_lobby';
+const LOBBY_KEY = 'hlor_active_lobby_v3';
+const LEGACY_LOBBY_KEYS = ['hlor_active_lobby', 'hlor_active_lobby_v2'];
 const SESSION_DISMISS_KEY = 'hlor_lobby_indicator_dismiss';
 
 const GAME_EMOJIS = { mafia: '🕵️', bunker: '🏚️', alias: '🗣️' };
@@ -30,17 +31,45 @@ function mergeLobbyPayload(code, game, name, extras) {
 /**
  * extras: { roomStatus: 'waiting'|'active', viewOrigin: 'lobby'|'game', isHost?: boolean }
  */
+function readStoredLobbyJson() {
+  let raw = localStorage.getItem(LOBBY_KEY);
+  if (raw) return raw;
+  for (const k of LEGACY_LOBBY_KEYS) {
+    raw = localStorage.getItem(k);
+    if (raw) {
+      try {
+        localStorage.setItem(LOBBY_KEY, raw);
+        localStorage.removeItem(k);
+      } catch (_) {}
+      return raw;
+    }
+  }
+  return null;
+}
+
+function removeAllLobbyStorageKeys() {
+  localStorage.removeItem(LOBBY_KEY);
+  LEGACY_LOBBY_KEYS.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch (_) {}
+  });
+}
+
 function setActiveLobby(code, game, name, extras) {
   try {
     sessionStorage.removeItem(SESSION_DISMISS_KEY);
   } catch (_) {}
   const payload = mergeLobbyPayload(code, game, name, extras);
+  try {
+    LEGACY_LOBBY_KEYS.forEach((k) => localStorage.removeItem(k));
+  } catch (_) {}
   localStorage.setItem(LOBBY_KEY, JSON.stringify(payload));
   renderLobbyIndicator();
 }
 
 function clearActiveLobby() {
-  localStorage.removeItem(LOBBY_KEY);
+  removeAllLobbyStorageKeys();
   try {
     sessionStorage.removeItem(SESSION_DISMISS_KEY);
   } catch (_) {}
@@ -49,11 +78,11 @@ function clearActiveLobby() {
 
 function getActiveLobby() {
   try {
-    const raw = localStorage.getItem(LOBBY_KEY);
+    const raw = readStoredLobbyJson();
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (Date.now() - data.ts > 4 * 60 * 60 * 1000) {
-      localStorage.removeItem(LOBBY_KEY);
+      removeAllLobbyStorageKeys();
       return null;
     }
     return {
@@ -163,16 +192,43 @@ async function goToActiveLobby() {
   const lobby = getActiveLobby();
   if (!lobby) return;
   const code = String(lobby.code || '').toUpperCase();
+  const bust = Date.now();
+
   if (typeof supabaseClient !== 'undefined' && supabaseClient) {
     try {
-      const { data } = await supabaseClient.from('lobbies').select('status,game').eq('code', code).maybeSingle();
-      if (data && data.game === 'mafia' && data.status === 'active') {
-        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}`;
+      const { data } = await supabaseClient
+        .from('lobbies')
+        .select('status,game,host_id')
+        .eq('code', code)
+        .maybeSingle();
+
+      if (data) {
+        if (data.status === 'ended') {
+          window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
+          return;
+        }
+        if (data.game === 'mafia') {
+          let uid = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
+          if (!uid) {
+            const { data: s } = await supabaseClient.auth.getSession();
+            uid = s?.session?.user?.id ?? null;
+          }
+          const roleQ = uid && String(data.host_id) === String(uid) ? 'host' : 'player';
+          window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
+          return;
+        }
+        window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
         return;
       }
     } catch (_) {}
   }
-  window.location.href = `lobby.html?code=${encodeURIComponent(code)}`;
+
+  /* Нет ответа API — по сохранённому профилю комнаты */
+  if (lobby.game === 'mafia') {
+    window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&t=${bust}`;
+    return;
+  }
+  window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
 }
 
 function closeLobbyIndicator() {

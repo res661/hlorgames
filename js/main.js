@@ -119,6 +119,11 @@ async function createLobby() {
     return;
   }
 
+  if (typeof getActiveLobby === 'function' && getActiveLobby()) {
+    showToast('Ты уже в комнате. Сначала выйди через плашку справа внизу.', 'error');
+    return;
+  }
+
   const errEl = document.getElementById('lobbyError');
   errEl.textContent = '';
   const code = generateRoomCode();
@@ -133,7 +138,11 @@ async function createLobby() {
     const maxPlayers = 8;
     const seatT      = maxPlayers;
     const seed       = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
-    const ctxRow     = { host_id: currentUser.id, host_plays: false };
+    const ctxRow     = {
+      host_id: currentUser.id,
+      host_plays: false,
+      syncMafiaGrid: selectedGame === 'mafia',
+    };
     const players    = window.LobbySeatUtils
       ? window.LobbySeatUtils.normalizeLobbySlotsForSave(seed, seatT, ctxRow)
       : [{ ...seed[0], slot: 0 }];
@@ -163,6 +172,13 @@ async function joinLobby() {
 
   if (!code || code.length < 4) {
     errEl.textContent = 'Введи код комнаты';
+    return;
+  }
+
+  const want = String(code || '').trim().toUpperCase();
+  const active = typeof getActiveLobby === 'function' ? getActiveLobby() : null;
+  if (active && String(active.code || '').toUpperCase() !== want) {
+    errEl.textContent = 'Ты уже в другой комнате. Сначала выйди: плашка справа внизу.';
     return;
   }
 

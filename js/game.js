@@ -117,13 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
   bindAuthButtons();
 
   // Обновляем форму при любом изменении авторизации
-  window._onAuthUpdate = updateCreateFormVisibility;
+  window._onAuthUpdate = () => {
+    updateCreateFormVisibility();
+    refreshGamePageLobbyGuard();
+  };
 
   // Ждём первого определения авторизации (не угадываем таймаут)
   const initPage = () => {
     setupCreateForm();
     loadLobbies();
     refreshInterval = setInterval(loadLobbies, 30000);
+    refreshGamePageLobbyGuard();
   };
 
   // _onAuthFirstLoad сработает когда onAuthStateChange определит сессию
@@ -136,6 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
       initPage();
     }
   }, 1500);
+
+  window.addEventListener('pageshow', () => refreshGamePageLobbyGuard());
 });
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
@@ -207,6 +213,26 @@ function showToast(msg, type = 'success') {
   window._toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
+/** Одна активная комната (индикатор): блок создать + кнопки «Войти» в чужие */
+function refreshGamePageLobbyGuard() {
+  const act = typeof getActiveLobby === 'function' ? getActiveLobby() : null;
+  const inRoom = !!act;
+
+  const form = document.getElementById('createForm');
+  const notice = document.getElementById('createRoomLockedNotice');
+  const submitBtn = document.getElementById('createLobbySubmitBtn');
+  const formVisible = form && !form.classList.contains('hidden');
+
+  if (notice) {
+    notice.classList.toggle('hidden', !(inRoom && formVisible));
+  }
+  if (submitBtn) {
+    submitBtn.disabled = !!(inRoom && currentUser && formVisible);
+  }
+
+  filterLobbies();
+}
+
 // ─── ТАБЫ САЙДБАРА ────────────────────────────────────────────────────────────
 
 function switchSideTab(tab) {
@@ -217,6 +243,7 @@ function switchSideTab(tab) {
   document.getElementById(tabs[tab])?.classList.add('active');
   document.getElementById(panels[tab])?.classList.remove('hidden');
   if (tab === 'mylobbies') loadMyLobbies();
+  if (tab === 'create') refreshGamePageLobbyGuard();
 }
 
 async function loadMyLobbies() {
@@ -238,9 +265,17 @@ async function loadMyLobbies() {
       wrap.innerHTML = '<p class="g-empty">Ты ещё не создавал лобби</p>';
       return;
     }
-    wrap.innerHTML = data.map(l => {
+    wrap.innerHTML = data.map((l) => {
       const isWaiting = l.status === 'waiting';
+      const isActiveGame = l.status === 'active';
       const players = lobbyParticipantsCount(l.players);
+      const showBtn = isWaiting || (isActiveGame && gameType === 'mafia');
+      const btnLabel =
+        gameType === 'mafia' && (isWaiting || isActiveGame)
+          ? 'К столу'
+          : isActiveGame
+            ? 'К столу'
+            : 'Войти';
       return `
         <div class="g-my-lobby ${isWaiting ? 'g-my-lobby--active' : ''}">
           <div class="g-my-lobby__top">
@@ -250,15 +285,53 @@ async function loadMyLobbies() {
           <div class="g-my-lobby__meta">
             <span>${players} игр.</span>
             <span>${fmtTimeAgo(l.created_at)}</span>
-            ${isWaiting ? '<span class="g-my-lobby__status">● Открыто</span>' : '<span style="color:var(--text-dim)">Завершено</span>'}
+            ${isWaiting ? '<span class="g-my-lobby__status">● Открыто</span>' : (isActiveGame ? '<span class="g-my-lobby__status" style="color:#60a5fa">▶ В игре</span>' : '<span style="color:var(--text-dim)">Завершено</span>')}
           </div>
-          ${isWaiting ? `<a href="lobby.html?code=${l.code}" class="btn btn--primary g-join-btn" style="margin-top:.6rem;font-size:.78rem">Войти</a>` : ''}
+          ${showBtn ? `<button type="button" class="btn btn--primary g-join-btn g-my-lobby-enter" data-my-code="${esc(l.code)}" style="margin-top:.6rem;font-size:.78rem;width:100%">${btnLabel}</button>` : ''}
         </div>
       `;
     }).join('');
+
+    wrap.querySelectorAll('.g-my-lobby-enter').forEach((btn) => {
+      const codeAttr = btn.getAttribute('data-my-code');
+      const row = data.find((r) => String(r.code) === String(codeAttr));
+      if (row) btn.addEventListener('click', () => enterRoomFromMyLobbyList(row));
+    });
   } catch (err) {
     wrap.innerHTML = `<p class="g-empty g-error">${err.message}</p>`;
   }
+}
+
+/** «Мои лобби»: мафия всегда открывается в mafia-play (сетка камер), как при создании комнаты */
+function enterRoomFromMyLobbyList(row) {
+  if (!row || !currentUser) return;
+  const code = String(row.code || '').toUpperCase();
+  const g = row.game || gameType;
+  const isHost = String(row.host_id || '') === String(currentUser.id);
+  const st = row.status === 'active' ? 'active' : 'waiting';
+
+  const bust = Date.now();
+  if (g === 'mafia' && (row.status === 'waiting' || row.status === 'active')) {
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(code, g, row.name || code, {
+        roomStatus: st,
+        viewOrigin: 'game',
+        isHost,
+      });
+    }
+    const roleQ = isHost ? 'host' : 'player';
+    window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
+    return;
+  }
+
+  if (typeof setActiveLobby === 'function') {
+    setActiveLobby(code, g, row.name || code, {
+      roomStatus: st,
+      viewOrigin: 'lobby',
+      isHost,
+    });
+  }
+  window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
 }
 
 function fmtTimeAgo(iso) {
@@ -321,6 +394,7 @@ function updateCreateFormVisibility() {
     notice.classList.remove('hidden');
     form.classList.add('hidden');
   }
+  refreshGamePageLobbyGuard();
 }
 
 // ─── СОЗДАНИЕ ЛОББИ ──────────────────────────────────────────────────────────
@@ -332,6 +406,11 @@ async function handleCreateLobby(e) {
 
   if (!currentUser) {
     openAuthModal('login');
+    return;
+  }
+
+  if (typeof getActiveLobby === 'function' && getActiveLobby()) {
+    showToast('Ты уже в комнате. Сначала выйди через плашку справа внизу.', 'error');
     return;
   }
 
@@ -355,7 +434,7 @@ async function handleCreateLobby(e) {
   try {
     let playersSeed = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
     const seatT = maxPlayers;
-    const ctxRow = { host_id: currentUser.id, host_plays: false };
+    const ctxRow = { host_id: currentUser.id, host_plays: false, syncMafiaGrid: gameType === 'mafia' };
     if (window.LobbySeatUtils) {
       playersSeed = window.LobbySeatUtils.normalizeLobbySlotsForSave(playersSeed, seatT, ctxRow);
     }
@@ -459,7 +538,6 @@ function renderActiveLobbies(lobbies) {
           <th>Название</th>
           <th>Хост</th>
           <th>Игроки</th>
-          <th>Код</th>
           <th>Создано</th>
           <th></th>
         </tr>
@@ -475,10 +553,11 @@ function renderActiveLobbies(lobbies) {
           const hostName = l.host_name || 'Игрок';
           const timeAgo  = getTimeAgo(l.created_at);
           const isFull   = players >= roomCap;
-          const iAmHost  = currentUser && String(l.host_id) === String(currentUser.id);
-          const codeCell = iAmHost
-            ? `<span class="g-lobby-code" title="Виден только тебе">${esc(l.code)}</span>`
-            : '<span class="g-lobby-code g-lobby-code--private">—</span>';
+          const sess     = typeof getActiveLobby === 'function' ? getActiveLobby() : null;
+          const myRoom   = sess ? String(sess.code || '').toUpperCase() : '';
+          const rowCode  = String(l.code || '').toUpperCase();
+          const inOtherLobby = !!(sess && myRoom !== rowCode);
+          const cantJoin = isFull || inOtherLobby;
           return `
             <tr class="g-lobby-row ${isFull ? 'g-lobby-row--full' : ''}">
               <td class="g-lobby-row__name">
@@ -494,12 +573,12 @@ function renderActiveLobbies(lobbies) {
                   <span class="g-fill-text">${players}/${roomCap}</span>
                 </div>
               </td>
-              <td>${codeCell}</td>
               <td class="g-lobby-row__time">${timeAgo}</td>
               <td>
-                <button class="btn btn--primary g-join-btn ${isFull ? 'disabled' : ''}"
+                <button class="btn btn--primary g-join-btn ${cantJoin ? 'disabled' : ''}"
                   onclick="joinLobby('${esc(l.code)}', ${hasPass})"
-                  ${isFull ? 'disabled' : ''}>
+                  ${cantJoin ? 'disabled' : ''}
+                  title="${inOtherLobby ? 'Сначала выйди из текущей комнаты (плашка справа внизу)' : ''}">
                   ${isFull ? 'Полная' : 'Войти'}
                 </button>
               </td>
@@ -594,22 +673,31 @@ async function joinLobby(code, hasPassword) {
       players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
       let nextPlayers = players;
       if (window.LobbySeatUtils) {
-        const ctxRow = { host_id: lobby.host_id, host_plays: false };
+        const ctxRow = { host_id: lobby.host_id, host_plays: false, syncMafiaGrid: (lobby.game || gameType) === 'mafia' };
         nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, ctxRow);
       }
       await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', code);
     }
 
+    const bust = Date.now();
+    const isHostUser = String(lobby.host_id) === String(currentUser.id);
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(String(lobby.code).toUpperCase(), lobby.game || gameType, lobby.name || lobby.code, {
+        roomStatus: lobby.status === 'active' ? 'active' : 'waiting',
+        viewOrigin: (lobby.game || gameType) === 'mafia' ? 'game' : 'lobby',
+        isHost: isHostUser,
+      });
+    }
+
     showToast(`Вхожу в комнату ${code}!`, 'success');
     const hostJoin = String(lobby.host_id) === String(currentUser.id);
-    // Для Мафии — слот выбирается на игровой странице или из лобби (mafia_slot в БД); роль в URL — только подсказка
     setTimeout(() => {
       if (gameType === 'mafia') {
         const roleQ = hostJoin ? 'host' : 'player';
-        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${roleQ}`;
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${roleQ}&t=${bust}`;
         return;
       }
-      window.location.href = `lobby.html?code=${encodeURIComponent(code)}`;
+      window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
     }, 400);
   } catch (err) {
     showToast('Ошибка: ' + err.message, 'error');

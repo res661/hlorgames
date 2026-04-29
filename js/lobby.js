@@ -57,7 +57,11 @@ let isHost       = false;
 /** Ведущий без места — всегда в коде (без колонки host_plays в БД). */
 function lobbySeatCtx(row) {
   if (!row) return null;
-  return { host_id: row.host_id, host_plays: false };
+  return {
+    host_id: row.host_id,
+    host_plays: false,
+    syncMafiaGrid: row.game === 'mafia',
+  };
 }
 
 if (typeof window.LobbySeatUtils === 'undefined') {
@@ -216,15 +220,26 @@ async function loadLobby() {
     }
 
     lobbyData = await syncMyLobbyIdentity(data);
-    renderLobby(lobbyData);
+
     if (typeof setActiveLobby === 'function' && (data.status === 'waiting' || data.status === 'active')) {
       const isHm = !!(currentUser && String(data.host_id) === String(currentUser.id));
       setActiveLobby(data.code, data.game, data.name || data.code, {
         roomStatus: data.status === 'active' ? 'active' : 'waiting',
-        viewOrigin: 'lobby',
+        viewOrigin: data.game === 'mafia' ? 'game' : 'lobby',
         isHost: isHm,
       });
     }
+
+    /* Мафия — один экран со столом и «камерами» (mafia-play); lobby.html только для бункера/алиаса */
+    if (data.game === 'mafia' && (data.status === 'waiting' || data.status === 'active')) {
+      const isHm = currentUser && String(data.host_id) === String(currentUser.id);
+      const roleQ = isHm ? 'host' : 'player';
+      stopLobbyTimers();
+      window.location.replace(`mafia-play.html?code=${encodeURIComponent(lobbyCode)}&role=${encodeURIComponent(roleQ)}&t=${Date.now()}`);
+      return;
+    }
+
+    renderLobby(lobbyData);
 
   } catch (err) {
     console.error('[Lobby] Ошибка загрузки:', err);

@@ -87,8 +87,11 @@
               <label class="form-label">Пароль <span class="form-hint" style="display:inline">(необязательно)</span></label>
               <input type="text" class="form-input" id="lobbyPassword" placeholder="Без пароля — открытая" maxlength="20" />
             </div>
+            <div id="createRoomLockedNotice" class="g-notice hidden" style="margin-bottom:.85rem;line-height:1.45;color:var(--text-muted);font-size:0.84rem;background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25)">
+              Ты уже в комнате. Чтобы создать новую или зайти в другую по коду — сначала выйди через плашку справа внизу («Выйти» из комнаты).
+            </div>
             <div class="form-error" id="createError"></div>
-            <button type="submit" class="btn btn--primary btn--full">Создать комнату</button>
+            <button type="submit" class="btn btn--primary btn--full" id="createLobbySubmitBtn">Создать комнату</button>
 
             <div class="g-form-divider">
               <span>или</span>
@@ -227,9 +230,9 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
-  <script src="js/lobby-indicator.js"></script>
-  <script src="js/lobby-seat-utils.js"></script>
-  <script src="js/game.js"></script>
+  <script src="js/lobby-indicator.js?v=3"></script>
+  <script src="js/lobby-seat-utils.js?v=3"></script>
+  <script src="js/game.js?v=3"></script>
   <script src="js/shared.js"></script>
 </body>
 </html>

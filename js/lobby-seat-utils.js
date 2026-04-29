@@ -14,6 +14,7 @@
       const prev = m.get(id);
       if (!prev) {
         m.set(id, {
+          ...(typeof p === 'object' ? { ...p } : {}),
           id: p.id,
           nickname: p.nickname || 'Игрок',
           ready: !!p.ready,
@@ -27,7 +28,8 @@
         else if (sB !== undefined && sB !== null && (sA === null || sA === undefined)) slot = sB;
         m.set(id, {
           ...prev,
-          nickname: p.nickname || prev.nickname,
+          ...p,
+          nickname: (p.nickname || prev.nickname || 'Игрок'),
           ready: p.ready !== undefined ? !!p.ready : prev.ready,
           slot,
         });
@@ -39,7 +41,8 @@
   /**
    * @param {Array} players
    * @param {number} maxP число мест за столом (включая +1 место хоста, если включён host_plays у лобби)
-   * @param {{host_id?:string,host_plays?:boolean}|null} lobbyCtx
+   * @param {{host_id?:string,host_plays?:boolean,syncMafiaGrid?:boolean}|null} lobbyCtx
+   * syncMafiaGrid — для мафии: mafia_slot = индекс слота сетки (как slot в лобби).
    */
   function normalizeLobbySlotsForSave(players, maxP, lobbyCtx) {
     const list = dedupeLobbyPlayers(players);
@@ -73,6 +76,19 @@
         bySlot.set(free, p);
       } else {
         p.slot = null;
+      }
+    }
+    if (lobbyCtx && lobbyCtx.syncMafiaGrid === true) {
+      for (const p of list) {
+        if (hid && !hostPlays && String(p.id) === hid) {
+          delete p.mafia_slot;
+          continue;
+        }
+        if (typeof p.slot === 'number' && p.slot >= 0 && p.slot < maxP) {
+          p.mafia_slot = p.slot;
+        } else if (typeof p.slot !== 'number' || Number.isNaN(p.slot)) {
+          delete p.mafia_slot;
+        }
       }
     }
     return list;

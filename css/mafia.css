@@ -124,6 +124,14 @@ body.mafia-body {
 }
 .mf-top-btn:hover { background: rgba(255,255,255,0.09); color: var(--mf-text); }
 .mf-top-btn.active { background: rgba(200,255,78,0.12); border-color: rgba(200,255,78,0.35); color: var(--mf-accent); }
+.mf-top-btn--leave {
+  border-color: rgba(239,68,68,0.32);
+}
+.mf-top-btn--leave:hover {
+  background: rgba(239,68,68,0.12);
+  color: #fecaca;
+  border-color: rgba(239,68,68,0.5);
+}
 
 .mf-chat-badge {
   background: var(--mf-accent); color: #060806;
