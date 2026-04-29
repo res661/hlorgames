@@ -284,6 +284,7 @@
       applyLobbyGridFromRow(data);
       syncMafiaLobbyIndicator(data);
       applyLobbySlotBindings();
+      saveSlots();
       renderGrid();
       updatePresenterForm();
       updateHostPanelTabsVisibility();
@@ -317,11 +318,44 @@
       const bound = lobbyPlayersRaw.find((p) => Number(p.mafia_slot) === i);
       if (bound) {
         slots[i].linkedUserId = bound.id;
-        if (!slots[i].name?.trim()) slots[i].name = bound.nickname || '';
-      } else if (slots[i].linkedUserId && !lobbyPlayersRaw.some((p) => String(p.id) === String(slots[i].linkedUserId) && Number(p.mafia_slot) === i)) {
-        slots[i].linkedUserId = null;
+        const nick = typeof bound.nickname === 'string' ? bound.nickname.trim() : '';
+        if (nick) slots[i].name = nick;
+        if (slots[i].status === 'extinct') slots[i].status = 'alive';
+      } else if (slots[i].linkedUserId) {
+        const matched = lobbyPlayersRaw.some(
+          (p) =>
+            String(p.id) === String(slots[i].linkedUserId) && Number(p.mafia_slot) === i
+        );
+        if (!matched) {
+          slots[i].linkedUserId = null;
+          if (!slots[i].vdoUrl) slots[i].name = '';
+          if (!slots[i].role) slots[i].status = 'extinct';
+        }
       }
     }
+  }
+
+  /** Ник для слота: сначала сохранённое имя слота; иначе — из строки комнаты (lobbies.players). */
+  function slotDisplayName(s) {
+    if (!s) return '';
+    const direct = typeof s.name === 'string' ? s.name.trim() : '';
+    if (direct) return direct;
+    const uid = s.linkedUserId;
+    if (uid == null || uid === '') return '';
+    const p = lobbyPlayersRaw.find((x) => x && String(x.id) === String(uid));
+    if (p?.nickname != null && String(p.nickname).trim()) return String(p.nickname).trim();
+    const m = lobbyPlayersMap[String(uid)];
+    return m != null && String(m).trim() ? String(m).trim() : '';
+  }
+
+  /** Считаем слот занятым, если есть привязка к игроку в комнате (не только вручную введённый текст). */
+  function slotLooksOccupied(s) {
+    if (!s) return false;
+    if (s.vdoUrl) return true;
+    if (s.linkedUserId != null && s.linkedUserId !== '') return true;
+    if (typeof s.name === 'string' && s.name.trim()) return true;
+    if (typeof s.role === 'string' && s.role.trim()) return true;
+    return false;
   }
 
   async function upsertPlayerMafiaSlot(slotIndex, userId) {
@@ -393,6 +427,7 @@
     }
     await upsertPlayerMafiaSlot(target, myUserId);
     await refreshPlayerMapFromDb();
+    broadcastSlotUpdate(target);
     const hintWrongCell = clickedIndex !== target && !slots[clickedIndex]?.linkedUserId;
     toast(
       hintWrongCell
@@ -650,7 +685,7 @@
 
   function makeSlot(i) {
     const s   = slots[i];
-    const cfg = !!(s.name || s.vdoUrl);
+    const cfg = slotLooksOccupied(s);
     const div = document.createElement('div');
     div.className = 'mf-slot' + (cfg ? ` mf-slot--${s.status}` : '');
     div.dataset.i = i;
@@ -675,9 +710,10 @@
       div.appendChild(iframe);
     } else {
       const ph = ce('div','mf-slot__ph');
+      const label = slotDisplayName(s) || (cfg ? '' : `Слот ${i + 1}`);
       ph.innerHTML = cfg && s.status === 'extinct'
         ? `<span class="mf-slot__ph-icon">🚫</span><span>ВЫБЫЛ</span>`
-        : `<span class="mf-slot__ph-icon">📷</span><span>${esc(s.name) || `Слот ${i+1}`}</span>`;
+        : `<span class="mf-slot__ph-icon">📷</span><span>${esc(label) || `Слот ${i+1}`}</span>`;
       if (!isHostFlag && !cfg && i < activeSlots) {
         const hint = ce('div');
         hint.style.cssText = 'font-size:0.58rem;opacity:0.5;margin-top:4px;text-transform:uppercase';
@@ -692,7 +728,7 @@
       const ov = ce('div','mf-slot__ov');
       const inf = ce('div','mf-slot__info');
 
-      const nm = ce('div','mf-slot__name'); nm.textContent = s.name || `Слот ${i+1}`; inf.appendChild(nm);
+      const nm = ce('div','mf-slot__name'); nm.textContent = slotDisplayName(s) || `Слот ${i+1}`; inf.appendChild(nm);
 
       // Роль: ведущему всегда на слотах; себе на своём слоте (остальным чужих ролей не показываем)
       const showRoleOv = !!(s.role && (isHostFlag || i === mySlot));
@@ -923,12 +959,12 @@
     list.innerHTML = '';
     for (let i = 0; i < activeSlots; i++) {
       const s = slots[i];
-      const cfg = !!(s.name||s.vdoUrl);
+      const cfg = slotLooksOccupied(s);
       const row = ce('div','mf-prow');
       const rc  = ROLES_MAP[s.role] || 'other';
       row.innerHTML = `
         <span class="mf-prow__num">${i+1}</span>
-        <span class="mf-prow__name">${esc(s.name)||'—'}</span>
+        <span class="mf-prow__name">${esc(slotDisplayName(s))||'—'}</span>
         <span class="mf-prow__role mf-slot__role--${rc}">${s.role||''}</span>
         <span class="mf-prow__state mf-prow__state--${s.status}">${cfg?(STATUS_LBL[s.status]||''):''}</span>
       `;

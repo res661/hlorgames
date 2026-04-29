@@ -98,6 +98,26 @@ function getActiveLobby() {
   }
 }
 
+/** Одна строка lobbies по коду (разный регистр в localStorage и в Postgres). */
+async function fetchLobbyRowFlexible(codeHint) {
+  if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+    return { data: null, error: null };
+  }
+  const hint = String(codeHint || '').trim();
+  if (!hint) return { data: null, error: null };
+  if (typeof window !== 'undefined' && typeof window.hlorFetchLobbyByCode === 'function') {
+    return window.hlorFetchLobbyByCode(hint);
+  }
+  const cand = [...new Set([hint, hint.toUpperCase(), hint.toLowerCase()])];
+  let lastErr = null;
+  for (const c of cand) {
+    const { data, error } = await supabaseClient.from('lobbies').select('*').eq('code', c).maybeSingle();
+    if (error) lastErr = error;
+    else if (data) return { data, error: null };
+  }
+  return { data: null, error: lastErr };
+}
+
 /** Тексты: различаем «просто свернул сайт со страницы лобби» и «ушёл со страницы активной игры». */
 function buildIndicatorTexts(lobby) {
   const nm = lobby.name || lobby.code || '';
@@ -209,11 +229,7 @@ async function goToActiveLobby() {
 
   if (typeof supabaseClient !== 'undefined' && supabaseClient) {
     try {
-      const { data } = await supabaseClient
-        .from('lobbies')
-        .select('status,game,host_id')
-        .eq('code', code)
-        .maybeSingle();
+      const { data } = await fetchLobbyRowFlexible(code);
 
       if (!data) {
         clearActiveLobby();
@@ -306,10 +322,10 @@ async function leaveFromIndicator() {
   }
 
   let isHostRm = !!lobby.isHost;
-  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+  if (typeof supabaseClient !== 'undefined' && supabaseClient && lobby.code) {
     try {
-      const { data } = await supabaseClient.from('lobbies').select('host_id').eq('code', lobby.code).maybeSingle();
-      if (data && uid) isHostRm = String(data.host_id) === String(uid);
+      const { data: row } = await fetchLobbyRowFlexible(lobby.code);
+      if (row && uid) isHostRm = String(row.host_id) === String(uid);
     } catch (_) {}
   }
 
@@ -329,22 +345,24 @@ async function leaveFromIndicator() {
       clearActiveLobby();
       if (typeof supabaseClient !== 'undefined' && supabaseClient && loc) {
         try {
-          const code = String(loc.code || '').toUpperCase();
-          const { data } = await supabaseClient.from('lobbies').select('players,host_id,status').eq('code', code).single();
           let u = uid;
           if (!u) {
             const { data: s } = await supabaseClient.auth.getSession();
             u = s?.session?.user?.id ?? null;
           }
+          const { data } = await fetchLobbyRowFlexible(loc.code);
           if (data && u) {
+            const codeExact = String(data.code ?? loc.code);
             if (String(data.host_id) === String(u)) {
-              await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', code);
+              await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', codeExact);
             } else {
               const players = (data.players || []).filter((p) => String(p.id) !== String(u));
-              await supabaseClient.from('lobbies').update({ players }).eq('code', code);
+              await supabaseClient.from('lobbies').update({ players }).eq('code', codeExact);
             }
           }
-        } catch (_) {}
+        } catch (e) {
+          console.warn('[lobby-indicator] leave/update', e);
+        }
       }
       if (typeof showToast === 'function') showToast(isHostRm ? 'Комната закрыта' : 'Ты вышел из комнаты', 'success');
     },
