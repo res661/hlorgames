@@ -237,7 +237,7 @@
     if (!LOBBY || !supabaseClient) return;
     try {
       const { data, error } = await fetchLobbyMaybeSingle(
-        'players,host_id,host_name,presenter_id,max_players,name,status,game',
+        '*',
       );
       if (error) {
         maybeToastLobbyFetchProblem(error);
@@ -397,7 +397,7 @@
   async function upsertPlayerMafiaSlot(slotIndex, userId) {
     if (!LOBBY || !supabaseClient) return;
     const { data, error: fetchErr } = await fetchLobbyMaybeSingle(
-      'players,host_id,max_players,host_plays,code',
+      '*',
     );
     if (fetchErr) {
       console.warn('[mafia] upsertPlayerMafiaSlot load', fetchErr);
