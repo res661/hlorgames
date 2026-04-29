@@ -73,6 +73,54 @@
 
   let lobbyDbRealtimeCh = null;
   let roomClosedOverlayShown = false;
+  /** точное значение `lobbies.code` из БД — для Realtime и .eq */
+  let lobbyCanonicalCode = '';
+  let lobbyRealtimeEnsured = false;
+
+  function lobbyCodeForDb() {
+    return lobbyCanonicalCode || LOBBY;
+  }
+
+  /**
+   * SELECT лобби по коду: пробуем разный регистр (URL и Postgres могут расходиться).
+   */
+  async function fetchLobbyMaybeSingle(selectCols) {
+    if (!supabaseClient || !LOBBY) {
+      return { data: null, error: null };
+    }
+    const candidates = [...new Set([LOBBY, LOBBY.toUpperCase(), LOBBY.toLowerCase()])];
+    let lastErr = null;
+    for (const codeVal of candidates) {
+      const { data, error } = await supabaseClient
+        .from('lobbies')
+        .select(selectCols)
+        .eq('code', codeVal)
+        .maybeSingle();
+      if (error) {
+        lastErr = error;
+        continue;
+      }
+      if (data) {
+        lobbyCanonicalCode = String(data.code ?? codeVal).trim() || codeVal;
+        return { data, error: null };
+      }
+    }
+    return { data: null, error: lastErr };
+  }
+
+  let softFetchFailToastShown = false;
+  function maybeToastLobbyFetchProblem(err) {
+    if (!err || softFetchFailToastShown) return;
+    softFetchFailToastShown = true;
+    console.warn('[mafia] загрузка lobbies:', err);
+    toast('Не удалось загрузить комнату — проверь интернет или обнови страницу.', 'error');
+  }
+
+  function ensureLobbyRowRealtimeAttached() {
+    if (lobbyRealtimeEnsured || !supabaseClient || !lobbyCodeForDb()) return;
+    lobbyRealtimeEnsured = true;
+    attachLobbyRowRealtime();
+  }
 
   function detachLobbyRowRealtime() {
     if (lobbyDbRealtimeCh && supabaseClient?.removeChannel) {
@@ -84,15 +132,16 @@
   }
 
   function attachLobbyRowRealtime() {
-    if (!supabaseClient || !LOBBY) return;
+    const codeEq = lobbyCodeForDb();
+    if (!supabaseClient || !codeEq) return;
     detachLobbyRowRealtime();
-    const chName = `mafia_lobby:${String(LOBBY).replace(/[^\w]/g, '_')}`;
+    const chName = `mafia_lobby:${String(codeEq).replace(/[^\w]/g, '_')}`;
     try {
       lobbyDbRealtimeCh = supabaseClient
         .channel(chName)
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'lobbies', filter: `code=eq.${LOBBY}` },
+          { event: '*', schema: 'public', table: 'lobbies', filter: `code=eq.${codeEq}` },
           () => {
             refreshPlayerMapFromDb();
           }
@@ -187,11 +236,13 @@
   async function refreshPlayerMapFromDb() {
     if (!LOBBY || !supabaseClient) return;
     try {
-      const { data } = await supabaseClient
-        .from('lobbies')
-        .select('players,host_id,host_name,presenter_id,max_players,name,status,game')
-        .eq('code', LOBBY)
-        .maybeSingle();
+      const { data, error } = await fetchLobbyMaybeSingle(
+        'players,host_id,host_name,presenter_id,max_players,name,status,game',
+      );
+      if (error) {
+        maybeToastLobbyFetchProblem(error);
+        return;
+      }
       if (!data) {
         showRoomEndedOverlay('Комната недоступна', 'Этого лобби больше нет — либо удалили, либо код неверный.');
         return;
@@ -222,7 +273,7 @@
         }
       }
       if (changed) {
-        await supabaseClient.from('lobbies').update({ players, host_name }).eq('code', LOBBY);
+        await supabaseClient.from('lobbies').update({ players, host_name }).eq('code', lobbyCodeForDb());
         lobbyPlayersRaw = players;
         rebuildLobbyPlayersMap(players);
       } else {
@@ -238,6 +289,7 @@
       updateHostPanelTabsVisibility();
       refreshTopBarBadges();
       updateLobbyModerationUI();
+      ensureLobbyRowRealtimeAttached();
     } catch (_) {}
   }
 
@@ -274,7 +326,7 @@
 
   async function upsertPlayerMafiaSlot(slotIndex, userId) {
     if (!LOBBY || !supabaseClient) return;
-    const { data } = await supabaseClient.from('lobbies').select('players').eq('code', LOBBY).maybeSingle();
+    const { data } = await supabaseClient.from('lobbies').select('players').eq('code', lobbyCodeForDb()).maybeSingle();
     let pl = (data?.players || []).map((p) => {
       const q = { ...p };
       if (Number(q.mafia_slot) === slotIndex) q.mafia_slot = null;
@@ -283,7 +335,7 @@
     if (userId) {
       pl = pl.map((p) => (String(p.id) === String(userId) ? { ...p, mafia_slot: slotIndex } : p));
     }
-    await supabaseClient.from('lobbies').update({ players: pl }).eq('code', LOBBY);
+    await supabaseClient.from('lobbies').update({ players: pl }).eq('code', lobbyCodeForDb());
     lobbyPlayersRaw = pl;
     rebuildLobbyPlayersMap(pl);
   }
@@ -432,34 +484,15 @@
     mySlot = parseInt(params.get('slot') ?? '-1', 10);
     isHostFlag = params.get('role') === 'host';
     if (!supabaseClient) return;
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
     if (session?.user) {
       myUserId = session.user.id;
       const prof = await fetchProfileQuick(myUserId);
       myNickname = prof?.nickname || session.user.email?.split('@')[0] || 'Игрок';
     }
-    if (!LOBBY || !myUserId) return;
-    try {
-      const { data: row } = await supabaseClient
-        .from('lobbies')
-        .select('host_id,players,presenter_id,max_players,name,status,game')
-        .eq('code', LOBBY)
-        .maybeSingle();
-      if (row) {
-        roomHostId      = row.host_id;
-        presenterUserId = row.presenter_id || null;
-        lobbyPlayersRaw = Array.isArray(row.players) ? row.players : [];
-        isRoomHost      = String(row.host_id) === String(myUserId);
-        rebuildLobbyPlayersMap(row.players);
-        recomputeGameMasterFlags();
-        applyLobbyGridFromRow(row);
-        syncMafiaLobbyIndicator(row);
-        applyLobbySlotBindings();
-        updateLobbyModerationUI();
-      }
-    } catch (e) {
-      console.warn('[mafia] resolveLobbyAndUser', e);
-    }
+    // Строку lobbies загружает refreshPlayerMapFromDb — один источник правды и единый поиск по коду (регистр).
   }
 
   /** Модальное окно роли игроку (ведущий шлёт по сети через broadcast или меняешь слот) */
@@ -504,6 +537,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     applySettings();
     await resolveLobbyAndUser();
+    await refreshPlayerMapFromDb();
     renderGrid();
     setupRoleRevealModal();
     setupRoleUI();
@@ -513,7 +547,6 @@
     setupPresenterControls();
     setupHotkeys();
     initGameBroadcast();
-    attachLobbyRowRealtime();
     const LOBBY_DB_POLL_MS = 6000;
     setInterval(refreshPlayerMapFromDb, LOBBY_DB_POLL_MS);
     updatePresenterForm();
@@ -525,7 +558,8 @@
 
   window.addEventListener('pageshow', (ev) => {
     if (!ev.persisted || !LOBBY) return;
-    resolveLobbyAndUser().then(() => {
+    resolveLobbyAndUser().then(async () => {
+      await refreshPlayerMapFromDb();
       renderGrid();
       setupRoleUI();
       refreshTopBarBadges();
@@ -568,7 +602,7 @@
       return;
     }
     try {
-      await supabaseClient.from('lobbies').update({ presenter_id: pid }).eq('code', LOBBY);
+      await supabaseClient.from('lobbies').update({ presenter_id: pid }).eq('code', lobbyCodeForDb());
       presenterUserId = pid;
       await resolveLobbyAndUser();
       updatePresenterForm();
@@ -941,7 +975,7 @@
     if (!supabaseClient || !LOBBY) return;
     try {
       const pl = lobbyPlayersRaw.filter((p) => String(p.id) !== String(uid));
-      await supabaseClient.from('lobbies').update({ players: pl }).eq('code', LOBBY);
+      await supabaseClient.from('lobbies').update({ players: pl }).eq('code', lobbyCodeForDb());
       lobbyPlayersRaw = pl;
       rebuildLobbyPlayersMap(pl);
       applyLobbySlotBindings();
