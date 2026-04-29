@@ -303,8 +303,9 @@
       mySlot = -1;
     } else {
       const mePl = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
-      if (mePl && mePl.mafia_slot != null && mePl.mafia_slot !== '' && !Number.isNaN(Number(mePl.mafia_slot))) {
-        mySlot = Number(mePl.mafia_slot);
+      if (mePl) {
+        const si = seatedGridIndexFromPlayerRow(mePl, TOTAL);
+        if (!Number.isNaN(si)) mySlot = si;
       }
     }
   }
@@ -315,7 +316,11 @@
         slots[i].linkedUserId = null;
         continue;
       }
-      const bound = lobbyPlayersRaw.find((p) => Number(p.mafia_slot) === i);
+      const bound = lobbyPlayersRaw.find(
+        (p) =>
+          Number(p.mafia_slot) === i ||
+          Number(p.slot) === i 
+      );
       if (bound) {
         slots[i].linkedUserId = bound.id;
         const nick = typeof bound.nickname === 'string' ? bound.nickname.trim() : '';
@@ -324,7 +329,8 @@
       } else if (slots[i].linkedUserId) {
         const matched = lobbyPlayersRaw.some(
           (p) =>
-            String(p.id) === String(slots[i].linkedUserId) && Number(p.mafia_slot) === i
+            String(p.id) === String(slots[i].linkedUserId) &&
+            (Number(p.mafia_slot) === i || Number(p.slot) === i),
         );
         if (!matched) {
           slots[i].linkedUserId = null;
@@ -358,18 +364,83 @@
     return false;
   }
 
+  function clearSeatIndexFromPlayerRow(q, slotIndex) {
+    const o = { ...q };
+    const onThisSeat =
+      Number(o.mafia_slot) === slotIndex ||
+      Number(o.slot) === slotIndex;
+    if (onThisSeat) {
+      o.mafia_slot = null;
+      o.slot = null;
+    }
+    return o;
+  }
+
+  /** Для любой строки игрока: индекс места по mafia_slot или slot (совпадают после normalize из join.js). */
+  function seatedGridIndexFromPlayerRow(p, max) {
+    if (!p) return NaN;
+    const a = Number(p.mafia_slot);
+    const b = Number(p.slot);
+    let v = NaN;
+    if (!Number.isNaN(a)) v = a;
+    else if (!Number.isNaN(b)) v = b;
+    if (Number.isNaN(v)) return NaN;
+    if (v < 0 || v >= max) return NaN;
+    return v;
+  }
+
+  /**
+   * Сохраняет место игрока в lobbies.players. Важно: в lobby-seat-utils syncMafiaGrid
+   * восстанавливает mafia_slot из поля slot — поэтому обновляем оба одинаково.
+   * Если пользователя не было в массиве (зашёл по ссылке / гонка join) — добавляем.
+   */
   async function upsertPlayerMafiaSlot(slotIndex, userId) {
     if (!LOBBY || !supabaseClient) return;
-    const { data } = await supabaseClient.from('lobbies').select('players').eq('code', lobbyCodeForDb()).maybeSingle();
-    let pl = (data?.players || []).map((p) => {
-      const q = { ...p };
-      if (Number(q.mafia_slot) === slotIndex) q.mafia_slot = null;
-      return q;
-    });
-    if (userId) {
-      pl = pl.map((p) => (String(p.id) === String(userId) ? { ...p, mafia_slot: slotIndex } : p));
+    const { data, error: fetchErr } = await fetchLobbyMaybeSingle(
+      'players,host_id,max_players,host_plays,code',
+    );
+    if (fetchErr) {
+      console.warn('[mafia] upsertPlayerMafiaSlot load', fetchErr);
+      toast('Не удалось загрузить комнату перед сохранением места.', 'error');
+      return;
     }
-    await supabaseClient.from('lobbies').update({ players: pl }).eq('code', lobbyCodeForDb());
+    if (!data) {
+      toast('Комната не найдена — обнови страницу или проверь код.', 'error');
+      return;
+    }
+
+    let pl = (Array.isArray(data.players) ? data.players : []).map((p) =>
+      clearSeatIndexFromPlayerRow(p, slotIndex),
+    );
+
+    if (userId) {
+      const ix = pl.findIndex((p) => p && String(p.id) === String(userId));
+      const assign = {
+        ...(ix >= 0 ? pl[ix] : {}),
+        id: ix >= 0 ? pl[ix].id : userId,
+        nickname:
+          ix >= 0
+            ? pl[ix].nickname || myNickname || 'Игрок'
+            : myNickname || 'Игрок',
+        ready: ix >= 0 ? !!pl[ix].ready : false,
+        slot: slotIndex,
+        mafia_slot: slotIndex,
+      };
+      if (ix >= 0) pl[ix] = assign;
+      else pl.push(assign);
+    }
+
+    if (window.LobbySeatUtils && typeof window.LobbySeatUtils.dedupeLobbyPlayers === 'function') {
+      pl = window.LobbySeatUtils.dedupeLobbyPlayers(pl);
+    }
+
+    const codeEq = lobbyCodeForDb();
+    const { error: updErr } = await supabaseClient.from('lobbies').update({ players: pl }).eq('code', codeEq);
+    if (updErr) {
+      console.warn('[mafia] upsertPlayerMafiaSlot save', updErr);
+      toast('Не сохранилось место за столом: ' + (updErr.message || 'ошибка'), 'error');
+      return;
+    }
     lobbyPlayersRaw = pl;
     rebuildLobbyPlayersMap(pl);
   }
@@ -378,8 +449,8 @@
   function getFirstFreeMafiaSlot(max) {
     const taken = new Set();
     for (const p of lobbyPlayersRaw) {
-      const ms = Number(p.mafia_slot);
-      if (!Number.isNaN(ms) && ms >= 0 && ms < max) taken.add(ms);
+      const idx = seatedGridIndexFromPlayerRow(p, max);
+      if (!Number.isNaN(idx)) taken.add(idx);
     }
     for (let j = 0; j < max; j++) {
       if (!taken.has(j)) return j;
@@ -394,8 +465,8 @@
       return;
     }
     const meRow = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
-    if (meRow != null && meRow.mafia_slot != null && meRow.mafia_slot !== '') {
-      const cur = Number(meRow.mafia_slot);
+    if (meRow != null) {
+      const cur = seatedGridIndexFromPlayerRow(meRow, activeSlots);
       if (!Number.isNaN(cur) && cur >= 0) {
         toast(`Ты уже за столом — место ${cur + 1}. Перестановкой занимается ведущий.`, 'error');
         return;
@@ -403,7 +474,9 @@
     }
     const foreign = lobbyPlayersRaw.some(
       (p) =>
-        Number(p.mafia_slot) === clickedIndex && p.id != null && String(p.id) !== String(myUserId)
+        seatedGridIndexFromPlayerRow(p, activeSlots) === clickedIndex &&
+        p.id != null &&
+        String(p.id) !== String(myUserId),
     );
     if (foreign) {
       toast('Это место занято другим игроком.', 'error');
@@ -419,7 +492,8 @@
       return;
     }
     const takenByOther = lobbyPlayersRaw.some(
-      (p) => Number(p.mafia_slot) === target && String(p.id) !== String(myUserId)
+      (p) =>
+        seatedGridIndexFromPlayerRow(p, activeSlots) === target && String(p.id) !== String(myUserId),
     );
     if (takenByOther) {
       toast('Место только что заняли — пробуй ещё раз.', 'error');
