@@ -695,11 +695,9 @@ async function joinLobby(code, hasPassword) {
   }
 
   try {
-    const { data: lobby, error } = await supabaseClient
-      .from('lobbies')
-      .select('*')
-      .eq('code', code)
-      .single();
+    const { data: lobby, error } = await (typeof window.hlorFetchLobbyByCode === 'function'
+      ? window.hlorFetchLobbyByCode(code)
+      : supabaseClient.from('lobbies').select('*').eq('code', String(code || '').trim().toUpperCase()).maybeSingle());
 
     if (error || !lobby) {
       showToast('Комната не найдена', 'error');
@@ -726,7 +724,7 @@ async function joinLobby(code, hasPassword) {
         const ctxRow = { host_id: lobby.host_id, host_plays: false, syncMafiaGrid: (lobby.game || gameType) === 'mafia' };
         nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, ctxRow);
       }
-      await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', code);
+      await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', lobby.code);
     }
 
     const bust = Date.now();
@@ -739,15 +737,16 @@ async function joinLobby(code, hasPassword) {
       });
     }
 
-    showToast(`Вхожу в комнату ${code}!`, 'success');
+    showToast(`Вхожу в комнату ${lobby.code}!`, 'success');
     const hostJoin = String(lobby.host_id) === String(currentUser.id);
+    const codeInUrl = lobby.code;
     setTimeout(() => {
       if (gameType === 'mafia') {
         const roleQ = hostJoin ? 'host' : 'player';
-        window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${roleQ}&t=${bust}`;
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(codeInUrl)}&role=${roleQ}&t=${bust}`;
         return;
       }
-      window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
+      window.location.href = `lobby.html?code=${encodeURIComponent(codeInUrl)}&t=${bust}`;
     }, 400);
   } catch (err) {
     showToast('Ошибка: ' + err.message, 'error');

@@ -151,4 +151,21 @@
   });
 
   window.isSecretAdminUiEnabled = () => _unlocked;
+
+  /** SELECT lobbies по коду из URL/поля и из таблицы (регистр может отличаться). */
+  window.hlorFetchLobbyByCode = async function (codeWant) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+      return { data: null, error: { message: 'Supabase недоступен' } };
+    }
+    const raw = String(codeWant || '').trim();
+    if (!raw) return { data: null, error: null };
+    const cand = [...new Set([raw, raw.toUpperCase(), raw.toLowerCase()])];
+    let lastErr = null;
+    for (const c of cand) {
+      const { data, error } = await supabaseClient.from('lobbies').select('*').eq('code', c).maybeSingle();
+      if (error) lastErr = error;
+      else if (data) return { data, error: null };
+    }
+    return { data: null, error: lastErr };
+  };
 })();

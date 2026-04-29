@@ -175,40 +175,108 @@ async function createLobby() {
 }
 
 async function joinLobby() {
-  const code  = document.getElementById('joinCode').value.trim().toUpperCase();
+  const codeWant = document.getElementById('joinCode').value.trim().toUpperCase();
   const errEl = document.getElementById('joinError');
   errEl.textContent = '';
 
-  if (!code || code.length < 4) {
+  if (!codeWant || codeWant.length < 4) {
     errEl.textContent = 'Введи код комнаты';
     return;
   }
 
-  const want = String(code || '').trim().toUpperCase();
+  if (!currentUser) {
+    openAuthModal('login');
+    showToast('Сначала войди — тогда добавим тебя в состав комнаты', 'error');
+    return;
+  }
+
   const active = typeof getActiveLobby === 'function' ? getActiveLobby() : null;
-  if (active && String(active.code || '').toUpperCase() !== want) {
+  if (active && String(active.code || '').toUpperCase() !== codeWant) {
     errEl.textContent = 'Ты уже в другой комнате. Сначала выйди: плашка справа внизу.';
     return;
   }
 
   if (!supabaseClient) {
-    closeLobbyModal();
-    showToast(`Подключаюсь к комнате ${code}...`, 'success');
+    errEl.textContent = 'Нет связи с сервером';
     return;
   }
 
   try {
-    const { data, error } = await supabaseClient.from('lobbies').select('*').eq('code', code).single();
-    if (error || !data) {
+    const { data: lobby, error } = await (typeof window.hlorFetchLobbyByCode === 'function'
+      ? window.hlorFetchLobbyByCode(codeWant)
+      : supabaseClient.from('lobbies').select('*').eq('code', codeWant).maybeSingle());
+
+    if (error && !lobby) {
+      console.warn('[main joinLobby]', error);
+      errEl.textContent = 'Не удалось загрузить комнату';
+      return;
+    }
+    if (!lobby) {
       errEl.textContent = 'Комната не найдена';
       return;
     }
-    if (data.status !== 'waiting') {
-      errEl.textContent = 'Игра уже началась';
+    if (lobby.status !== 'waiting') {
+      errEl.textContent = 'Игра уже началась или комната закрыта';
       return;
     }
+
+    let players = Array.isArray(lobby.players) ? [...lobby.players] : [];
+    const maxP = lobby.max_players || 16;
+    const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
+
+    if (!alreadyIn) {
+      let n = 0;
+      const seen = new Set();
+      for (const p of players) {
+        if (p && p.id != null && !seen.has(String(p.id))) {
+          seen.add(String(p.id));
+          n++;
+        }
+      }
+      if (n >= maxP) {
+        errEl.textContent = 'Комната заполнена';
+        return;
+      }
+      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
+      let nextPlayers = players;
+      if (window.LobbySeatUtils) {
+        nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, maxP, {
+          host_id: lobby.host_id,
+          host_plays: false,
+          syncMafiaGrid: lobby.game === 'mafia',
+        });
+      }
+      const { error: upErr } = await supabaseClient
+        .from('lobbies')
+        .update({ players: nextPlayers })
+        .eq('code', lobby.code);
+      if (upErr) throw upErr;
+    }
+
+    const gameKey = lobby.game || 'mafia';
+    const isHostJoin = String(lobby.host_id) === String(currentUser.id);
+
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(String(lobby.code).toUpperCase(), gameKey, lobby.name || lobby.code, {
+        roomStatus: lobby.status === 'active' ? 'active' : 'waiting',
+        viewOrigin: gameKey === 'mafia' ? 'game' : 'lobby',
+        isHost: isHostJoin,
+      });
+    }
+
     closeLobbyModal();
-    showToast(`Вхожу в комнату ${code}!`, 'success');
+    showToast(`Вхожу в комнату ${lobby.code}!`, 'success');
+
+    const bust = Date.now();
+    setTimeout(() => {
+      if (gameKey === 'mafia') {
+        window.location.href = `mafia-play.html?code=${encodeURIComponent(lobby.code)}&role=${
+          isHostJoin ? 'host' : 'player'
+        }&t=${bust}`;
+      } else {
+        window.location.href = `lobby.html?code=${encodeURIComponent(lobby.code)}&t=${bust}`;
+      }
+    }, 250);
   } catch (err) {
     errEl.textContent = 'Ошибка: ' + err.message;
   }
