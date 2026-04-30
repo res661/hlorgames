@@ -490,6 +490,7 @@ async function handleCreateLobby(e) {
       status:      'waiting',
       max_players: maxPlayers,
       password:    password || null,
+      host_plays:  false,
       players:     playersSeed,
     });
 
@@ -708,10 +709,15 @@ async function joinLobby(code, hasPassword) {
       return;
     }
 
-    const players   = Array.isArray(lobby.players) ? lobby.players : [];
-    const maxP      = lobby.max_players || gameInfo.maxPlayers;
-    const roomCap   = maxP;
-    const alreadyIn = players.some(p => String(p.id) === String(currentUser.id));
+    const players = Array.isArray(lobby.players) ? [...lobby.players] : [];
+    const maxP = lobby.max_players || gameInfo.maxPlayers;
+    const roomCap = maxP;
+    const seatCtx = {
+      host_id: lobby.host_id,
+      host_plays: lobby.host_plays === true,
+      syncMafiaGrid: (lobby.game || gameType) === 'mafia',
+    };
+    const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
       if (lobbyParticipantsCount(players) >= roomCap) {
@@ -719,12 +725,11 @@ async function joinLobby(code, hasPassword) {
         return;
       }
       players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
-      let nextPlayers = players;
-      if (window.LobbySeatUtils) {
-        const ctxRow = { host_id: lobby.host_id, host_plays: false, syncMafiaGrid: (lobby.game || gameType) === 'mafia' };
-        nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, ctxRow);
-      }
-      await supabaseClient.from('lobbies').update({ players: nextPlayers }).eq('code', lobby.code);
+    }
+
+    if (window.LobbySeatUtils && lobby.status === 'waiting') {
+      const normalized = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, seatCtx);
+      await supabaseClient.from('lobbies').update({ players: normalized }).eq('code', lobby.code);
     }
 
     const bust = Date.now();

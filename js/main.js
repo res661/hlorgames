@@ -154,6 +154,7 @@ async function createLobby() {
       host_name:   currentUser.nickname,
       status:      'waiting',
       max_players: maxPlayers,
+      host_plays:  false,
       players,
     });
 
@@ -222,6 +223,11 @@ async function joinLobby() {
 
     let players = Array.isArray(lobby.players) ? [...lobby.players] : [];
     const maxP = lobby.max_players || 16;
+    const seatCtx = {
+      host_id: lobby.host_id,
+      host_plays: lobby.host_plays === true,
+      syncMafiaGrid: lobby.game === 'mafia',
+    };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
 
     if (!alreadyIn) {
@@ -238,17 +244,13 @@ async function joinLobby() {
         return;
       }
       players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
-      let nextPlayers = players;
-      if (window.LobbySeatUtils) {
-        nextPlayers = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, maxP, {
-          host_id: lobby.host_id,
-          host_plays: false,
-          syncMafiaGrid: lobby.game === 'mafia',
-        });
-      }
+    }
+
+    if (window.LobbySeatUtils && lobby.status === 'waiting') {
+      const normalized = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, maxP, seatCtx);
       const { error: upErr } = await supabaseClient
         .from('lobbies')
-        .update({ players: nextPlayers })
+        .update({ players: normalized })
         .eq('code', lobby.code);
       if (upErr) throw upErr;
     }

@@ -76,6 +76,10 @@
   /** точное значение `lobbies.code` из БД — для Realtime и .eq */
   let lobbyCanonicalCode = '';
   let lobbyRealtimeEnsured = false;
+  /** Защита от рекурсии при автоназначении слота при первой загрузке. */
+  let refreshPlayerMapDepth = 0;
+  /** Статус строки лобби для UX (ожидание / игра). */
+  let lastLobbyRowStatus = '';
 
   function lobbyCodeForDb() {
     return lobbyCanonicalCode || LOBBY;
@@ -235,6 +239,7 @@
 
   async function refreshPlayerMapFromDb() {
     if (!LOBBY || !supabaseClient) return;
+    refreshPlayerMapDepth++;
     try {
       const { data, error } = await fetchLobbyMaybeSingle(
         '*',
@@ -254,6 +259,7 @@
         );
         return;
       }
+      lastLobbyRowStatus = data.status || '';
       roomHostId      = data.host_id;
       presenterUserId = data.presenter_id || null;
       lobbyPlayersRaw = Array.isArray(data.players) ? data.players : [];
@@ -283,15 +289,26 @@
       recomputeGameMasterFlags();
       applyLobbyGridFromRow(data);
       syncMafiaLobbyIndicator(data);
-      applyLobbySlotBindings();
-      saveSlots();
-      renderGrid();
-      updatePresenterForm();
-      updateHostPanelTabsVisibility();
-      refreshTopBarBadges();
-      renderHostPlayers();
+
+      let uiHandledByNestedRefresh = false;
+      if (data.status === 'waiting' && refreshPlayerMapDepth === 1) {
+        uiHandledByNestedRefresh = await maybeAutoAssignWaitingSeat();
+      }
+
+      if (!uiHandledByNestedRefresh) {
+        applyLobbySlotBindings();
+        saveSlots();
+        renderGrid();
+        updatePresenterForm();
+        updateHostPanelTabsVisibility();
+        refreshTopBarBadges();
+        renderHostPlayers();
+      }
       ensureLobbyRowRealtimeAttached();
     } catch (_) {}
+    finally {
+      refreshPlayerMapDepth--;
+    }
   }
 
   function recomputeGameMasterFlags() {
@@ -434,6 +451,16 @@
       pl = window.LobbySeatUtils.dedupeLobbyPlayers(pl);
     }
 
+    const maxP = Math.max(1, Math.min(TOTAL, Number(data.max_players) || 8));
+    const ctxRow = {
+      host_id: data.host_id,
+      host_plays: data.host_plays === true,
+      syncMafiaGrid: data.game === 'mafia',
+    };
+    if (window.LobbySeatUtils && typeof window.LobbySeatUtils.normalizeLobbySlotsForSave === 'function') {
+      pl = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
+    }
+
     const codeEq = lobbyCodeForDb();
     const { error: updErr } = await supabaseClient.from('lobbies').update({ players: pl }).eq('code', codeEq);
     if (updErr) {
@@ -458,57 +485,18 @@
     return -1;
   }
 
-  async function tryClaimSlot(clickedIndex) {
-    if (isHostFlag || clickedIndex < 0 || clickedIndex >= activeSlots) return;
-    if (!myUserId || !LOBBY || !supabaseClient) {
-      toast('Войди в аккаунт', 'error');
-      return;
-    }
+  async function maybeAutoAssignWaitingSeat() {
+    if (!myUserId || !supabaseClient || !LOBBY) return false;
+    recomputeGameMasterFlags();
+    if (isHostFlag) return false;
     const meRow = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
-    if (meRow != null) {
-      const cur = seatedGridIndexFromPlayerRow(meRow, activeSlots);
-      if (!Number.isNaN(cur) && cur >= 0) {
-        toast(`Ты уже за столом — место ${cur + 1}. Перестановкой занимается ведущий.`, 'error');
-        return;
-      }
-    }
-    const foreign = lobbyPlayersRaw.some(
-      (p) =>
-        seatedGridIndexFromPlayerRow(p, activeSlots) === clickedIndex &&
-        p.id != null &&
-        String(p.id) !== String(myUserId),
-    );
-    if (foreign) {
-      toast('Это место занято другим игроком.', 'error');
-      return;
-    }
-    if (slots[clickedIndex]?.vdoUrl || slots[clickedIndex]?.role) {
-      toast('Этот слот настроен ведущим — выбери обычный.', 'error');
-      return;
-    }
-    let target = getFirstFreeMafiaSlot(activeSlots);
-    if (target < 0) {
-      toast('Все места за столом заняты.', 'error');
-      return;
-    }
-    const takenByOther = lobbyPlayersRaw.some(
-      (p) =>
-        seatedGridIndexFromPlayerRow(p, activeSlots) === target && String(p.id) !== String(myUserId),
-    );
-    if (takenByOther) {
-      toast('Место только что заняли — пробуй ещё раз.', 'error');
-      return;
-    }
+    if (!meRow) return false;
+    if (!Number.isNaN(seatedGridIndexFromPlayerRow(meRow, activeSlots))) return false;
+    const target = getFirstFreeMafiaSlot(activeSlots);
+    if (target < 0) return false;
     await upsertPlayerMafiaSlot(target, myUserId);
     await refreshPlayerMapFromDb();
-    broadcastSlotUpdate(target);
-    const hintWrongCell = clickedIndex !== target && !slots[clickedIndex]?.linkedUserId;
-    toast(
-      hintWrongCell
-        ? `По очереди твоё место — №${target + 1} (ещё можно нажать на любую свободную клетку).`
-        : `Ты занял место ${target + 1}.`,
-      'success',
-    );
+    return true;
   }
 
   function updatePresenterForm() {
@@ -788,12 +776,6 @@
       ph.innerHTML = cfg && s.status === 'extinct'
         ? `<span class="mf-slot__ph-icon">🚫</span><span>ВЫБЫЛ</span>`
         : `<span class="mf-slot__ph-icon">📷</span><span>${esc(label) || `Слот ${i+1}`}</span>`;
-      if (!isHostFlag && !cfg && i < activeSlots) {
-        const hint = ce('div');
-        hint.style.cssText = 'font-size:0.58rem;opacity:0.5;margin-top:4px;text-transform:uppercase';
-        hint.textContent = 'Нажми — место по очереди';
-        ph.appendChild(hint);
-      }
       div.appendChild(ph);
     }
 
@@ -831,7 +813,13 @@
     }
 
     if (isHostFlag) div.addEventListener('click', () => openSlotModal(i));
-    else div.addEventListener('click', () => tryClaimSlot(i));
+    else {
+      div.addEventListener('click', () => {
+        if (lastLobbyRowStatus === 'waiting') {
+          toast('Место назначается автоматически при входе в комнату (выбрать ячейку нельзя).', 'info');
+        }
+      });
+    }
     return div;
   }
 

@@ -54,12 +54,12 @@ let isHost       = false;
 
 // ─── Слоты за столом (0 … seatT−1); порядок по очереди входа (см. lobby-seat-utils.js) ─
 
-/** Ведущий без места — всегда в коде (без колонки host_plays в БД). */
+/** Хост без слота по умолчанию; слот даём только если в строке лобби host_plays === true (исключение). */
 function lobbySeatCtx(row) {
   if (!row) return null;
   return {
     host_id: row.host_id,
-    host_plays: false,
+    host_plays: row.host_plays === true,
     syncMafiaGrid: row.game === 'mafia',
   };
 }
@@ -76,11 +76,44 @@ function normalizeLobbySlotsForSave(players, maxP, lobbyCtx) {
   return window.LobbySeatUtils.normalizeLobbySlotsForSave(players, maxP, lobbyCtx || null);
 }
 
+/** Сравнение назначений слотов по id (после normalize дубликаты убраны). */
+function lobbyPlayersSlotsFingerprint(players) {
+  const m = new Map();
+  for (const p of players || []) {
+    if (!p || p.id == null) continue;
+    const sl = p.slot;
+    let v = '';
+    if (sl !== undefined && sl !== null) {
+      const n = Number(sl);
+      v = Number.isFinite(n) && Number.isInteger(n) ? String(n) : `x:${String(sl)}`;
+    }
+    m.set(String(p.id), v);
+  }
+  return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([id, v]) => `${id}:${v}`).join('|');
+}
+
+/** Если участники есть в комнате, но слоты не соответствуют правилам — дописываем в БД (Realtime разошлёт всем). */
+async function persistLobbySlotsIfOutOfSync(data) {
+  if (!supabaseClient || !data || data.status !== 'waiting') return data;
+  const seatT = lobbySeatTotal(data);
+  const raw = [...(data.players || [])];
+  const norm = normalizeLobbySlotsForSave(raw, seatT, lobbySeatCtx(data));
+  if (lobbyPlayersSlotsFingerprint(raw) === lobbyPlayersSlotsFingerprint(norm)) {
+    return { ...data, players: norm };
+  }
+  const { error } = await supabaseClient.from('lobbies').update({ players: norm }).eq('code', data.code);
+  if (error) {
+    console.warn('[Lobby] persistLobbySlotsIfOutOfSync', error);
+    return data;
+  }
+  return { ...data, players: norm };
+}
+
 function countLobbyParticipants(players) {
   return dedupeLobbyPlayers(players).length;
 }
 
-/** Число мест за столом = max_players (ведущий в коде всегда без слота). */
+/** Число мест за столом = max_players (ведущий без слота, если host_plays не true). */
 function lobbySeatTotal(lobby) {
   const game = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
   const maxP = lobby.max_players || game.max;
@@ -162,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initLobby() {
   await loadLobby();
   attachLobbyRealtime();
-  pollInterval = setInterval(loadLobby, 8000);
+  pollInterval = setInterval(loadLobby, 3500);
 }
 
 function detachLobbyRealtime() {
@@ -231,20 +264,23 @@ async function loadLobby() {
       return;
     }
 
-    lobbyData = await syncMyLobbyIdentity(data);
+    let synced = await syncMyLobbyIdentity(data);
+    synced = await persistLobbySlotsIfOutOfSync(synced);
 
-    if (typeof setActiveLobby === 'function' && (data.status === 'waiting' || data.status === 'active')) {
-      const isHm = !!(currentUser && String(data.host_id) === String(currentUser.id));
-      setActiveLobby(data.code, data.game, data.name || data.code, {
-        roomStatus: data.status === 'active' ? 'active' : 'waiting',
-        viewOrigin: data.game === 'mafia' ? 'game' : 'lobby',
+    lobbyData = synced;
+
+    if (typeof setActiveLobby === 'function' && (synced.status === 'waiting' || synced.status === 'active')) {
+      const isHm = !!(currentUser && String(synced.host_id) === String(currentUser.id));
+      setActiveLobby(synced.code, synced.game, synced.name || synced.code, {
+        roomStatus: synced.status === 'active' ? 'active' : 'waiting',
+        viewOrigin: synced.game === 'mafia' ? 'game' : 'lobby',
         isHost: isHm,
       });
     }
 
     /* Мафия — один экран со столом и «камерами» (mafia-play); lobby.html только для бункера/алиаса */
-    if (data.game === 'mafia' && (data.status === 'waiting' || data.status === 'active')) {
-      const isHm = currentUser && String(data.host_id) === String(currentUser.id);
+    if (synced.game === 'mafia' && (synced.status === 'waiting' || synced.status === 'active')) {
+      const isHm = currentUser && String(synced.host_id) === String(currentUser.id);
       const roleQ = isHm ? 'host' : 'player';
       stopLobbyTimers();
       window.location.replace(`mafia-play.html?code=${encodeURIComponent(lobbyCode)}&role=${encodeURIComponent(roleQ)}&t=${Date.now()}`);
@@ -294,52 +330,6 @@ async function syncMyLobbyIdentity(data) {
   } catch {
     return data;
   }
-}
-
-async function claimLobbySeatNext() {
-  if (!currentUser || !lobbyData || !supabaseClient) return;
-  if (String(lobbyData.host_id) === String(currentUser.id)) {
-    showToast('Ведущий не занимает место за столом — только игроки.', 'info');
-    return;
-  }
-  if (lobbyData.status !== 'waiting') {
-    showToast('Игра уже идёт — места не меняют так.', 'error');
-    return;
-  }
-  const seatT = lobbySeatTotal(lobbyData);
-  let players = [...(lobbyData.players || [])];
-  players = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(lobbyData));
-  const me = players.find((p) => String(p.id) === String(currentUser.id));
-  if (!me) {
-    showToast('Тебя нет в составе комнаты.', 'error');
-    return;
-  }
-  if (me.slot != null && me.slot !== undefined) {
-    const num = Number(me.slot);
-    showToast(`Ты уже за столом — место ${Number.isFinite(num) ? num + 1 : '?'}.`, 'info');
-    return;
-  }
-  const taken = new Set();
-  players.forEach((p) => {
-    const si = p.slot == null ? NaN : Number(p.slot);
-    if (Number.isInteger(si) && si >= 0 && si < seatT) taken.add(si);
-  });
-  let target = -1;
-  for (let j = 0; j < seatT; j++) {
-    if (!taken.has(j)) {
-      target = j;
-      break;
-    }
-  }
-  if (target < 0) {
-    showToast('Все места заняты.', 'error');
-    return;
-  }
-  const iMe = players.findIndex((p) => String(p.id) === String(currentUser.id));
-  players[iMe] = { ...players[iMe], slot: target };
-  const cleaned = normalizeLobbySlotsForSave(players, seatT, lobbySeatCtx(lobbyData));
-  await persistLobbyPlayers(cleaned, seatT);
-  showToast(`Место по очереди — №${target + 1}.`, 'success');
 }
 
 // ─── РЕНДЕР ───────────────────────────────────────────────────────────────────
@@ -484,10 +474,11 @@ function renderSlots(lobby) {
         </div>`;
     } else {
       const iamHostHere = !!(currentUser && String(hostId) === String(currentUser.id));
-      const emptySub = iamHostHere ? 'Порядок: кто зашёл 1-й, 2-й…' : 'Нажми здесь — займёшь следующий номер по очереди';
-      const pickCls = (!iamHostHere && lobby.status === 'waiting') ? ' lb-slot--pickable' : '';
+      const emptySub = iamHostHere
+        ? 'Игроки получают номер автоматически при входе по очереди.'
+        : 'Место назначается автоматически при входе в комнату — выбрать слот нельзя.';
       html += `
-        <div class="lb-slot lb-slot--empty${pickCls}" data-lobby-slot-index="${i}">
+        <div class="lb-slot lb-slot--empty" data-lobby-slot-index="${i}">
           <span class="lb-slot-num">${i + 1}</span>
           <div class="lb-slot-avatar lb-slot-avatar--empty">+</div>
           <div class="lb-slot-info">
@@ -523,19 +514,6 @@ function renderSlots(lobby) {
       hostClearSlotFromLobby(idx);
     });
   });
-
-  if (!wrap.dataset.seatDelegation) {
-    wrap.dataset.seatDelegation = '1';
-    wrap.addEventListener('click', (ev) => {
-      const row = ev.target.closest('.lb-slot--empty');
-      if (!row) return;
-      const hostFlag = !!(currentUser && lobbyData && lobbyData.host_id && String(lobbyData.host_id) === String(currentUser.id));
-      if (hostFlag) return;
-      if (!lobbyData || lobby.status !== 'waiting') return;
-      ev.preventDefault();
-      claimLobbySeatNext();
-    });
-  }
 }
 
 async function hostClearSlotFromLobby(slotIndex) {
