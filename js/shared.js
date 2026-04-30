@@ -166,6 +166,22 @@
       if (error) lastErr = error;
       else if (data) return { data, error: null };
     }
-    return { data: null, error: lastErr };
+  /** Уведомить все открытые mafia-play этой комнаты перечитать lobbies (состав слотов). */
+  window.hlorBroadcastMafiaRoomPayload = function (roomCode, payload) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient || !roomCode) return;
+    const code = String(roomCode).trim().toUpperCase();
+    const CHANNEL = `mafia:${code}`;
+    const body = payload || { type: 'lobby_players_ping', ts: Date.now() };
+    const ch = supabaseClient.channel(CHANNEL);
+    ch.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        ch.send({ type: 'broadcast', event: 'game', payload: body });
+        setTimeout(() => {
+          try {
+            supabaseClient.removeChannel(ch);
+          } catch (_) {}
+        }, 450);
+      }
+    });
   };
 })();

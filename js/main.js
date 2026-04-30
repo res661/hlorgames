@@ -252,6 +252,9 @@ async function joinLobby() {
         .update({ players: normalized })
         .eq('code', lobby.code);
       if (upErr) throw upErr;
+      if (lobby.game === 'mafia' && typeof window.hlorBroadcastMafiaRoomPayload === 'function') {
+        window.hlorBroadcastMafiaRoomPayload(lobby.code);
+      }
     }
 
     const gameKey = lobby.game || 'mafia';

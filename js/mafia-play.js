@@ -83,6 +83,29 @@
   /** Статус строки лобби для UX (ожидание / игра). */
   let lastLobbyRowStatus = '';
 
+  let lobbyPlayersPingTimer = null;
+
+  /** Перечитать строку лобби после broadcast (состав слотов в БД). */
+  function scheduleRefreshAfterLobbyPing() {
+    clearTimeout(lobbyPlayersPingTimer);
+    lobbyPlayersPingTimer = setTimeout(() => {
+      lobbyPlayersPingTimer = null;
+      refreshPlayerMapFromDb();
+    }, 100);
+  }
+
+  /** Тот же канал, что фазы/таймер: все на mafia-play подписаны → мгновенно тянут slots из lobbies.players. */
+  function pingPeersLobbyPlayersChanged() {
+    const payload = { type: 'lobby_players_ping', ts: Date.now() };
+    if (rtChannel) {
+      rtChannel.send({ type: 'broadcast', event: 'game', payload });
+      return;
+    }
+    if (typeof window.hlorBroadcastMafiaRoomPayload === 'function') {
+      window.hlorBroadcastMafiaRoomPayload(lobbyCodeForDb(), payload);
+    }
+  }
+
   function lobbyCodeForDb() {
     return lobbyCanonicalCode || LOBBY;
   }
@@ -285,6 +308,7 @@
     }
     lobbyPlayersRaw = pl;
     rebuildLobbyPlayersMap(pl);
+    pingPeersLobbyPlayersChanged();
     return true;
   }
 
@@ -362,6 +386,7 @@
         await supabaseClient.from('lobbies').update({ players, host_name }).eq('code', lobbyCodeForDb());
         lobbyPlayersRaw = players;
         rebuildLobbyPlayersMap(players);
+        pingPeersLobbyPlayersChanged();
       } else {
         rebuildLobbyPlayersMap(lobbyPlayersRaw);
       }
@@ -554,6 +579,7 @@
     }
     lobbyPlayersRaw = pl;
     rebuildLobbyPlayersMap(pl);
+    pingPeersLobbyPlayersChanged();
   }
 
   /** Индекс первого свободного места 0 … max−1 по данным комнаты (очередь «кто первый занял — тот ниже номер»). */
@@ -734,7 +760,7 @@
     setupPresenterControls();
     setupHotkeys();
     initGameBroadcast();
-    const LOBBY_DB_POLL_MS = 6000;
+    const LOBBY_DB_POLL_MS = 2200;
     setInterval(refreshPlayerMapFromDb, LOBBY_DB_POLL_MS);
     updatePresenterForm();
     updateHostPanelTabsVisibility();
@@ -1216,7 +1242,12 @@
     if (!confirm(`Исключить «${nickname || 'игрока'}» из лобби?`)) return;
     if (!supabaseClient || !LOBBY) return;
     try {
-      const pl = lobbyPlayersRaw.filter((p) => String(p.id) !== String(uid));
+      let pl = lobbyPlayersRaw.filter((p) => String(p.id) !== String(uid));
+      const maxP = Math.max(1, Math.min(TOTAL, activeSlots));
+      const ctxRow = { host_id: roomHostId, syncMafiaGrid: true };
+      if (window.LobbySeatUtils?.normalizeLobbySlotsForSave) {
+        pl = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
+      }
       await supabaseClient.from('lobbies').update({ players: pl }).eq('code', lobbyCodeForDb());
       lobbyPlayersRaw = pl;
       rebuildLobbyPlayersMap(pl);
@@ -1225,6 +1256,7 @@
       renderHostPlayers();
       updatePresenterForm();
       toast('Игрок исключён из лобби', 'success');
+      pingPeersLobbyPlayersChanged();
     } catch (e) {
       toast('Не удалось исключить', 'error');
     }
@@ -1361,6 +1393,9 @@
             else document.getElementById('myRoleWrap')?.classList.add('hidden');
           }
         }
+        break;
+      case 'lobby_players_ping':
+        scheduleRefreshAfterLobbyPing();
         break;
       case 'role_assign':
         if (p.slot === mySlot && !isHostFlag) {

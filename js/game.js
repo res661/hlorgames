@@ -730,6 +730,9 @@ async function joinLobby(code, hasPassword) {
     if (window.LobbySeatUtils && lobby.status === 'waiting') {
       const normalized = window.LobbySeatUtils.normalizeLobbySlotsForSave(players, roomCap, seatCtx);
       await supabaseClient.from('lobbies').update({ players: normalized }).eq('code', lobby.code);
+      if ((lobby.game || gameType) === 'mafia' && typeof window.hlorBroadcastMafiaRoomPayload === 'function') {
+        window.hlorBroadcastMafiaRoomPayload(lobby.code);
+      }
     }
 
     const bust = Date.now();
