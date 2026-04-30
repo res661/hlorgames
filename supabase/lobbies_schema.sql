@@ -71,3 +71,6 @@ create policy "lobbies_delete_host"
 -- Удалить чужие лобби из админки: добавь политику вручную, когда есть public.profiles с role:
 -- create policy "lobbies_delete_admin" on public.lobbies for delete to authenticated
 -- using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','superadmin')));
+
+-- Чтобы клиенты получали postgres_changes без только опроса по таймеру, выполни:
+-- supabase/enable_realtime_lobbies.sql (или Database → Publications → supabase_realtime → lobbies).
