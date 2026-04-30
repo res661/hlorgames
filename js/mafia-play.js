@@ -766,6 +766,7 @@
       else if (String(presenterUserId) === String(myUserId)) st.textContent = 'Ты назначен ведущим за столом.';
       else st.textContent = 'Ведущий назначен — панель управления только у него.';
     }
+    if (typeof window.MafiaCustomSelect !== 'undefined') window.MafiaCustomSelect.refresh(sel);
   }
 
   function updateHostPanelTabsVisibility() {
@@ -885,6 +886,7 @@
     updatePresenterForm();
     updateHostPanelTabsVisibility();
     refreshTopBarBadges();
+    if (typeof window.MafiaCustomSelect !== 'undefined') window.MafiaCustomSelect.mountAll();
     if (isHostFlag) toast('Панель «Ведущий» — назначай роли в слоте; игрокам роль покажется отдельным окном.', 'success');
     updateLobbyModerationUI();
     if (isHostFlag) schedulePersistMafiaBoardToDb();
@@ -909,6 +911,7 @@
       chk.addEventListener('change', () => {
         sel.disabled = !chk.checked;
         if (!chk.checked) sel.value = '';
+        if (typeof window.MafiaCustomSelect !== 'undefined') window.MafiaCustomSelect.refresh(sel);
       });
     }
     document.getElementById('btnSavePresenter')?.addEventListener('click', savePresenterSettings);
@@ -1204,11 +1207,18 @@
     document.getElementById('sendRoleWrap').style.display = hasRole ? 'block' : 'none';
     document.getElementById('sendRoleCheck').checked = true;
     document.getElementById('slotModal').classList.add('open');
+    if (typeof window.MafiaCustomSelect !== 'undefined') {
+      ['slotLobbyPlayer', 'slotRole', 'slotStatus'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) window.MafiaCustomSelect.refresh(el);
+      });
+    }
   }
 
   function closeSlotModal() {
     document.getElementById('slotModal').classList.remove('open');
     editIdx = null;
+    if (typeof window.MafiaCustomSelect !== 'undefined') window.MafiaCustomSelect.closeAll();
   }
 
   async function saveSlot() {

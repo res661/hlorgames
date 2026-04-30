@@ -309,6 +309,12 @@ function openLobbyLeaveConfirm(opts) {
   };
 }
 
+/** Куда вести после полного выхода из комнаты (как в lobby.js goBack). */
+function navigateAfterLobbyExit(gameKey) {
+  const g = String(gameKey || '').trim();
+  window.location.href = g ? `game.html?g=${encodeURIComponent(g)}` : 'index.html';
+}
+
 async function leaveFromIndicator() {
   const lobby = getActiveLobby();
   if (!lobby) return;
@@ -342,6 +348,7 @@ async function leaveFromIndicator() {
     danger: true,
     onConfirm: async () => {
       const loc = getActiveLobby();
+      const exitGame = loc && loc.game ? String(loc.game) : '';
       clearActiveLobby();
       if (typeof supabaseClient !== 'undefined' && supabaseClient && loc) {
         try {
@@ -365,6 +372,7 @@ async function leaveFromIndicator() {
         }
       }
       if (typeof showToast === 'function') showToast(isHostRm ? 'Комната закрыта' : 'Ты вышел из комнаты', 'success');
+      navigateAfterLobbyExit(exitGame);
     },
   });
 }

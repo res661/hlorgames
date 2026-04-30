@@ -392,6 +392,126 @@ body.mafia-body {
 .mf-btn--red:hover  { background:rgba(239,68,68,.2); }
 
 
+/* ── Кастомные SELECT (стиль сайта: лайм + оливковое выделение) ── */
+.mf-dd {
+  position: relative;
+  width: 100%;
+}
+#presenterRoomBlock .mf-dd {
+  margin-top: 8px;
+}
+.mf-dd__native {
+  position: absolute !important;
+  opacity: 0 !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  border: none !important;
+  pointer-events: none;
+}
+.mf-dd__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  background: #121412;
+  border: 1px solid rgba(200, 255, 78, 0.42);
+  border-radius: 7px;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mf-dd__trigger:hover:not(:disabled) {
+  border-color: rgba(200, 255, 78, 0.65);
+  background: #161916;
+}
+.mf-dd__trigger:focus-visible {
+  border-color: var(--mf-accent);
+  box-shadow: 0 0 0 2px rgba(200, 255, 78, 0.14);
+}
+.mf-dd__trigger-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+.mf-dd__trigger-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-dd__trigger-chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.52rem;
+  opacity: 0.82;
+  transform: translateY(1px);
+}
+.mf-dd--disabled .mf-dd__trigger {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.mf-dd__menu {
+  position: fixed;
+  z-index: 520;
+  margin: 0;
+  padding: 6px;
+  background: #2c2f2b;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  max-height: min(52vh, 320px);
+  overflow-y: auto;
+}
+.mf-dd__menu[hidden] {
+  display: none !important;
+}
+.mf-dd__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #939892;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.mf-dd__item:hover {
+  background: #3a3d2e;
+  color: var(--mf-accent);
+}
+.mf-dd__item.is-selected {
+  background: #3a3d2e;
+  color: var(--mf-accent);
+}
+.mf-dd__item-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+.mf-dd__item-text {
+  flex: 1;
+  min-width: 0;
+}
+
 
 /* ── PHASE BACKGROUNDS ── */
 body.mafia-body.ph-night { background:#050609; }
@@ -406,6 +526,11 @@ body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3
   border: 1px solid rgba(200, 255, 78, 0.28);
   border-radius: 8px;
 }
+.mf-slot-modal .mf-dd__trigger {
+  background: #000;
+  border-color: rgba(200, 255, 78, 0.38);
+  border-radius: 8px;
+}
 .mf-slot-modal .mf-input:focus {
   border-color: var(--mf-accent);
   box-shadow: 0 0 0 2px rgba(200, 255, 78, 0.12);
@@ -415,14 +540,6 @@ body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3
   margin-top: 6px;
   font-size: 0.72rem;
   color: var(--mf-muted);
-}
-select.mf-slot-modal__select {
-  appearance: auto;
-  cursor: pointer;
-}
-select.mf-slot-modal__select option {
-  background: #6f7370;
-  color: #fff;
 }
 
 /* ── SEND ROLE WRAP ── */

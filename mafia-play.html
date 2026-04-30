@@ -139,7 +139,7 @@
               <input type="checkbox" id="chkSeparatePresenter"/>
               <span>Назначить отдельного ведущего</span>
             </label>
-            <select class="mf-input" id="selectPresenter" disabled style="margin-top:8px">
+            <select class="mf-input mf-dd-select" id="selectPresenter" disabled>
               <option value="">— Кто ведёт игру —</option>
             </select>
             <button type="button" class="mf-btn mf-btn--blue" id="btnSavePresenter" style="margin-top:10px;width:100%">Сохранить</button>
@@ -166,7 +166,7 @@
           </div>
           <div class="mf-ctrl">
             <div class="mf-ctrl__label">Сетка</div>
-            <select class="mf-input" id="settingGrid">
+            <select class="mf-input mf-dd-select" id="settingGrid">
               <option value="4">4 в ряд</option>
               <option value="3">3 в ряд</option>
               <option value="6">6 в ряд</option>
@@ -194,7 +194,7 @@
 
       <div class="mf-ctrl">
         <div class="mf-ctrl__label">Привязка к игроку лобби</div>
-        <select class="mf-input mf-slot-modal__select" id="slotLobbyPlayer">
+        <select class="mf-input mf-dd-select" id="slotLobbyPlayer">
           <option value="">— Нет привязки —</option>
         </select>
         <span class="form-hint mf-slot-modal__hint">Игроки могут сами занять свободный слот; ты можешь переназначить здесь</span>
@@ -205,7 +205,7 @@
       </div>
       <div class="mf-ctrl">
         <div class="mf-ctrl__label">Роль</div>
-        <select class="mf-input mf-slot-modal__select" id="slotRole">
+        <select class="mf-input mf-dd-select" id="slotRole">
           <option value="">— не назначена —</option>
           <option value="Мирный">👤 Мирный</option>
           <option value="Мафия">🔫 Мафия</option>
@@ -223,7 +223,7 @@
       </div>
       <div class="mf-ctrl">
         <div class="mf-ctrl__label">Статус</div>
-        <select class="mf-input mf-slot-modal__select" id="slotStatus">
+        <select class="mf-input mf-dd-select" id="slotStatus">
           <option value="alive">Жив</option>
           <option value="dead">Мёртв</option>
           <option value="extinct">Выбыл</option>
@@ -262,7 +262,8 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-seat-utils.js?v=4"></script>
-  <script src="js/lobby-indicator.js?v=6"></script>
-  <script src="js/mafia-play.js?v=20"></script>
+  <script src="js/lobby-indicator.js?v=7"></script>
+  <script src="js/mf-custom-select.js?v=1"></script>
+  <script src="js/mafia-play.js?v=21"></script>
 </body>
 </html>
