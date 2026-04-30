@@ -378,7 +378,14 @@
         vdoUrl: 'vdoUrl' in r ? String(r.vdoUrl ?? '') : prev.vdoUrl,
         status: 'status' in r ? String(r.status || 'extinct') : prev.status,
         votes: 'votes' in r ? Number(r.votes) || 0 : prev.votes || 0,
-        linkedUserId: 'linkedUserId' in r ? r.linkedUserId ?? null : prev.linkedUserId,
+        /* В ожидании «mafia_board» часто приходит с linkedUserId:null и затирал состав из lobbies.players */
+        linkedUserId: (() => {
+          if (!('linkedUserId' in r)) return prev.linkedUserId;
+          const inc = r.linkedUserId;
+          if (inc != null && inc !== '') return inc;
+          if (lastLobbyRowStatus === 'waiting') return prev.linkedUserId;
+          return inc ?? null;
+        })(),
         role: preserveRole,
       };
     }
@@ -508,11 +515,11 @@
 
       if (!uiHandledByNestedRefresh) {
         wipeStaleSlotFaceCardsWaiting();
-        applyLobbySlotBindings();
         if (data.mafia_board && Number.isFinite(Number(data.mafia_board.seq))) {
           mafiaBoardSeqCounter = Math.max(mafiaBoardSeqCounter, Number(data.mafia_board.seq));
         }
         applyMafiaBoardFromServer(data.mafia_board);
+        applyLobbySlotBindings();
         saveSlots();
         syncMafiaGridDomAfterLobbyPull();
         updatePresenterForm();
@@ -1372,44 +1379,6 @@
     });
   }
 
-  function renderWaitingRosterBar() {
-    const wrap = document.getElementById('mfWaitingRosterBar');
-    const list = document.getElementById('mfWaitingRosterList');
-    if (!wrap || !list) return;
-    const waiting = lastLobbyRowStatus === 'waiting';
-    wrap.classList.toggle('hidden', !waiting);
-    if (!waiting) return;
-
-    const chips = [];
-    if (roomHostId) {
-      const hn = (lobbyHostDisplayName || '').trim() || 'Ведущий';
-      chips.push(
-        `<span class="mf-waiting-roster__chip mf-waiting-roster__chip--host" title="Ведущий комнаты">👑 ${esc(hn)}</span>`,
-      );
-    }
-    const sorted = [...lobbyPlayersRaw]
-      .filter((p) => p && p.id != null)
-      .sort((a, b) => {
-        const ia = seatedGridIndexFromPlayerRow(a, activeSlots);
-        const ib = seatedGridIndexFromPlayerRow(b, activeSlots);
-        if (!Number.isNaN(ia) && !Number.isNaN(ib)) return ia - ib;
-        if (!Number.isNaN(ia)) return -1;
-        if (!Number.isNaN(ib)) return 1;
-        return rosterPlayerLabel(a).localeCompare(rosterPlayerLabel(b), 'ru');
-      });
-    sorted.forEach((p) => {
-      const self = String(p.id) === String(myUserId);
-      const nm = rosterPlayerLabel(p);
-      const idx = seatedGridIndexFromPlayerRow(p, activeSlots);
-      const seatLbl = !Number.isNaN(idx) ? ` · стол №${idx + 1}` : '';
-      const line = `${nm}${seatLbl}${self ? ' · ты' : ''}`;
-      chips.push(
-        `<span class="mf-waiting-roster__chip${self ? ' mf-waiting-roster__chip--me' : ''}" title="${self ? 'Твой слот за столом' : ''}">${esc(line)}</span>`,
-      );
-    });
-    list.innerHTML = chips.join('');
-  }
-
   function renderHostPlayers() {
     const list = document.getElementById('hostPlayersList');
     if (!list) return;
@@ -1428,7 +1397,6 @@
       row.addEventListener('click', () => { if(isHostFlag) openSlotModal(i); });
       list.appendChild(row);
     }
-    renderWaitingRosterBar();
     updateLobbyModerationUI();
   }
 
