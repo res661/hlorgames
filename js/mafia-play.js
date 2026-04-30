@@ -87,6 +87,10 @@
 
   let lobbyPlayersPingTimer = null;
 
+  /** Чтобы опрос лобби не пересоздавал всю сетку и не моргал VDO Ninja. */
+  let _mafiaGridLayoutSig = '';
+  let _mafiaSlotDomSigs = [];
+
   /** Перечитать строку лобби после broadcast (состав слотов в БД). */
   function scheduleRefreshAfterLobbyPing() {
     clearTimeout(lobbyPlayersPingTimer);
@@ -407,7 +411,7 @@
         wipeStaleSlotFaceCardsWaiting();
         applyLobbySlotBindings();
         saveSlots();
-        renderGrid();
+        syncMafiaGridDomAfterLobbyPull();
         updatePresenterForm();
         updateHostPanelTabsVisibility();
         refreshTopBarBadges();
@@ -461,7 +465,13 @@
         if (!matched) {
           slots[i].linkedUserId = null;
           if (!slots[i].vdoUrl) slots[i].name = '';
-          if (!slots[i].role) slots[i].status = 'extinct';
+          if (lastLobbyRowStatus === 'waiting' && !slots[i].vdoUrl) {
+            slots[i].role = '';
+            slots[i].votes = 0;
+            slots[i].status = 'extinct';
+          } else if (!slots[i].role) {
+            slots[i].status = 'extinct';
+          }
         }
       }
     }
@@ -754,7 +764,7 @@
     applySettings();
     await resolveLobbyAndUser();
     await refreshPlayerMapFromDb();
-    renderGrid();
+    if (!$grid().querySelector('.mf-slot')) renderGrid();
     setupRoleRevealModal();
     setupRoleUI();
     setupSidebars();
@@ -776,7 +786,7 @@
     if (!ev.persisted || !LOBBY) return;
     resolveLobbyAndUser().then(async () => {
       await refreshPlayerMapFromDb();
-      renderGrid();
+      if (!$grid().querySelector('.mf-slot')) renderGrid();
       setupRoleUI();
       refreshTopBarBadges();
       updatePresenterForm();
@@ -851,17 +861,116 @@
     val.className = `mf-role-badge__val mf-slot__role--${cls}`;
   }
 
+  function slotDomSignature(i) {
+    const s = slots[i] || defSlot();
+    const occ = slotLooksOccupied(s);
+    const nick = slotDisplayName(s);
+    const showRoleOv = !!(s.role && (isHostFlag || i === mySlot));
+    return [
+      occ ? 1 : 0,
+      s.status,
+      String(s.vdoUrl || '').trim(),
+      nick,
+      String(s.linkedUserId ?? ''),
+      showRoleOv ? String(s.role) : '',
+      s.votes | 0,
+      isHostFlag ? 1 : 0,
+      mySlot,
+    ].join('\x1e');
+  }
+
+  function refreshMafiaSlotDomSignatures() {
+    _mafiaGridLayoutSig = `${activeSlots}:${gridCols}`;
+    _mafiaSlotDomSigs = [];
+    for (let i = 0; i < activeSlots; i++) _mafiaSlotDomSigs[i] = slotDomSignature(i);
+  }
+
+  /** Опрос БД: перерисовываем только изменившиеся ячейки — iframe с тем же URL не трогаем. */
+  function syncMafiaGridDomAfterLobbyPull() {
+    const layoutSig = `${activeSlots}:${gridCols}`;
+    if (
+      _mafiaGridLayoutSig !== layoutSig ||
+      _mafiaSlotDomSigs.length !== activeSlots
+    ) {
+      renderGrid();
+      return;
+    }
+    for (let i = 0; i < activeSlots; i++) {
+      const sig = slotDomSignature(i);
+      if (_mafiaSlotDomSigs[i] !== sig) {
+        _mafiaSlotDomSigs[i] = sig;
+        renderSlot(i);
+      }
+    }
+  }
+
+  function collectMafiaVideoIframesBySlot() {
+    const map = new Map();
+    const g = $grid();
+    if (!g) return map;
+    g.querySelectorAll('.mf-slot[data-i]').forEach((cell) => {
+      const ix = parseInt(cell.getAttribute('data-i'), 10);
+      const iframe = cell.querySelector('iframe.mf-slot__video');
+      if (!Number.isNaN(ix) && iframe) map.set(ix, iframe);
+    });
+    return map;
+  }
+
+  function mafiaIframeUrlsMatch(srcA, targetHref) {
+    if (!srcA || !targetHref) return false;
+    try {
+      const a = new URL(srcA, window.location.href);
+      const b = new URL(targetHref, window.location.href);
+      const va = a.searchParams.get('view') || a.searchParams.get('push') || '';
+      const vb = b.searchParams.get('view') || b.searchParams.get('push') || '';
+      if (va && vb && va === vb) return true;
+      return a.pathname === b.pathname && a.search === b.search;
+    } catch (_) {
+      return String(srcA).split('?')[0] === String(targetHref).split('?')[0];
+    }
+  }
+
+  /** Не пересоздаём iframe — иначе VDO Ninja переподключает камеру и «мигает». */
+  function reuseMafiaVideoIframe(preservedIframe, cellEl, slotIndex) {
+    const s = slots[slotIndex];
+    const fresh = cellEl.querySelector('iframe.mf-slot__video');
+    if (!preservedIframe || !fresh || !s?.vdoUrl || s.status === 'extinct') return;
+    const want = vdoUrl(s.vdoUrl);
+    if (!want || !mafiaIframeUrlsMatch(preservedIframe.src, want)) return;
+    fresh.replaceWith(preservedIframe);
+  }
+
   // ── GRID ─────────────────────────────────────────────────────────────────────
   function renderGrid() {
+    const preserved = collectMafiaVideoIframesBySlot();
     const g = $grid();
     g.innerHTML = '';
     g.style.gridTemplateColumns = `repeat(${gridCols},1fr)`;
-    for (let i = 0; i < activeSlots; i++) g.appendChild(makeSlot(i));
+    for (let i = 0; i < activeSlots; i++) {
+      const div = makeSlot(i);
+      const prevIf = preserved.get(i);
+      if (prevIf) reuseMafiaVideoIframe(prevIf, div, i);
+      g.appendChild(div);
+    }
+    refreshMafiaSlotDomSignatures();
   }
 
   function renderSlot(i) {
-    const cur = $grid().querySelector(`[data-i="${i}"]`);
-    if (cur) cur.replaceWith(makeSlot(i)); else renderGrid();
+    const g = $grid();
+    const cur = g.querySelector(`[data-i="${i}"]`);
+    if (!cur) {
+      renderGrid();
+      return;
+    }
+    const prevIf = cur.querySelector('iframe.mf-slot__video');
+    const next = makeSlot(i);
+    if (prevIf) reuseMafiaVideoIframe(prevIf, next, i);
+    cur.replaceWith(next);
+    if (_mafiaGridLayoutSig === `${activeSlots}:${gridCols}` && _mafiaSlotDomSigs.length === activeSlots) {
+      _mafiaSlotDomSigs[i] = slotDomSignature(i);
+    } else {
+      refreshMafiaSlotDomSignatures();
+    }
   }
 
   function makeSlot(i) {
@@ -891,10 +1000,11 @@
       div.appendChild(iframe);
     } else {
       const ph = ce('div','mf-slot__ph');
-      const label = slotDisplayName(s) || (cfg ? '' : `Слот ${i + 1}`);
+      const nick = slotDisplayName(s);
+      const label = nick || (cfg ? '—' : 'Свободно');
       ph.innerHTML = cfg && s.status === 'extinct'
         ? `<span class="mf-slot__ph-icon">🚫</span><span>ВЫБЫЛ</span>`
-        : `<span class="mf-slot__ph-icon">📷</span><span>${esc(label) || `Слот ${i+1}`}</span>`;
+        : `<span class="mf-slot__ph-icon">📷</span><span>${esc(label)}</span>`;
       div.appendChild(ph);
     }
 
@@ -903,13 +1013,9 @@
       const ov = ce('div','mf-slot__ov');
       const inf = ce('div','mf-slot__info');
 
-      const nm = ce('div','mf-slot__name'); nm.textContent = slotDisplayName(s) || `Слот ${i+1}`; inf.appendChild(nm);
-
-      const seatIx = ce('div','mf-slot__seat-idx');
-      seatIx.style.cssText =
-        'font-size:0.68rem;opacity:0.75;font-weight:700;margin-bottom:3px;letter-spacing:0.03em;color:rgba(238,242,255,.92)';
-      seatIx.textContent = `Место №${i + 1}`;
-      inf.insertBefore(seatIx, nm);
+      const nm = ce('div','mf-slot__name');
+      nm.textContent = slotDisplayName(s) || '—';
+      inf.appendChild(nm);
 
       // Роль: ведущему всегда на слотах; себе на своём слоте (остальным чужих ролей не показываем)
       const showRoleOv = !!(s.role && (isHostFlag || i === mySlot));
@@ -920,7 +1026,8 @@
       }
 
       const st = ce('div',`mf-slot__status mf-slot__status--${s.status}`);
-      st.textContent = STATUS_LBL[s.status]||''; inf.appendChild(st);
+      st.textContent = STATUS_LBL[s.status] || '';
+      inf.appendChild(st);
 
       ov.appendChild(inf);
 
