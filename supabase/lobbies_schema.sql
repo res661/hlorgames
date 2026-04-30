@@ -17,7 +17,7 @@ create table if not exists public.lobbies (
   presenter_id  uuid,
   mafia_chat    jsonb not null default '[]'::jsonb,
   lobby_chat    jsonb not null default '[]'::jsonb,
-  host_plays    boolean not null default true,
+  host_plays    boolean not null default false,
   created_at    timestamptz not null default now(),
   constraint lobbies_status_check check (status in ('waiting', 'active', 'ended'))
 );

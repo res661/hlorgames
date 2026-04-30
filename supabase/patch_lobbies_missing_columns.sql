@@ -11,7 +11,10 @@ alter table public.lobbies
   add column if not exists lobby_chat jsonb not null default '[]'::jsonb;
 
 alter table public.lobbies
-  add column if not exists host_plays boolean not null default true;
+  add column if not exists host_plays boolean not null default false;
+
+alter table public.lobbies
+  alter column host_plays set default false;
 
 -- Обновить кэш схемы PostgREST (часто убирает "Could not find column in schema cache")
 notify pgrst, 'reload schema';

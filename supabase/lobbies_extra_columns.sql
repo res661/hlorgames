@@ -12,7 +12,10 @@ alter table public.lobbies
   add column if not exists lobby_chat jsonb not null default '[]'::jsonb;
 
 alter table public.lobbies
-  add column if not exists host_plays boolean not null default true;
+  add column if not exists host_plays boolean not null default false;
+
+alter table public.lobbies
+  alter column host_plays set default false;
 
 comment on column public.lobbies.presenter_id is 'Игрок с правами ведущего в игре (панель фаз/слотов). NULL = ведёт хост комнаты (host_id).';
 comment on column public.lobbies.mafia_chat is 'История чата mafia-play: [{kind, uid, text, ts, nick?}]';

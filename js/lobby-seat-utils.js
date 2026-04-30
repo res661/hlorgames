@@ -47,7 +47,8 @@
   function normalizeLobbySlotsForSave(players, maxP, lobbyCtx) {
     const list = dedupeLobbyPlayers(players);
     const hid = lobbyCtx && lobbyCtx.host_id != null ? String(lobbyCtx.host_id) : null;
-    const hostPlays = !(lobbyCtx && lobbyCtx.host_plays === false);
+    /** Только явное host_plays === true даёт хосту место (иначе дефолт БД true ломал ТЗ «ведущий без слота»). */
+    const hostPlays = !!(lobbyCtx && lobbyCtx.host_plays === true);
 
     /* JSONB иногда отдаёт slot строкой ("0") — strict === ломал рендер слотов */
     for (const p of list) {

@@ -237,6 +237,89 @@
     }
   }
 
+  /**
+   * Одним проходом: убрать слот у хоста если host_plays не true (чинит старые строки и default true в БД),
+   * добавить текущего пользователя в players если он открыл стол по ссылке без join — иначе автослот не сработает.
+   */
+  async function repairWaitingLobbyPlayersRow() {
+    if (!supabaseClient || refreshPlayerMapDepth !== 1) return false;
+    const { data: fresh, error } = await fetchLobbyMaybeSingle('*');
+    if (error || !fresh || fresh.status !== 'waiting') return false;
+
+    let pl = [...(fresh.players || [])];
+    const maxP = Math.max(1, Math.min(TOTAL, Number(fresh.max_players) || 8));
+    const ctxRow = {
+      host_id: fresh.host_id,
+      host_plays: fresh.host_plays === true,
+      syncMafiaGrid: fresh.game === 'mafia',
+    };
+
+    let dirty = false;
+
+    if (fresh.host_plays !== true) {
+      const hid = fresh.host_id;
+      const hostBad = pl.some(
+        (p) => p && String(p.id) === String(hid) && (p.slot != null || p.mafia_slot != null),
+      );
+      if (hostBad) {
+        dirty = true;
+        pl = pl.map((p) => {
+          if (!p || String(p.id) !== String(hid)) return p;
+          const x = { ...p, slot: null };
+          delete x.mafia_slot;
+          return x;
+        });
+      }
+    }
+
+    if (
+      myUserId &&
+      String(fresh.host_id) !== String(myUserId) &&
+      !pl.some((p) => p && String(p.id) === String(myUserId))
+    ) {
+      const deduped = window.LobbySeatUtils?.dedupeLobbyPlayers
+        ? window.LobbySeatUtils.dedupeLobbyPlayers(pl)
+        : pl.filter(Boolean);
+      if (deduped.length < maxP) {
+        dirty = true;
+        pl.push({ id: myUserId, nickname: myNickname || 'Игрок', ready: false });
+      }
+    }
+
+    if (!dirty) return false;
+
+    if (window.LobbySeatUtils?.normalizeLobbySlotsForSave) {
+      pl = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
+    }
+
+    const { error: upErr } = await supabaseClient.from('lobbies').update({ players: pl }).eq('code', lobbyCodeForDb());
+    if (upErr) {
+      console.warn('[mafia] repairWaitingLobbyPlayersRow', upErr);
+      return false;
+    }
+    lobbyPlayersRaw = pl;
+    rebuildLobbyPlayersMap(pl);
+    return true;
+  }
+
+  function wipeStaleSlotFaceCardsWaiting() {
+    if (lastLobbyRowStatus !== 'waiting') return;
+    for (let i = 0; i < activeSlots && i < TOTAL; i++) {
+      const hasLobbySeat = lobbyPlayersRaw.some(
+        (p) =>
+          p &&
+          (Number(p.mafia_slot) === i ||
+            Number(p.slot) === i ||
+            (slots[i].linkedUserId != null && String(p.id) === String(slots[i].linkedUserId))),
+      );
+      if (hasLobbySeat) continue;
+      if (!slots[i].linkedUserId && !slots[i].vdoUrl && !slots[i].role) {
+        slots[i].name = '';
+        slots[i].status = 'extinct';
+      }
+    }
+  }
+
   async function refreshPlayerMapFromDb() {
     if (!LOBBY || !supabaseClient) return;
     refreshPlayerMapDepth++;
@@ -264,6 +347,14 @@
       presenterUserId = data.presenter_id || null;
       lobbyPlayersRaw = Array.isArray(data.players) ? data.players : [];
 
+      if (data.status === 'waiting') {
+        wipeStaleSlotFaceCardsWaiting();
+      }
+
+      if (data.status === 'waiting' && refreshPlayerMapDepth === 1) {
+        await repairWaitingLobbyPlayersRow();
+      }
+
       let players = [...lobbyPlayersRaw];
       let host_name = data.host_name;
       let changed = false;
@@ -283,7 +374,7 @@
         lobbyPlayersRaw = players;
         rebuildLobbyPlayersMap(players);
       } else {
-        rebuildLobbyPlayersMap(data.players);
+        rebuildLobbyPlayersMap(lobbyPlayersRaw);
       }
       isRoomHost = !!(myUserId && roomHostId && String(roomHostId) === String(myUserId));
       recomputeGameMasterFlags();
@@ -296,6 +387,7 @@
       }
 
       if (!uiHandledByNestedRefresh) {
+        wipeStaleSlotFaceCardsWaiting();
         applyLobbySlotBindings();
         saveSlots();
         renderGrid();
@@ -785,6 +877,12 @@
       const inf = ce('div','mf-slot__info');
 
       const nm = ce('div','mf-slot__name'); nm.textContent = slotDisplayName(s) || `Слот ${i+1}`; inf.appendChild(nm);
+
+      const seatIx = ce('div','mf-slot__seat-idx');
+      seatIx.style.cssText =
+        'font-size:0.68rem;opacity:0.75;font-weight:700;margin-bottom:3px;letter-spacing:0.03em;color:rgba(238,242,255,.92)';
+      seatIx.textContent = `Место №${i + 1}`;
+      inf.insertBefore(seatIx, nm);
 
       // Роль: ведущему всегда на слотах; себе на своём слоте (остальным чужих ролей не показываем)
       const showRoleOv = !!(s.role && (isHostFlag || i === mySlot));
