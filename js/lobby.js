@@ -263,25 +263,34 @@ async function loadLobby() {
 async function syncMyLobbyIdentity(data) {
   if (!currentUser || !supabaseClient || !data) return data;
   try {
-    const players = [...(data.players || [])];
+    const list = [...(data.players || [])];
     let host_name = data.host_name;
-    let changed   = false;
-    const i = players.findIndex(p => String(p.id) === String(currentUser.id));
-    if (i >= 0 && players[i].nickname !== currentUser.nickname) {
-      players[i] = { ...players[i], nickname: currentUser.nickname };
-      changed = true;
-    }
+    let changed = false;
+    const i = list.findIndex((p) => String(p.id) === String(currentUser.id));
+    if (i >= 0 && list[i].nickname !== currentUser.nickname) changed = true;
     if (String(data.host_id) === String(currentUser.id) && host_name !== currentUser.nickname) {
       host_name = currentUser.nickname;
       changed = true;
     }
     if (!changed) return data;
+    const { data: freshRow, error: fetchErr } = await supabaseClient
+      .from('lobbies')
+      .select('players')
+      .eq('code', data.code)
+      .maybeSingle();
+    if (fetchErr) return data;
+    let merged = [...(freshRow?.players ?? list)];
+    const j = merged.findIndex((p) => String(p.id) === String(currentUser.id));
+    if (j >= 0 && merged[j].nickname !== currentUser.nickname) {
+      merged[j] = { ...merged[j], nickname: currentUser.nickname };
+    }
+    merged = normalizeLobbySlotsForSave(merged, lobbySeatTotal(data), lobbySeatCtx(data));
     const { error } = await supabaseClient
       .from('lobbies')
-      .update({ players, host_name })
+      .update({ players: merged, host_name })
       .eq('code', data.code);
     if (error) return data;
-    return { ...data, players, host_name };
+    return { ...data, players: merged, host_name };
   } catch {
     return data;
   }
@@ -305,13 +314,15 @@ async function claimLobbySeatNext() {
     showToast('Тебя нет в составе комнаты.', 'error');
     return;
   }
-  if (me.slot != null) {
-    showToast(`Ты уже за столом — место ${me.slot + 1}.`, 'info');
+  if (me.slot != null && me.slot !== undefined) {
+    const num = Number(me.slot);
+    showToast(`Ты уже за столом — место ${Number.isFinite(num) ? num + 1 : '?'}.`, 'info');
     return;
   }
   const taken = new Set();
   players.forEach((p) => {
-    if (p.slot != null && typeof p.slot === 'number' && p.slot >= 0 && p.slot < seatT) taken.add(p.slot);
+    const si = p.slot == null ? NaN : Number(p.slot);
+    if (Number.isInteger(si) && si >= 0 && si < seatT) taken.add(si);
   });
   let target = -1;
   for (let j = 0; j < seatT; j++) {
@@ -583,7 +594,16 @@ async function leaveAndExit() {
   if (isHost) {
     await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
   } else {
-    const players = (lobbyData.players || []).filter(p => String(p.id) !== String(currentUser?.id));
+    const { data: freshRow, error: fetchErr } = await supabaseClient
+      .from('lobbies')
+      .select('players')
+      .eq('code', lobbyCode)
+      .maybeSingle();
+    if (fetchErr) console.warn('[Lobby] leave fetch', fetchErr);
+    let players = [...(freshRow?.players ?? lobbyData.players ?? [])].filter(
+      (p) => String(p.id) !== String(currentUser?.id),
+    );
+    players = normalizeLobbySlotsForSave(players, lobbySeatTotal(lobbyData), lobbySeatCtx(lobbyData));
     await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   }
 
@@ -603,7 +623,21 @@ async function kickPlayer(playerId, nickname) {
     icon: '👢',
   });
   if (!ok) return;
-  const players = (lobbyData.players || []).filter(p => String(p.id) !== String(playerId));
+  const { data: freshRow, error: fetchErr } = await supabaseClient
+    .from('lobbies')
+    .select('players')
+    .eq('code', lobbyCode)
+    .maybeSingle();
+  if (fetchErr) {
+    showToast('Не удалось обновить состав: ' + fetchErr.message, 'error');
+    return;
+  }
+  const seatT = lobbySeatTotal(lobbyData);
+  let players = normalizeLobbySlotsForSave(
+    [...(freshRow?.players ?? [])].filter((p) => String(p.id) !== String(playerId)),
+    seatT,
+    lobbySeatCtx(lobbyData),
+  );
   await supabaseClient.from('lobbies').update({ players }).eq('code', lobbyCode);
   showToast(`${nickname} исключён`, 'success');
   await loadLobby();
@@ -630,13 +664,21 @@ async function saveSettings() {
   const tmpLobby = { ...lobbyData, max_players: maxPlayers };
   const seatT = lobbySeatTotal(tmpLobby);
   const ctx = lobbySeatCtx(lobbyData);
-  let players = normalizeLobbySlotsForSave([...(lobbyData.players || [])], seatT, ctx);
-  players.forEach((p) => {
-    if (typeof p.slot === 'number' && p.slot >= seatT) p.slot = null;
-  });
-  players = normalizeLobbySlotsForSave(players, seatT, ctx);
 
   try {
+    const { data: freshRow, error: fetchErr } = await supabaseClient
+      .from('lobbies')
+      .select('players')
+      .eq('code', lobbyCode)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+
+    let players = normalizeLobbySlotsForSave([...(freshRow?.players ?? lobbyData.players ?? [])], seatT, ctx);
+    players.forEach((p) => {
+      if (typeof p.slot === 'number' && p.slot >= seatT) p.slot = null;
+    });
+    players = normalizeLobbySlotsForSave(players, seatT, ctx);
+
     await supabaseClient.from('lobbies')
       .update({ name, max_players: maxPlayers, password, players })
       .eq('code', lobbyCode);

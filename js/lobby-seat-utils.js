@@ -49,6 +49,21 @@
     const hid = lobbyCtx && lobbyCtx.host_id != null ? String(lobbyCtx.host_id) : null;
     const hostPlays = !(lobbyCtx && lobbyCtx.host_plays === false);
 
+    /* JSONB иногда отдаёт slot строкой ("0") — strict === ломал рендер слотов */
+    for (const p of list) {
+      if (hid && !hostPlays && String(p.id) === hid) {
+        p.slot = null;
+        continue;
+      }
+      if (p.slot === null || p.slot === undefined) continue;
+      const n = Number(p.slot);
+      if (!Number.isFinite(n) || !Number.isInteger(n)) {
+        p.slot = null;
+      } else {
+        p.slot = n;
+      }
+    }
+
     const bySlot = new Map();
     for (const p of list) {
       if (hid && !hostPlays && String(p.id) === hid) {
