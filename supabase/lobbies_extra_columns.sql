@@ -23,3 +23,5 @@ comment on column public.lobbies.lobby_chat is 'История чата lobby.ht
 comment on column public.lobbies.host_plays is 'true: хост занимает +1 место в лобби вне основной сетки камер в мафии; false: только ведёт, без лишнего слота';
 
 -- Опционально: индекс не обязателен (мало строк на лобби).
+
+-- Состояние стола мафии (слоты, фазы) для realtime по Postgres: supabase/add_mafia_board_column.sql

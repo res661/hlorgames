@@ -87,6 +87,12 @@
 
   let lobbyPlayersPingTimer = null;
 
+  /** Таблица в Postgres — истина для стола; broadcast остаётся как «мгновенный дополнительный» канал. */
+  let persistMafiaBoardTimer = null;
+  let mafiaBoardSeqCounter = 0;
+  let lastAppliedMafiaBoardSeq = -1;
+  let mafiaBoardSaveWarned = false;
+
   /** Чтобы опрос лобби не пересоздавал всю сетку и не моргал VDO Ninja. */
   let _mafiaGridLayoutSig = '';
   let _mafiaSlotDomSigs = [];
@@ -337,6 +343,99 @@
     }
   }
 
+  /** Серверное состояние стола (roles не сохраняются — только хост/игрок держат роль локально). */
+  function applyMafiaBoardFromServer(board) {
+    if (!board || typeof board !== 'object' || board.v !== 1 || !Array.isArray(board.slots)) return;
+    const seq = Number(board.seq);
+    if (!Number.isFinite(seq)) return;
+    if (seq <= lastAppliedMafiaBoardSeq) return;
+    lastAppliedMafiaBoardSeq = seq;
+    mafiaBoardSeqCounter = Math.max(mafiaBoardSeqCounter, seq);
+
+    if (typeof board.phase === 'string' && PHASES[board.phase]) {
+      setPhase(board.phase, false);
+    }
+    if (typeof board.activeSlots === 'number') {
+      activeSlots = Math.max(1, Math.min(TOTAL, Math.round(board.activeSlots)));
+      const inp = document.getElementById('settingSlots');
+      if (inp) inp.value = String(activeSlots);
+    }
+    if (typeof board.gridCols === 'number') {
+      gridCols = Math.max(2, Math.min(8, Math.round(board.gridCols)));
+      const gin = document.getElementById('settingGrid');
+      if (gin) gin.value = String(gridCols);
+    }
+
+    for (let i = 0; i < TOTAL; i++) {
+      const r = board.slots[i];
+      if (!r || typeof r !== 'object') continue;
+      const prev = slots[i] || defSlot();
+      const preserveRole = viewerMaySeeSlotRole(i) ? String(prev.role || '') : '';
+      slots[i] = {
+        ...defSlot(),
+        ...prev,
+        name: 'name' in r ? String(r.name ?? '') : prev.name,
+        vdoUrl: 'vdoUrl' in r ? String(r.vdoUrl ?? '') : prev.vdoUrl,
+        status: 'status' in r ? String(r.status || 'extinct') : prev.status,
+        votes: 'votes' in r ? Number(r.votes) || 0 : prev.votes || 0,
+        linkedUserId: 'linkedUserId' in r ? r.linkedUserId ?? null : prev.linkedUserId,
+        role: preserveRole,
+      };
+    }
+  }
+
+  function schedulePersistMafiaBoardToDb() {
+    if (!isHostFlag || !supabaseClient || !LOBBY) return;
+    clearTimeout(persistMafiaBoardTimer);
+    persistMafiaBoardTimer = setTimeout(() => {
+      persistMafiaBoardTimer = null;
+      persistMafiaBoardToDbNow();
+    }, 160);
+  }
+
+  async function persistMafiaBoardToDbNow() {
+    if (!isHostFlag || !supabaseClient || !LOBBY) return;
+    mafiaBoardSeqCounter += 1;
+    const payload = {
+      v: 1,
+      seq: mafiaBoardSeqCounter,
+      phase,
+      activeSlots,
+      gridCols,
+      slots: slots.slice(0, TOTAL).map((s) => ({
+        name: typeof s?.name === 'string' ? s.name : '',
+        vdoUrl: typeof s?.vdoUrl === 'string' ? s.vdoUrl : '',
+        status: s?.status || 'extinct',
+        votes: Number(s?.votes) || 0,
+        linkedUserId: s?.linkedUserId ?? null,
+      })),
+    };
+    try {
+      const { error } = await supabaseClient
+        .from('lobbies')
+        .update({ mafia_board: payload })
+        .eq('code', lobbyCodeForDb());
+      if (error) {
+        console.warn('[mafia] mafia_board save', error);
+        const msg = error.message || '';
+        if (
+          !mafiaBoardSaveWarned &&
+          (msg.includes('mafia_board') ||
+            msg.includes('schema cache') ||
+            String(error.code || '') === 'PGRST204')
+        ) {
+          mafiaBoardSaveWarned = true;
+          toast(
+            'Добавь колонку mafia_board в таблицу lobbies (файл supabase/add_mafia_board_column.sql в проекте).',
+            'error',
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('[mafia] mafia_board save', e);
+    }
+  }
+
   async function refreshPlayerMapFromDb() {
     if (!LOBBY || !supabaseClient) return;
     refreshPlayerMapDepth++;
@@ -410,6 +509,10 @@
       if (!uiHandledByNestedRefresh) {
         wipeStaleSlotFaceCardsWaiting();
         applyLobbySlotBindings();
+        if (data.mafia_board && Number.isFinite(Number(data.mafia_board.seq))) {
+          mafiaBoardSeqCounter = Math.max(mafiaBoardSeqCounter, Number(data.mafia_board.seq));
+        }
+        applyMafiaBoardFromServer(data.mafia_board);
         saveSlots();
         syncMafiaGridDomAfterLobbyPull();
         updatePresenterForm();
@@ -780,6 +883,7 @@
     refreshTopBarBadges();
     if (isHostFlag) toast('Панель «Ведущий» — назначай роли в слоте; игрокам роль покажется отдельным окном.', 'success');
     updateLobbyModerationUI();
+    if (isHostFlag) schedulePersistMafiaBoardToDb();
   });
 
   window.addEventListener('pageshow', (ev) => {
@@ -1131,6 +1235,7 @@
 
     // Broadcast обновление слота всем
     broadcastSlotUpdate(editIdx);
+    schedulePersistMafiaBoardToDb();
   }
 
   async function clearSlot() {
@@ -1143,6 +1248,7 @@
     closeSlotModal();
     toast(`Слот #${editIdx+1} очищен`);
     broadcastSlotUpdate(editIdx);
+    schedulePersistMafiaBoardToDb();
   }
 
   // ── SIDEBARS ─────────────────────────────────────────────────────────────────
@@ -1208,6 +1314,7 @@
       slots.forEach(s => s.votes = 0); saveSlots(); renderGrid();
       toast('Голоса сброшены');
       broadcast({ type:'reset_votes' });
+      schedulePersistMafiaBoardToDb();
     };
     document.getElementById('btnReviveAll').onclick = () => {
       if (!isHostFlag) return;
@@ -1215,6 +1322,7 @@
       saveSlots(); renderGrid(); renderHostPlayers();
       toast('Все воскрешены','success');
       broadcast({ type:'revive_all' });
+      schedulePersistMafiaBoardToDb();
     };
     document.getElementById('btnResetGame').onclick = () => {
       if (!isHostFlag) return;
@@ -1223,6 +1331,7 @@
       saveSlots(); setPhase('wait', true); stopTimer(true); renderGrid(); renderHostPlayers();
       toast('Игра сброшена');
       broadcast({ type: 'slots_full_sync', snapshot: slots.map((x) => ({ ...x })) });
+      schedulePersistMafiaBoardToDb();
     };
     document.getElementById('btnRandEvent').onclick = () => {
       if (!isHostFlag) return;
@@ -1234,11 +1343,13 @@
       if (!isHostFlag) return;
       activeSlots = Math.max(1, Math.min(12, parseInt(document.getElementById('settingSlots').value)||12));
       renderGrid(); saveSettings({ activeSlots });
+      schedulePersistMafiaBoardToDb();
     };
     document.getElementById('btnApplyGrid').onclick = () => {
       if (!isHostFlag) return;
       gridCols = parseInt(document.getElementById('settingGrid').value)||4;
       renderGrid(); saveSettings({ gridCols });
+      schedulePersistMafiaBoardToDb();
     };
     document.getElementById('settingRoom').addEventListener('input', (e) => {
       if (!isHostFlag) return;
@@ -1367,6 +1478,7 @@
       updatePresenterForm();
       toast('Игрок исключён из лобби', 'success');
       pingPeersLobbyPlayersChanged();
+      schedulePersistMafiaBoardToDb();
     } catch (e) {
       toast('Не удалось исключить', 'error');
     }
@@ -1387,6 +1499,7 @@
       setTimeout(triggerRandEvent, 800);
     }
     if (broadcast_) broadcast({ type:'phase', phase:p });
+    if (broadcast_) schedulePersistMafiaBoardToDb();
   }
 
   // ── TIMER ────────────────────────────────────────────────────────────────────
@@ -1433,6 +1546,7 @@
       slots[i].status='dead'; saveSlots(); renderSlot(i); renderHostPlayers();
       slotMsg(i,'💀 УБИТ!');
       broadcast({ type:'slot_update', idx:i, slot:slots[i] });
+      schedulePersistMafiaBoardToDb();
     }
   }
   function slotMsg(i, text) {
