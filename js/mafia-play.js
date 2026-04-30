@@ -555,10 +555,17 @@
           Number(p.slot) === i 
       );
       if (bound) {
+        const prevUid = slots[i].linkedUserId;
         slots[i].linkedUserId = bound.id;
         const nick = typeof bound.nickname === 'string' ? bound.nickname.trim() : '';
         if (nick) slots[i].name = nick;
-        if (slots[i].status === 'extinct') slots[i].status = 'alive';
+        /* Только слот без привязки → игрок сел: extinct как «пустой» → жив.
+           Если ведущий вручную выставил «Выбыл», при обновлении лобби не трогаем. */
+        const seatJustTaken =
+          prevUid == null ||
+          prevUid === '' ||
+          String(prevUid) !== String(bound.id);
+        if (seatJustTaken && slots[i].status === 'extinct') slots[i].status = 'alive';
       } else if (slots[i].linkedUserId) {
         const matched = lobbyPlayersRaw.some(
           (p) =>
@@ -784,21 +791,18 @@
       if (tS) tS.classList.add('active');
     } else {
       if (stabs) stabs.classList.remove('hidden');
-      const playersTab = document.getElementById('stab-players');
-      const phasesTab = document.getElementById('stab-phases');
-      const settingsPanel = document.getElementById('stab-settings');
-      document.querySelectorAll('.mf-stab').forEach((x) => x.classList.remove('active'));
-      document.querySelectorAll('.mf-stab-panel').forEach((x) => {
-        x.classList.add('hidden');
-        x.classList.remove('active');
+      const stabKeys = ['players', 'phases', 'settings'];
+      let keep = document.querySelector('#hostStabs .mf-stab.active')?.dataset?.stab;
+      if (!stabKeys.includes(keep)) keep = 'players';
+      document.querySelectorAll('#hostStabs .mf-stab').forEach((x) => {
+        x.classList.toggle('active', x.dataset.stab === keep);
       });
-      document.querySelector('.mf-stab[data-stab="players"]')?.classList.add('active');
-      if (playersTab) {
-        playersTab.classList.remove('hidden');
-        playersTab.classList.add('active');
-      }
-      if (phasesTab) phasesTab.classList.add('hidden');
-      if (settingsPanel) settingsPanel.classList.add('hidden');
+      document.querySelectorAll('.mf-stab-panel').forEach((x) => {
+        const key = x.id.startsWith('stab-') ? x.id.slice(5) : '';
+        const show = key === keep;
+        x.classList.toggle('hidden', !show);
+        x.classList.toggle('active', show);
+      });
     }
   }
 

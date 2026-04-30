@@ -398,6 +398,33 @@ body.mafia-body.ph-night { background:#050609; }
 body.mafia-body.ph-night .mafia-main { filter: brightness(.78); }
 body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3); }
 
+/* ── SLOT MODAL (ведущий) — те же контрасты, что у панели ── */
+.mf-slot-modal .mf-ctrl { margin-bottom: 14px; }
+.mf-slot-modal .mf-ctrl:last-of-type { margin-bottom: 0; }
+.mf-slot-modal .mf-input {
+  background: #000;
+  border: 1px solid rgba(200, 255, 78, 0.28);
+  border-radius: 8px;
+}
+.mf-slot-modal .mf-input:focus {
+  border-color: var(--mf-accent);
+  box-shadow: 0 0 0 2px rgba(200, 255, 78, 0.12);
+}
+.mf-slot-modal__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--mf-muted);
+}
+select.mf-slot-modal__select {
+  appearance: auto;
+  cursor: pointer;
+}
+select.mf-slot-modal__select option {
+  background: #6f7370;
+  color: #fff;
+}
+
 /* ── SEND ROLE WRAP ── */
 .mf-send-role-wrap {
   padding: 10px 12px;

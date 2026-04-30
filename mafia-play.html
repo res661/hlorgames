@@ -188,24 +188,24 @@
 
   <!-- ===== МОДАЛ: Настройка слота ===== -->
   <div class="modal-overlay" id="slotModal">
-    <div class="modal" style="max-width:460px">
+    <div class="modal mf-slot-modal" style="max-width:460px">
       <button class="modal__close" id="btnCloseSlot">✕</button>
       <h3 class="modal__title" id="slotModalTitle">Слот #1</h3>
 
-      <div class="form-group">
-        <label class="form-label">Привязка к игроку лобби</label>
-        <select class="form-input" id="slotLobbyPlayer">
+      <div class="mf-ctrl">
+        <div class="mf-ctrl__label">Привязка к игроку лобби</div>
+        <select class="mf-input mf-slot-modal__select" id="slotLobbyPlayer">
           <option value="">— Нет привязки —</option>
         </select>
-        <span class="form-hint">Игроки могут сами занять свободный слот; ты можешь переназначить здесь</span>
+        <span class="form-hint mf-slot-modal__hint">Игроки могут сами занять свободный слот; ты можешь переназначить здесь</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">Имя игрока</label>
-        <input class="form-input" id="slotName" placeholder="Имя..." maxlength="30"/>
+      <div class="mf-ctrl">
+        <div class="mf-ctrl__label">Имя игрока</div>
+        <input class="mf-input" id="slotName" placeholder="Имя..." maxlength="30"/>
       </div>
-      <div class="form-group">
-        <label class="form-label">Роль</label>
-        <select class="form-input" id="slotRole">
+      <div class="mf-ctrl">
+        <div class="mf-ctrl__label">Роль</div>
+        <select class="mf-input mf-slot-modal__select" id="slotRole">
           <option value="">— не назначена —</option>
           <option value="Мирный">👤 Мирный</option>
           <option value="Мафия">🔫 Мафия</option>
@@ -216,14 +216,14 @@
           <option value="Комиссар">🎖 Комиссар</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">VDO.Ninja ссылка</label>
-        <input class="form-input" id="slotVdo" placeholder="https://vdo.ninja/?view=ID"/>
-        <span class="form-hint">Или просто вставьте Stream ID</span>
+      <div class="mf-ctrl">
+        <div class="mf-ctrl__label">VDO.Ninja ссылка</div>
+        <input class="mf-input" id="slotVdo" placeholder="https://vdo.ninja/?view=ID"/>
+        <span class="form-hint mf-slot-modal__hint">Или просто вставьте Stream ID</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">Статус</label>
-        <select class="form-input" id="slotStatus">
+      <div class="mf-ctrl">
+        <div class="mf-ctrl__label">Статус</div>
+        <select class="mf-input mf-slot-modal__select" id="slotStatus">
           <option value="alive">Жив</option>
           <option value="dead">Мёртв</option>
           <option value="extinct">Выбыл</option>
@@ -263,6 +263,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-seat-utils.js?v=4"></script>
   <script src="js/lobby-indicator.js?v=6"></script>
-  <script src="js/mafia-play.js?v=19"></script>
+  <script src="js/mafia-play.js?v=20"></script>
 </body>
 </html>
