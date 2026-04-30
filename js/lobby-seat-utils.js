@@ -57,6 +57,14 @@
     const hid = lobbyCtx && lobbyCtx.host_id != null ? String(lobbyCtx.host_id) : null;
     let list = hid ? stripHostFromLobbyPlayers(players, lobbyCtx.host_id) : dedupeLobbyPlayers(players);
 
+    /* Из БД часто приходит только mafia_slot — без этого слот остаётся пустым и лобби «не видит» занятость. */
+    for (const p of list) {
+      if ((p.slot === null || p.slot === undefined) && p.mafia_slot != null && p.mafia_slot !== '') {
+        const mn = Number(p.mafia_slot);
+        if (Number.isFinite(mn) && Number.isInteger(mn)) p.slot = mn;
+      }
+    }
+
     for (const p of list) {
       if (p.slot === null || p.slot === undefined) continue;
       const n = Number(p.slot);

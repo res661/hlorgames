@@ -202,6 +202,64 @@ body.mafia-body {
 .mafia-main {
   flex: 1; overflow-y: auto; padding: 10px;
 }
+
+/* Ожидание: все видят, кто в комнате (до старта игры) */
+.mf-waiting-roster {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(200, 255, 78, 0.18);
+  border-radius: 10px;
+}
+.mf-waiting-roster.hidden {
+  display: none !important;
+}
+.mf-waiting-roster__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.mf-waiting-roster__title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mf-muted);
+}
+.mf-waiting-roster__hint {
+  font-size: 0.68rem;
+  color: var(--mf-dim);
+}
+.mf-waiting-roster__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mf-waiting-roster__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--mf-brd);
+  color: var(--mf-text);
+}
+.mf-waiting-roster__chip--host {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  color: #fcd34d;
+}
+.mf-waiting-roster__chip--me {
+  border-color: rgba(200, 255, 78, 0.45);
+  background: rgba(200, 255, 78, 0.1);
+  color: var(--mf-accent);
+}
+
 .mafia-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

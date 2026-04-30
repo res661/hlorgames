@@ -537,7 +537,7 @@
     } else {
       const mePl = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
       if (mePl) {
-        const si = seatedGridIndexFromPlayerRow(mePl, TOTAL);
+        const si = seatedGridIndexFromPlayerRow(mePl, activeSlots);
         if (!Number.isNaN(si)) mySlot = si;
       }
     }
@@ -1372,6 +1372,44 @@
     });
   }
 
+  function renderWaitingRosterBar() {
+    const wrap = document.getElementById('mfWaitingRosterBar');
+    const list = document.getElementById('mfWaitingRosterList');
+    if (!wrap || !list) return;
+    const waiting = lastLobbyRowStatus === 'waiting';
+    wrap.classList.toggle('hidden', !waiting);
+    if (!waiting) return;
+
+    const chips = [];
+    if (roomHostId) {
+      const hn = (lobbyHostDisplayName || '').trim() || 'Ведущий';
+      chips.push(
+        `<span class="mf-waiting-roster__chip mf-waiting-roster__chip--host" title="Ведущий комнаты">👑 ${esc(hn)}</span>`,
+      );
+    }
+    const sorted = [...lobbyPlayersRaw]
+      .filter((p) => p && p.id != null)
+      .sort((a, b) => {
+        const ia = seatedGridIndexFromPlayerRow(a, activeSlots);
+        const ib = seatedGridIndexFromPlayerRow(b, activeSlots);
+        if (!Number.isNaN(ia) && !Number.isNaN(ib)) return ia - ib;
+        if (!Number.isNaN(ia)) return -1;
+        if (!Number.isNaN(ib)) return 1;
+        return rosterPlayerLabel(a).localeCompare(rosterPlayerLabel(b), 'ru');
+      });
+    sorted.forEach((p) => {
+      const self = String(p.id) === String(myUserId);
+      const nm = rosterPlayerLabel(p);
+      const idx = seatedGridIndexFromPlayerRow(p, activeSlots);
+      const seatLbl = !Number.isNaN(idx) ? ` · стол №${idx + 1}` : '';
+      const line = `${nm}${seatLbl}${self ? ' · ты' : ''}`;
+      chips.push(
+        `<span class="mf-waiting-roster__chip${self ? ' mf-waiting-roster__chip--me' : ''}" title="${self ? 'Твой слот за столом' : ''}">${esc(line)}</span>`,
+      );
+    });
+    list.innerHTML = chips.join('');
+  }
+
   function renderHostPlayers() {
     const list = document.getElementById('hostPlayersList');
     if (!list) return;
@@ -1390,6 +1428,7 @@
       row.addEventListener('click', () => { if(isHostFlag) openSlotModal(i); });
       list.appendChild(row);
     }
+    renderWaitingRosterBar();
     updateLobbyModerationUI();
   }
 
@@ -1411,19 +1450,34 @@
 
   function buildLobbyRosterRowsHtml() {
     if (!Array.isArray(lobbyPlayersRaw)) return '';
-    const rows = lobbyPlayersRaw.filter((p) => p && p.id != null && String(p.id) !== String(myUserId));
+    const mod = !!(isRoomHost || isHostFlag);
+    const rows = [...lobbyPlayersRaw]
+      .filter((p) => p && p.id != null)
+      .sort((a, b) => {
+        const ia = seatedGridIndexFromPlayerRow(a, activeSlots);
+        const ib = seatedGridIndexFromPlayerRow(b, activeSlots);
+        if (!Number.isNaN(ia) && !Number.isNaN(ib)) return ia - ib;
+        if (!Number.isNaN(ia)) return -1;
+        if (!Number.isNaN(ib)) return 1;
+        return rosterPlayerLabel(a).localeCompare(rosterPlayerLabel(b), 'ru');
+      });
     return rows
       .map((p) => {
-        const nick = rosterPlayerLabel(p);
+        const self = String(p.id) === String(myUserId);
+        const nick = rosterPlayerLabel(p) + (self ? ' (ты)' : '');
         const lb = typeof p.slot === 'number' ? ` · лобби #${p.slot + 1}` : '';
         const ms =
           p.mafia_slot != null && p.mafia_slot !== '' && !Number.isNaN(Number(p.mafia_slot))
             ? ` · сетка #${Number(p.mafia_slot) + 1}`
             : '';
+        const kick =
+          mod && !self
+            ? `<button type="button" class="mf-btn mf-btn--dim mf-lobby-roster-kick" data-kick-lobby-player="${encodeURIComponent(String(p.id))}">Выгнать</button>`
+            : '';
         return `
         <div class="mf-lobby-roster-row">
           <span class="mf-lobby-roster-name">${esc(nick)}${lb}${ms}</span>
-          <button type="button" class="mf-btn mf-btn--dim mf-lobby-roster-kick" data-kick-lobby-player="${encodeURIComponent(String(p.id))}">Выгнать</button>
+          ${kick}
         </div>`;
       })
       .join('');
@@ -1452,18 +1506,27 @@
     const rowsHtml = buildLobbyRosterRowsHtml();
     const othersCount = countLobbyPeersForRoster();
 
+    const participantCount = lobbyPlayersRaw.filter((p) => p && p.id != null).length;
+
     if (wrapMain) {
-      wrapMain.classList.toggle('hidden', !canModerate);
+      wrapMain.classList.toggle('hidden', !(lastLobbyRowStatus === 'waiting' && isHostFlag));
     }
     if (emptyHint) {
-      emptyHint.classList.toggle('hidden', !canModerate || othersCount > 0);
+      emptyHint.classList.toggle(
+        'hidden',
+        !(lastLobbyRowStatus === 'waiting' && isHostFlag && participantCount <= 1),
+      );
     }
 
     [list, listMain].forEach((el) => {
       if (!el) return;
-      el.innerHTML =
-        rowsHtml ||
-        (canModerate ? '<p class="mf-hint" style="margin:6px 0 0">Пока некого исключить — в списке лобби только ты.</p>' : '');
+      const fallback =
+        canModerate && participantCount === 0
+          ? '<p class="mf-hint" style="margin:6px 0 0">Никто не подключился к комнате — отправь код друзьям.</p>'
+          : canModerate && participantCount === 1 && lobbyPlayersRaw.some((p) => String(p.id) === String(myUserId))
+            ? '<p class="mf-hint" style="margin:6px 0 0">В списке только ты — как только зайдут другие, они появятся здесь и на столе выше.</p>'
+            : '';
+      el.innerHTML = rowsHtml || fallback;
       bindLobbyRosterKickButtons(el);
     });
 

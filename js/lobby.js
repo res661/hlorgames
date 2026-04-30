@@ -435,6 +435,13 @@ function renderLobby(lobby) {
   document.getElementById('lobbyLayout').classList.remove('hidden');
 }
 
+/** Игрок на месте i по полю slot или mafia_slot (до/после нормализации). */
+function lobbyPlayerAtSeat(players, seatIndex) {
+  return players.find(
+    (x) => Number(x.slot) === seatIndex || Number(x.mafia_slot) === seatIndex,
+  );
+}
+
 function renderSlots(lobby) {
   const seatT  = lobbySeatTotal(lobby);
   const hostId = lobby.host_id;
@@ -445,7 +452,7 @@ function renderSlots(lobby) {
   let html = '';
 
   for (let i = 0; i < seatT; i++) {
-    const p = players.find(x => x.slot === i);
+    const p = lobbyPlayerAtSeat(players, i);
     if (p) {
       const isMe      = String(p.id) === String(currentUser?.id);
       const isHostP   = String(p.id) === String(hostId);
@@ -493,7 +500,14 @@ function renderSlots(lobby) {
     }
   }
 
-  const unseated = players.filter(p => p.slot == null);
+  const unseated = players.filter((p) => {
+    const idx = Number(p.slot);
+    const mx = Number(p.mafia_slot);
+    const ok =
+      (Number.isFinite(idx) && idx >= 0 && idx < seatT) ||
+      (Number.isFinite(mx) && mx >= 0 && mx < seatT);
+    return !ok;
+  });
   if (unseated.length) {
     html += `<div class="lb-unseated-banner">
       <div class="lb-unseated-banner__title">В комнате, но не за столом</div>
