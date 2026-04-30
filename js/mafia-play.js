@@ -402,6 +402,10 @@
 
   async function persistMafiaBoardToDbNow() {
     if (!isHostFlag || !supabaseClient || !LOBBY) return;
+    /* В ожидании состав слотов берётся из lobbies.players — иначе хост перезапишет mafia_board «пустыми» местами. */
+    if (lastLobbyRowStatus === 'waiting') {
+      applyLobbySlotBindings();
+    }
     mafiaBoardSeqCounter += 1;
     const payload = {
       v: 1,
@@ -649,67 +653,106 @@
    */
   async function upsertPlayerMafiaSlot(slotIndex, userId) {
     if (!LOBBY || !supabaseClient) return;
-    const { data, error: fetchErr } = await fetchLobbyMaybeSingle(
-      '*',
-    );
-    if (fetchErr) {
-      console.warn('[mafia] upsertPlayerMafiaSlot load', fetchErr);
-      toast('Не удалось загрузить комнату перед сохранением места.', 'error');
-      return;
-    }
-    if (!data) {
-      toast('Комната не найдена — обнови страницу или проверь код.', 'error');
-      return;
-    }
-    if (userId && String(userId) === String(data.host_id)) {
-      toast('Ведущий не входит в список игроков и не занимает место за столом.', 'info');
-      return;
-    }
+    const maxAttempts = userId ? 5 : 1;
+    let lastSaveErr = null;
 
-    let pl = (Array.isArray(data.players) ? data.players : [])
-      .filter((p) => p && String(p.id) !== String(data.host_id))
-      .map((p) => clearSeatIndexFromPlayerRow(p, slotIndex));
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const { data, error: fetchErr } = await fetchLobbyMaybeSingle('*');
+      if (fetchErr) {
+        console.warn('[mafia] upsertPlayerMafiaSlot load', fetchErr);
+        toast('Не удалось загрузить комнату перед сохранением места.', 'error');
+        return;
+      }
+      if (!data) {
+        toast('Комната не найдена — обнови страницу или проверь код.', 'error');
+        return;
+      }
+      if (userId && String(userId) === String(data.host_id)) {
+        toast('Ведущий не входит в список игроков и не занимает место за столом.', 'info');
+        return;
+      }
 
-    if (userId) {
-      const ix = pl.findIndex((p) => p && String(p.id) === String(userId));
-      const assign = {
-        ...(ix >= 0 ? pl[ix] : {}),
-        id: ix >= 0 ? pl[ix].id : userId,
-        nickname:
-          ix >= 0
-            ? pl[ix].nickname || myNickname || 'Игрок'
-            : myNickname || 'Игрок',
-        ready: ix >= 0 ? !!pl[ix].ready : false,
-        slot: slotIndex,
-        mafia_slot: slotIndex,
+      let pl = (Array.isArray(data.players) ? data.players : []).filter(
+        (p) => p && String(p.id) !== String(data.host_id),
+      );
+
+      const maxP = Math.max(1, Math.min(TOTAL, Number(data.max_players) || 8));
+
+      let targetIdx = slotIndex;
+      if (userId) {
+        const takenByOther = (idx) =>
+          pl.some(
+            (p) =>
+              p &&
+              String(p.id) !== String(userId) &&
+              (Number(p.slot) === idx || Number(p.mafia_slot) === idx),
+          );
+        if (takenByOther(targetIdx)) {
+          const busy = new Set();
+          for (const p of pl) {
+            if (!p || String(p.id) === String(userId)) continue;
+            const ix = seatedGridIndexFromPlayerRow(p, maxP);
+            if (!Number.isNaN(ix)) busy.add(ix);
+          }
+          targetIdx = -1;
+          for (let j = 0; j < maxP; j++) {
+            if (!busy.has(j)) {
+              targetIdx = j;
+              break;
+            }
+          }
+          if (targetIdx < 0) {
+            toast('Нет свободных мест за столом.', 'error');
+            return;
+          }
+        }
+      }
+
+      pl = pl.map((p) => clearSeatIndexFromPlayerRow(p, targetIdx));
+
+      if (userId) {
+        const ix = pl.findIndex((p) => p && String(p.id) === String(userId));
+        const assign = {
+          ...(ix >= 0 ? pl[ix] : {}),
+          id: ix >= 0 ? pl[ix].id : userId,
+          nickname:
+            ix >= 0
+              ? pl[ix].nickname || myNickname || 'Игрок'
+              : myNickname || 'Игрок',
+          ready: ix >= 0 ? !!pl[ix].ready : false,
+          slot: targetIdx,
+          mafia_slot: targetIdx,
+        };
+        if (ix >= 0) pl[ix] = assign;
+        else pl.push(assign);
+      }
+
+      if (window.LobbySeatUtils && typeof window.LobbySeatUtils.dedupeLobbyPlayers === 'function') {
+        pl = window.LobbySeatUtils.dedupeLobbyPlayers(pl);
+      }
+
+      const ctxRow = {
+        host_id: data.host_id,
+        syncMafiaGrid: data.game === 'mafia',
       };
-      if (ix >= 0) pl[ix] = assign;
-      else pl.push(assign);
+      if (window.LobbySeatUtils && typeof window.LobbySeatUtils.normalizeLobbySlotsForSave === 'function') {
+        pl = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
+      }
+
+      const codeEq = lobbyCodeForDb();
+      const { error: updErr } = await supabaseClient.from('lobbies').update({ players: pl }).eq('code', codeEq);
+      if (!updErr) {
+        lobbyPlayersRaw = pl;
+        rebuildLobbyPlayersMap(pl);
+        pingPeersLobbyPlayersChanged();
+        return;
+      }
+      lastSaveErr = updErr;
+      console.warn('[mafia] upsertPlayerMafiaSlot save retry', attempt, updErr);
+      await new Promise((r) => setTimeout(r, 80 + attempt * 100));
     }
 
-    if (window.LobbySeatUtils && typeof window.LobbySeatUtils.dedupeLobbyPlayers === 'function') {
-      pl = window.LobbySeatUtils.dedupeLobbyPlayers(pl);
-    }
-
-    const maxP = Math.max(1, Math.min(TOTAL, Number(data.max_players) || 8));
-    const ctxRow = {
-      host_id: data.host_id,
-      syncMafiaGrid: data.game === 'mafia',
-    };
-    if (window.LobbySeatUtils && typeof window.LobbySeatUtils.normalizeLobbySlotsForSave === 'function') {
-      pl = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
-    }
-
-    const codeEq = lobbyCodeForDb();
-    const { error: updErr } = await supabaseClient.from('lobbies').update({ players: pl }).eq('code', codeEq);
-    if (updErr) {
-      console.warn('[mafia] upsertPlayerMafiaSlot save', updErr);
-      toast('Не сохранилось место за столом: ' + (updErr.message || 'ошибка'), 'error');
-      return;
-    }
-    lobbyPlayersRaw = pl;
-    rebuildLobbyPlayersMap(pl);
-    pingPeersLobbyPlayersChanged();
+    toast('Не сохранилось место за столом: ' + (lastSaveErr?.message || 'ошибка'), 'error');
   }
 
   /** Индекс первого свободного места 0 … max−1 по данным комнаты (очередь «кто первый занял — тот ниже номер»). */
@@ -734,9 +777,16 @@
     if (!Number.isNaN(seatedGridIndexFromPlayerRow(meRow, activeSlots))) return false;
     const target = getFirstFreeMafiaSlot(activeSlots);
     if (target < 0) return false;
-    await upsertPlayerMafiaSlot(target, myUserId);
-    await refreshPlayerMapFromDb();
-    return true;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const t = attempt === 0 ? target : getFirstFreeMafiaSlot(activeSlots);
+      if (t < 0) return false;
+      await upsertPlayerMafiaSlot(t, myUserId);
+      await refreshPlayerMapFromDb();
+      const me2 = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
+      if (me2 && !Number.isNaN(seatedGridIndexFromPlayerRow(me2, activeSlots))) return true;
+      await new Promise((r) => setTimeout(r, 90 + attempt * 130));
+    }
+    return false;
   }
 
   function updatePresenterForm() {
@@ -896,7 +946,6 @@
     if (typeof window.MafiaCustomSelect !== 'undefined') window.MafiaCustomSelect.mountAll();
     if (isHostFlag) toast('Панель «Ведущий» — назначай роли в слоте; игрокам роль покажется отдельным окном.', 'success');
     updateLobbyModerationUI();
-    if (isHostFlag) schedulePersistMafiaBoardToDb();
   });
 
   window.addEventListener('pageshow', (ev) => {
