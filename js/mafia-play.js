@@ -1501,6 +1501,28 @@
     broadcast({ type:'slot_update', idx:i, slot:slots[i] });
   }
 
+  /** Ведущий и владелец слота могут знать роль в клиентских данных; остальным чужую роль не подмешиваем (не только UI). */
+  function viewerMaySeeSlotRole(slotIdx) {
+    if (isHostFlag) return true;
+    if (typeof slotIdx !== 'number' || Number.isNaN(slotIdx)) return false;
+    return Number(slotIdx) === Number(mySlot);
+  }
+
+  /** Слияние с сервером broadcast: не терять поля из-за частичного payload; статус/ник синхронизируются у всех. */
+  function mergeSlotFromBroadcast(slotIdx, remotePatch) {
+    if (remotePatch == null || typeof remotePatch !== 'object') return;
+    const cur = slots[slotIdx] || defSlot();
+    const merged = {
+      ...defSlot(),
+      ...cur,
+      ...remotePatch,
+    };
+    if (!viewerMaySeeSlotRole(slotIdx)) {
+      merged.role = '';
+    }
+    slots[slotIdx] = merged;
+  }
+
   function handlePayload(p) {
     if (!p || !p.type) return;
     switch (p.type) {
@@ -1515,7 +1537,7 @@
         break;
       case 'slot_update':
         if (typeof p.idx === 'number' && p.slot !== undefined) {
-          slots[p.idx] = p.slot;
+          mergeSlotFromBroadcast(p.idx, p.slot);
           saveSlots();
           renderSlot(p.idx);
           if (isHostFlag) renderHostPlayers();
@@ -1530,7 +1552,10 @@
         break;
       case 'role_assign':
         if (typeof p.slot === 'number' && p.slotSnapshot && typeof p.slotSnapshot === 'object') {
-          slots[p.slot] = { ...defSlot(), ...slots[p.slot], ...p.slotSnapshot };
+          mergeSlotFromBroadcast(p.slot, p.slotSnapshot);
+          if (!isHostFlag && viewerMaySeeSlotRole(p.slot) && p.role) {
+            slots[p.slot].role = String(p.role);
+          }
           saveSlots();
           renderSlot(p.slot);
           if (isHostFlag) renderHostPlayers();
