@@ -54,12 +54,11 @@ let isHost       = false;
 
 // ─── Слоты за столом (0 … seatT−1); порядок по очереди входа (см. lobby-seat-utils.js) ─
 
-/** Хост без слота по умолчанию; слот даём только если в строке лобби host_plays === true (исключение). */
+/** Контекст нормализации: хост только host_id в строке лобби, не в players[]. */
 function lobbySeatCtx(row) {
   if (!row) return null;
   return {
     host_id: row.host_id,
-    host_plays: row.host_plays === true,
     syncMafiaGrid: row.game === 'mafia',
   };
 }
@@ -113,7 +112,7 @@ function countLobbyParticipants(players) {
   return dedupeLobbyPlayers(players).length;
 }
 
-/** Число мест за столом = max_players (ведущий без слота, если host_plays не true). */
+/** Число мест за столом = max_players (ведущий только host_id / host_name, не в players[]). */
 function lobbySeatTotal(lobby) {
   const game = GAMES_INFO[lobby.game] || GAMES_INFO.mafia;
   const maxP = lobby.max_players || game.max;
@@ -230,6 +229,7 @@ function attachLobbyRealtime() {
         }
       )
       .subscribe((status) => {
+        /* Одно изменение строки lobbies → Postgres шлёт всем подписчикам канала (как broadcast на строку). */
         if (status === 'CHANNEL_ERROR') console.warn('[Lobby] Realtime недоступен (включи Replication для lobbies в Supabase)');
       });
   } catch (e) {
@@ -299,7 +299,9 @@ async function loadLobby() {
 async function syncMyLobbyIdentity(data) {
   if (!currentUser || !supabaseClient || !data) return data;
   try {
-    const list = [...(data.players || [])];
+    const list = [...(data.players || [])].filter(
+      (p) => p && String(p.id) !== String(data.host_id),
+    );
     let host_name = data.host_name;
     let changed = false;
     const i = list.findIndex((p) => String(p.id) === String(currentUser.id));
@@ -315,7 +317,9 @@ async function syncMyLobbyIdentity(data) {
       .eq('code', data.code)
       .maybeSingle();
     if (fetchErr) return data;
-    let merged = [...(freshRow?.players ?? list)];
+    let merged = [...(freshRow?.players ?? list)].filter(
+      (p) => p && String(p.id) !== String(data.host_id),
+    );
     const j = merged.findIndex((p) => String(p.id) === String(currentUser.id));
     if (j >= 0 && merged[j].nickname !== currentUser.nickname) {
       merged[j] = { ...merged[j], nickname: currentUser.nickname };

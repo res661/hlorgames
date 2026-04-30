@@ -1,6 +1,9 @@
 /**
- * LOBBY-SEAT-UTILS.JS — общая логика слотов для lobby.js и game.js
- * Порядок мест: по очереди входа в комнату; host_plays:false — создатель без места (только ведущий у стола не сидит).
+ * LOBBY-SEAT-UTILS.JS — слоты лобби для lobby.js / game.js / mafia-play.js
+ *
+ * Правило: host_id живёт только в строке лобби (host_id, host_name).
+ * Массив players[] — только участники за столом; хост туда НЕ включается.
+ * Слоты 0…max−1 назначаются по очереди тем, у кого ещё нет места.
  */
 
 (function (global) {
@@ -38,24 +41,23 @@
     return [...m.values()];
   }
 
+  /** Убрать запись хоста из массива игроков (ведущий не в players[]). */
+  function stripHostFromLobbyPlayers(players, hostId) {
+    if (hostId == null || hostId === '') return dedupeLobbyPlayers(players);
+    const hid = String(hostId);
+    return dedupeLobbyPlayers(players || []).filter((p) => p && String(p.id) !== hid);
+  }
+
   /**
    * @param {Array} players
-   * @param {number} maxP число мест за столом (включая +1 место хоста, если включён host_plays у лобби)
-   * @param {{host_id?:string,host_plays?:boolean,syncMafiaGrid?:boolean}|null} lobbyCtx
-   * syncMafiaGrid — для мафии: mafia_slot = индекс слота сетки (как slot в лобби).
+   * @param {number} maxP число мест за столом
+   * @param {{host_id?:string,syncMafiaGrid?:boolean}|null} lobbyCtx — host_id обязателен для фильтрации хоста из входного массива
    */
   function normalizeLobbySlotsForSave(players, maxP, lobbyCtx) {
-    const list = dedupeLobbyPlayers(players);
     const hid = lobbyCtx && lobbyCtx.host_id != null ? String(lobbyCtx.host_id) : null;
-    /** Только явное host_plays === true даёт хосту место (иначе дефолт БД true ломал ТЗ «ведущий без слота»). */
-    const hostPlays = !!(lobbyCtx && lobbyCtx.host_plays === true);
+    let list = hid ? stripHostFromLobbyPlayers(players, lobbyCtx.host_id) : dedupeLobbyPlayers(players);
 
-    /* JSONB иногда отдаёт slot строкой ("0") — strict === ломал рендер слотов */
     for (const p of list) {
-      if (hid && !hostPlays && String(p.id) === hid) {
-        p.slot = null;
-        continue;
-      }
       if (p.slot === null || p.slot === undefined) continue;
       const n = Number(p.slot);
       if (!Number.isFinite(n) || !Number.isInteger(n)) {
@@ -67,10 +69,6 @@
 
     const bySlot = new Map();
     for (const p of list) {
-      if (hid && !hostPlays && String(p.id) === hid) {
-        p.slot = null;
-        continue;
-      }
       const s = p.slot;
       if (s === null || s === undefined) continue;
       if (typeof s !== 'number' || s < 0 || s >= maxP || bySlot.has(s)) {
@@ -80,10 +78,6 @@
       }
     }
     for (const p of list) {
-      if (hid && !hostPlays && String(p.id) === hid) {
-        p.slot = null;
-        continue;
-      }
       if (p.slot !== undefined && p.slot !== null) continue;
       let free = 0;
       while (free < maxP && bySlot.has(free)) free++;
@@ -96,13 +90,9 @@
     }
     if (lobbyCtx && lobbyCtx.syncMafiaGrid === true) {
       for (const p of list) {
-        if (hid && !hostPlays && String(p.id) === hid) {
-          delete p.mafia_slot;
-          continue;
-        }
         if (typeof p.slot === 'number' && p.slot >= 0 && p.slot < maxP) {
           p.mafia_slot = p.slot;
-        } else if (typeof p.slot !== 'number' || Number.isNaN(p.slot)) {
+        } else {
           delete p.mafia_slot;
         }
       }
@@ -110,5 +100,9 @@
     return list;
   }
 
-  global.LobbySeatUtils = { dedupeLobbyPlayers, normalizeLobbySlotsForSave };
+  global.LobbySeatUtils = {
+    dedupeLobbyPlayers,
+    stripHostFromLobbyPlayers,
+    normalizeLobbySlotsForSave,
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

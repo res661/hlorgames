@@ -137,15 +137,14 @@ async function createLobby() {
   try {
     const maxPlayers = 8;
     const seatT      = maxPlayers;
-    const seed       = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
+    const seed       = [];
     const ctxRow     = {
       host_id: currentUser.id,
-      host_plays: false,
       syncMafiaGrid: selectedGame === 'mafia',
     };
     const players    = window.LobbySeatUtils
       ? window.LobbySeatUtils.normalizeLobbySlotsForSave(seed, seatT, ctxRow)
-      : [{ ...seed[0], slot: 0 }];
+      : [];
 
     const { error } = await supabaseClient.from('lobbies').insert({
       code,
@@ -225,12 +224,12 @@ async function joinLobby() {
     const maxP = lobby.max_players || 16;
     const seatCtx = {
       host_id: lobby.host_id,
-      host_plays: lobby.host_plays === true,
       syncMafiaGrid: lobby.game === 'mafia',
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
+    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
 
-    if (!alreadyIn) {
+    if (!alreadyIn && !joiningAsHost) {
       let n = 0;
       const seen = new Set();
       for (const p of players) {

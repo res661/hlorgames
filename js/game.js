@@ -474,9 +474,9 @@ async function handleCreateLobby(e) {
   }
 
   try {
-    let playersSeed = [{ id: currentUser.id, nickname: currentUser.nickname, ready: false }];
+    let playersSeed = [];
     const seatT = maxPlayers;
-    const ctxRow = { host_id: currentUser.id, host_plays: false, syncMafiaGrid: gameType === 'mafia' };
+    const ctxRow = { host_id: currentUser.id, syncMafiaGrid: gameType === 'mafia' };
     if (window.LobbySeatUtils) {
       playersSeed = window.LobbySeatUtils.normalizeLobbySlotsForSave(playersSeed, seatT, ctxRow);
     }
@@ -714,12 +714,12 @@ async function joinLobby(code, hasPassword) {
     const roomCap = maxP;
     const seatCtx = {
       host_id: lobby.host_id,
-      host_plays: lobby.host_plays === true,
       syncMafiaGrid: (lobby.game || gameType) === 'mafia',
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
+    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
 
-    if (!alreadyIn) {
+    if (!alreadyIn && !joiningAsHost) {
       if (lobbyParticipantsCount(players) >= roomCap) {
         showToast('Комната заполнена', 'error');
         return;

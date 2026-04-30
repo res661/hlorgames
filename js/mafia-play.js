@@ -67,6 +67,8 @@
   let lobbyPlayersMap = {};
   /** Полный массив игроков лобби (с mafia_slot, id) */
   let lobbyPlayersRaw = [];
+  /** Ник ведущего из строки лобби (хост не в players[]). */
+  let lobbyHostDisplayName = '';
   let roomHostId       = null;
   let presenterUserId  = null;
   let isRoomHost       = false;
@@ -238,39 +240,23 @@
   }
 
   /**
-   * Одним проходом: убрать слот у хоста если host_plays не true (чинит старые строки и default true в БД),
-   * добавить текущего пользователя в players если он открыл стол по ссылке без join — иначе автослот не сработает.
+   * Чистка старых данных: удалить хоста из players[], добавить гостя при входе по ссылке без join.
    */
   async function repairWaitingLobbyPlayersRow() {
     if (!supabaseClient || refreshPlayerMapDepth !== 1) return false;
     const { data: fresh, error } = await fetchLobbyMaybeSingle('*');
     if (error || !fresh || fresh.status !== 'waiting') return false;
 
-    let pl = [...(fresh.players || [])];
+    const hadHostInPlayers = (fresh.players || []).some((p) => p && String(p.id) === String(fresh.host_id));
+
+    let pl = [...(fresh.players || [])].filter((p) => p && String(p.id) !== String(fresh.host_id));
     const maxP = Math.max(1, Math.min(TOTAL, Number(fresh.max_players) || 8));
     const ctxRow = {
       host_id: fresh.host_id,
-      host_plays: fresh.host_plays === true,
       syncMafiaGrid: fresh.game === 'mafia',
     };
 
-    let dirty = false;
-
-    if (fresh.host_plays !== true) {
-      const hid = fresh.host_id;
-      const hostBad = pl.some(
-        (p) => p && String(p.id) === String(hid) && (p.slot != null || p.mafia_slot != null),
-      );
-      if (hostBad) {
-        dirty = true;
-        pl = pl.map((p) => {
-          if (!p || String(p.id) !== String(hid)) return p;
-          const x = { ...p, slot: null };
-          delete x.mafia_slot;
-          return x;
-        });
-      }
-    }
+    let dirty = hadHostInPlayers;
 
     if (
       myUserId &&
@@ -345,7 +331,10 @@
       lastLobbyRowStatus = data.status || '';
       roomHostId      = data.host_id;
       presenterUserId = data.presenter_id || null;
-      lobbyPlayersRaw = Array.isArray(data.players) ? data.players : [];
+      lobbyHostDisplayName = data.host_name || '';
+      lobbyPlayersRaw = (Array.isArray(data.players) ? data.players : []).filter(
+        (p) => p && String(p.id) !== String(data.host_id),
+      );
 
       if (data.status === 'waiting') {
         wipeStaleSlotFaceCardsWaiting();
@@ -517,10 +506,14 @@
       toast('Комната не найдена — обнови страницу или проверь код.', 'error');
       return;
     }
+    if (userId && String(userId) === String(data.host_id)) {
+      toast('Ведущий не входит в список игроков и не занимает место за столом.', 'info');
+      return;
+    }
 
-    let pl = (Array.isArray(data.players) ? data.players : []).map((p) =>
-      clearSeatIndexFromPlayerRow(p, slotIndex),
-    );
+    let pl = (Array.isArray(data.players) ? data.players : [])
+      .filter((p) => p && String(p.id) !== String(data.host_id))
+      .map((p) => clearSeatIndexFromPlayerRow(p, slotIndex));
 
     if (userId) {
       const ix = pl.findIndex((p) => p && String(p.id) === String(userId));
@@ -546,7 +539,6 @@
     const maxP = Math.max(1, Math.min(TOTAL, Number(data.max_players) || 8));
     const ctxRow = {
       host_id: data.host_id,
-      host_plays: data.host_plays === true,
       syncMafiaGrid: data.game === 'mafia',
     };
     if (window.LobbySeatUtils && typeof window.LobbySeatUtils.normalizeLobbySlotsForSave === 'function') {
@@ -605,11 +597,17 @@
     chk.checked = !!presenterUserId;
     sel.disabled = !chk.checked;
     sel.innerHTML = '<option value="">— Кто ведёт игру —</option>';
+    if (roomHostId) {
+      const oh = document.createElement('option');
+      oh.value = String(roomHostId);
+      oh.textContent = `${lobbyHostDisplayName || 'Создатель комнаты'} · ведущий (не игрок)`;
+      sel.appendChild(oh);
+    }
     lobbyPlayersRaw.forEach((p) => {
       if (!p.id) return;
       const o = document.createElement('option');
       o.value = p.id;
-      o.textContent = `${p.nickname || 'Игрок'}${String(p.id) === String(roomHostId) ? ' · создатель' : ''}`;
+      o.textContent = p.nickname || 'Игрок';
       sel.appendChild(o);
     });
     if (presenterUserId) sel.value = String(presenterUserId);
