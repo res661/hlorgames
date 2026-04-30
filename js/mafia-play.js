@@ -61,6 +61,8 @@
   let editIdx      = null;
   let hostOpen     = false;
   let rtChannel    = null;
+  /** Пока канал не SUBSCRIBED, broadcast.send часто теряется — есть запасной путь через shared.js */
+  let rtBroadcastReady = false;
   let myNickname   = 'Игрок';
   let myUserId     = null;
   /** id → ник из строки lobbies.players (обновляется по опросу БД) */
@@ -97,12 +99,13 @@
   /** Тот же канал, что фазы/таймер: все на mafia-play подписаны → мгновенно тянут slots из lobbies.players. */
   function pingPeersLobbyPlayersChanged() {
     const payload = { type: 'lobby_players_ping', ts: Date.now() };
-    if (rtChannel) {
+    const code = lobbyCodeForDb();
+    if (rtChannel && rtBroadcastReady) {
       rtChannel.send({ type: 'broadcast', event: 'game', payload });
       return;
     }
-    if (typeof window.hlorBroadcastMafiaRoomPayload === 'function') {
-      window.hlorBroadcastMafiaRoomPayload(lobbyCodeForDb(), payload);
+    if (typeof window.hlorBroadcastMafiaRoomPayload === 'function' && code) {
+      window.hlorBroadcastMafiaRoomPayload(code, payload);
     }
   }
 
@@ -1332,11 +1335,23 @@
   }
 
   function sendRoleNotification(slotIdx, role, playerName) {
+    const s = slots[slotIdx];
+    const slotSnapshot = s
+      ? {
+          name: s.name || '',
+          status: s.status || 'alive',
+          vdoUrl: s.vdoUrl || '',
+          linkedUserId: s.linkedUserId ?? null,
+          role: s.role || '',
+          votes: s.votes ?? 0,
+        }
+      : null;
     broadcast({
       type: 'role_assign',
       slot: slotIdx,
       role,
       playerName: playerName || `Слот ${slotIdx + 1}`,
+      slotSnapshot,
     });
     toast(`Роль «${role}» отправлена (${playerName || 'слот ' + (slotIdx + 1)})`, 'success');
   }
@@ -1355,15 +1370,24 @@
 
   function connectChannel() {
     if (!supabaseClient) return;
+    rtBroadcastReady = false;
     rtChannel = supabaseClient.channel(CHANNEL);
     rtChannel
       .on('broadcast', { event: 'game' }, ({ payload }) => handlePayload(payload))
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') rtBroadcastReady = true;
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') rtBroadcastReady = false;
+      });
   }
 
   function broadcast(payload) {
-    if (rtChannel) {
-      rtChannel.send({ type:'broadcast', event:'game', payload });
+    const code = lobbyCodeForDb();
+    if (rtChannel && rtBroadcastReady) {
+      rtChannel.send({ type: 'broadcast', event: 'game', payload });
+      return;
+    }
+    if (typeof window.hlorBroadcastMafiaRoomPayload === 'function' && code) {
+      window.hlorBroadcastMafiaRoomPayload(code, payload);
     }
   }
   function broadcastSlotUpdate(i) {
@@ -1398,6 +1422,12 @@
         scheduleRefreshAfterLobbyPing();
         break;
       case 'role_assign':
+        if (typeof p.slot === 'number' && p.slotSnapshot && typeof p.slotSnapshot === 'object') {
+          slots[p.slot] = { ...defSlot(), ...slots[p.slot], ...p.slotSnapshot };
+          saveSlots();
+          renderSlot(p.slot);
+          if (isHostFlag) renderHostPlayers();
+        }
         if (p.slot === mySlot && !isHostFlag) {
           openRoleReveal(p.role, '');
           showMyRole(p.role);
