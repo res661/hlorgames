@@ -204,10 +204,27 @@ input, select { font-family: inherit; }
 .user-avatar .user-avatar__emoji {
   font-size: 1.05rem; line-height: 1;
   font-family: var(--font), "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+/* Цветная буква / буква на лайме — в навбаре, в профиле и без обёртки .user-avatar */
+.user-avatar__letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: inherit;
+  box-sizing: border-box;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .user-avatar .user-avatar__letter {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%; border-radius: inherit;
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -273,7 +290,15 @@ input, select { font-family: inherit; }
   box-shadow: 0 0 0 2px rgba(200,255,78,0.35), inset 0 0 0 1px rgba(0,0,0,0.35);
 }
 
-.profile-avatar-big .user-avatar__emoji { font-size: 2.4rem; }
+.profile-avatar-big .user-avatar__emoji {
+  font-size: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+}
 .profile-avatar-big .user-avatar__letter {
   font-size: 2rem;
   font-weight: 900;
@@ -771,6 +796,7 @@ section { padding: 80px 24px; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.8rem; font-weight: 800; color: var(--lime);
   margin: 0 auto 0.7rem; transition: all 0.2s;
+  overflow: hidden;
 }
 .profile-avatar-big[data-has-emoji="true"] { background: rgba(255,255,255,0.04); font-size: 2.2rem; }
 .profile-avatar-actions { display: flex; gap: 8px; justify-content: center; margin-bottom: 6px; }

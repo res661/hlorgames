@@ -56,11 +56,14 @@ body.pf-page {
   font-size: 3rem;
   line-height: 1;
   font-family: var(--font), 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .pf-hero__avatar .user-avatar__letter {
-  width: 100%;
-  height: 100%;
   font-size: 2.85rem;
   font-weight: 900;
 }
