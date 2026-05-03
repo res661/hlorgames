@@ -160,12 +160,6 @@
       desc: 'Игровой стол: фазы, голосование, чат ведущего.',
     };
     bundle.canonicalPath = path ? path + search : '/mafia-play.html';
-  } else if (pageKind === 'top') {
-    bundle = {
-      title: 'Топ игроков — HLOR GAMES',
-      desc: 'Рейтинг по комнатам: хосты, участники, создание комнат.',
-    };
-    bundle.canonicalPath = path ? path + search : '/top.html';
   } else if (pageKind === 'admin') {
     bundle = {
       title: 'Админ — HLOR GAMES',

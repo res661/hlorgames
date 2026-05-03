@@ -224,9 +224,6 @@ function onUserSignedIn(user) {
           </div>
         </div>
         <div class="user-dropdown__divider"></div>
-        <a href="top.html" class="user-dropdown__item" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px;padding:10px 14px;font-weight:600" onclick="document.getElementById('userDropdown')?.classList.add('hidden')">
-          <span aria-hidden="true">🏆</span> Топ игроков
-        </a>
         <button class="user-dropdown__item user-dropdown__item--danger" onclick="handleLogout()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Выйти
