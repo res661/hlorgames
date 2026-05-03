@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru" data-hlor-page="top">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Топ игроков HLOR GAMES: комнаты, хосты, участники." />
+  <link rel="icon" href="img/logo.png" type="image/png" />
+  <link rel="apple-touch-icon" href="img/logo.png" />
+  <title>Топ игроков — HLOR GAMES</title>
+  <script src="js/site-config.js"></script>
+  <script src="js/seo-meta.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/top-page.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="top-page">
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__container">
+      <a href="index.html" class="navbar__logo">
+        <img src="img/logo.png" class="logo-icon" alt="HlorGames" />
+        <span class="logo-text">HLOR GAMES</span>
+      </a>
+      <nav class="navbar__links" id="navLinks">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="play-mafia.html" class="nav-link">Мафия</a>
+        <a href="index.html#games" class="nav-link">Игры</a>
+        <a href="top.html" class="nav-link active">Топ</a>
+        <a href="profile.html" class="nav-link">Профиль</a>
+      </nav>
+      <div class="navbar__auth" id="navAuth">
+        <button class="btn btn--ghost" id="btnLogin">Войти</button>
+        <button class="btn btn--primary" id="btnRegister">Регистрация</button>
+      </div>
+      <button class="navbar__burger" id="burgerBtn" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="top-main">
+    <h1 class="top-hero__title">Топ игроков</h1>
+    <p class="top-hero__sub">
+      Статистика обновляется на сервере: создание комнаты, переход статуса в «закрыто» как хост, участие среди игроков в списке в момент закрытия. Никнеймы из профилей.
+    </p>
+
+    <div class="top-controls">
+      <label>
+        Категория
+        <select id="top-category" class="custom-unstyled"></select>
+      </label>
+      <label class="top-bar">
+        Порядок
+        <select id="top-order" class="custom-unstyled">
+          <option value="desc">От большего к меньшему</option>
+          <option value="asc">От меньшего к большему</option>
+        </select>
+      </label>
+      <button type="button" class="btn btn--ghost" id="top-refresh-btn">Обновить</button>
+    </div>
+
+    <div class="top-table-wrap">
+      <table class="top-table" aria-label="Таблица лидеров">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Игрок</th>
+            <th>Число</th>
+            <th>± к вчера</th>
+          </tr>
+        </thead>
+        <tbody id="top-tbody">
+          <tr><td colspan="4" style="padding:18px;text-align:center">Загрузка…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="top-footnote" id="top-snapshot-note"></p>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__container">
+      <div class="footer__logo">
+        <img src="img/logo.png" alt="" style="width:20px;height:20px;object-fit:contain;" />
+        HLOR GAMES
+      </div>
+      <span class="footer__copy">Made with ♥ by <strong>RESWAKE</strong></span>
+    </div>
+  </footer>
+
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal__close" id="modalClose">✕</button>
+      <div class="modal__tabs">
+        <button class="modal__tab active" id="tabLogin" onclick="switchTab('login')">Войти</button>
+        <button class="modal__tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
+      </div>
+      <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Войти</button>
+      </form>
+      <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Никнейм</label>
+          <input type="text" class="form-input" id="regNickname" placeholder="Крутой игрок" required minlength="2" maxlength="20" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Минимум 6 символов" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="form-error" id="registerError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function showToast(msg, type) {
+      type = type || 'success';
+      var el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      clearTimeout(window.__topToast);
+      window.__topToast = setTimeout(function () { el.classList.remove('show'); }, 3000);
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/lobby-indicator.js?v=7"></script>
+  <script src="js/top-page.js?v=1"></script>
+</body>
+</html>
