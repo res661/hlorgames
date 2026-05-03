@@ -11,7 +11,7 @@
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/mafia.css?v=5" />
-  <link rel="stylesheet" href="css/whoami.css?v=1" />
+  <link rel="stylesheet" href="css/whoami.css?v=2" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="mafia-body">
@@ -40,26 +40,31 @@
         Создатель
       </div>
       <button type="button" class="mf-top-btn hidden" id="btnWhoamiHostPanel">Настройки</button>
+      <button type="button" class="mf-top-btn mf-top-btn--notebook hidden" id="btnNotebook">📓 Записная книжка</button>
       <button type="button" class="mf-top-btn mf-top-btn--leave" id="btnLeaveLobby" title="Выйти из комнаты">Выйти</button>
       <a href="javascript:history.back()" class="mf-top-btn">← Назад</a>
     </div>
   </header>
 
+  <!-- Компактное «ведро» блокнота: те же строки что на карточках слотов -->
+  <div id="whoamiNotebookBackdrop" class="whoami-notebook-backdrop hidden" aria-hidden="true"></div>
+  <section id="whoamiNotebook" class="whoami-notebook hidden" aria-label="Записная книжка">
+    <div class="whoami-notebook__toolbar">
+      <span class="whoami-notebook__title">Записная книжка</span>
+      <span class="whoami-notebook__sub">То же содержание, что в полях на слотах — только у тебя в браузере</span>
+      <button type="button" class="mf-top-btn mf-top-btn--narrow" id="btnNotebookClose">Закрыть</button>
+    </div>
+    <div id="notesHintLoggedOut" class="whoami-notebook__guest hidden">Войди — тогда сохраним слова локально на этом устройстве.</div>
+    <div id="notebookList" class="whoami-notebook__list hidden"></div>
+  </section>
+
   <div class="mafia-workspace whoami-workspace" id="workspace">
     <main class="mafia-main whoami-main" id="whoamiMain">
       <div class="whoami-intro" id="whoamiIntro">
-        <p class="whoami-intro__hint">Занимаешь место по нажатию на свободный слот. Слова ты пишешь ниже — <strong>только ты</strong> их видишь в этом браузере.</p>
+        <p class="whoami-intro__hint">Свободный слот — тап занять. <strong>Слово для этого места</strong> пиши прямо на карточке; кнопка «Проверить» — посмотреть текст. То же есть в 📓 книжке сверху.</p>
       </div>
       <div class="mafia-grid whoami-grid" id="whoamiGrid"></div>
     </main>
-
-    <aside class="whoami-notes" id="whoamiNotesAside" aria-label="Секретные слова">
-      <div class="whoami-notes__head">
-        <span class="whoami-notes__title">Мои слова для других</span>
-      </div>
-      <div class="whoami-notes__hint" id="notesHintLoggedOut">Войди, чтобы сохранять слова на этом устройстве.</div>
-      <div class="whoami-notes__list hidden" id="notesList"></div>
-    </aside>
 
     <aside class="mf-sidebar mf-sidebar--host hidden" id="hostSidebarWhoami">
       <div class="mf-sidebar__head">
@@ -112,7 +117,8 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
-  <script src="js/stats.js?v=2"></script>
-  <script src="js/whoami-play.js?v=1"></script>
+  <script src="js/lobby-history.js?v=1"></script>
+  <script src="js/stats.js?v=3"></script>
+  <script src="js/whoami-play.js?v=4"></script>
 </body>
 </html>

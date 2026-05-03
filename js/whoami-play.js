@@ -26,6 +26,13 @@
   /** индекс слота в модалке камеры или -1 */
   let modalSlotIndex = -1;
 
+  /** Выезжающее меню блокнота (зеркально полям на карточках) */
+  let notebookOpen = false;
+
+  let roomClosedOverlayShown = false;
+  let whoamiPollTimer = null;
+  let whoamiRtCh = null;
+
   const $ = (id) => document.getElementById(id);
   const gridEl = () => $('whoamiGrid');
 
@@ -38,12 +45,53 @@
     toast._t = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  function escHtml(s) {
-    return String(s ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  function detachWhoamiRealtime() {
+    if (whoamiRtCh && supabaseClient?.removeChannel) {
+      try {
+        supabaseClient.removeChannel(whoamiRtCh);
+      } catch (_) {}
+      whoamiRtCh = null;
+    }
+    if (whoamiPollTimer != null) {
+      clearInterval(whoamiPollTimer);
+      whoamiPollTimer = null;
+    }
+  }
+
+  function escOverlay(s) {
+    const d = document.createElement('div');
+    d.textContent = s ?? '';
+    return d.innerHTML;
+  }
+
+  /** Хост закрыл комнату или строка исчезла — общий экран, как у мафии */
+  function showWhoamiRoomEndedOverlay(title, subtitle) {
+    if (roomClosedOverlayShown) return;
+    roomClosedOverlayShown = true;
+    detachWhoamiRealtime();
+    try {
+      if (typeof window.hlorStats?.stopPlayTimer === 'function') window.hlorStats.stopPlayTimer();
+    } catch (_) {}
+    if (typeof clearActiveLobby === 'function') clearActiveLobby();
+
+    document.body.style.overflow = 'hidden';
+    const o = document.createElement('div');
+    o.style.cssText =
+      'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;' +
+      'padding:22px;background:rgba(6,8,14,.93);backdrop-filter:blur(6px)';
+    const href = 'game.html?g=whoami';
+    const iconEmoji =
+      String(title).indexOf('недост') >= 0 || String(title).indexOf('удал') >= 0 ? '📭' : '🚪';
+    o.innerHTML = `
+      <div style="max-width:400px;text-align:center;font-family:inherit;color:#eef">
+        <div style="font-size:2.6rem;margin-bottom:10px">${iconEmoji}</div>
+        <h2 style="margin:0 0 10px;font-size:1.2rem;font-weight:800">${escOverlay(title)}</h2>
+        <p style="margin:0 0 20px;font-size:.88rem;line-height:1.5;opacity:.78">${escOverlay(subtitle)}</p>
+        <a href="${href}" style="display:inline-block;padding:10px 18px;border-radius:10px;font-weight:800;
+          text-decoration:none;background:rgba(200,255,78,.92);color:#0a0c0f">На страницу игры</a>
+      </div>
+    `;
+    document.body.appendChild(o);
   }
 
   function lobbyCodeForDb() {
@@ -125,6 +173,94 @@
     try {
       localStorage.setItem(wordsStorageKey(myUserId), JSON.stringify(cur));
     } catch (_) {}
+  }
+
+  function textareasWordFor(targetUserId) {
+    const tid = String(targetUserId || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return Array.from(document.querySelectorAll(`textarea[data-word-for="${tid}"]`));
+  }
+
+  function syncWordMirrors(targetUserId, value, exclude) {
+    textareasWordFor(targetUserId).forEach((ta) => {
+      if (ta !== exclude) ta.value = value || '';
+      const peek = ta.closest('.whoami-on-slot')?.querySelector('.whoami-slot-checkpeek');
+      if (peek && peek.classList.contains('whoami-slot-checkpeek--open'))
+        peek.textContent = ta.value.trim() ? ta.value : '— пусто —';
+    });
+  }
+
+  /**
+   * Подпись + поле + «Проверить» для одной цели; клики не пробивают выбор места за столом.
+   */
+  function mountSecretWordForTarget(root, targetPlayer, variant) {
+    if (!targetPlayer || !targetPlayer.id) return;
+    const targetId = String(targetPlayer.id);
+    const nick = targetPlayer.nickname || 'Игрок';
+
+    const wrap = document.createElement('div');
+    wrap.className = variant === 'slot-dock' ? 'whoami-on-slot slot-dock' : 'whoami-on-slot whoami-on-slot--book';
+
+    const stopSeat = (ev) => ev.stopPropagation();
+    wrap.addEventListener('click', stopSeat);
+    wrap.addEventListener('mousedown', stopSeat);
+
+    const lab = document.createElement('label');
+    lab.className = 'whoami-slot-word-label';
+    lab.textContent = `Загадать для · ${nick}`;
+
+    const row = document.createElement('div');
+    row.className = 'whoami-slot-word-row';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'whoami-slot-input whoami-slot-input--concealed';
+    textarea.maxLength = 240;
+    textarea.autocomplete = 'off';
+    textarea.dataset.wordFor = targetId;
+    textarea.placeholder = 'слово (угадывает другой)';
+    textarea.value = loadWordsMap()[targetId] || '';
+
+    const peek = document.createElement('div');
+    peek.className = 'whoami-slot-checkpeek';
+
+    textarea.addEventListener('focus', () => {
+      textarea.classList.remove('whoami-slot-input--concealed');
+    });
+    textarea.addEventListener('blur', () => {
+      if (!peek.classList.contains('whoami-slot-checkpeek--open')) textarea.classList.add('whoami-slot-input--concealed');
+    });
+    textarea.addEventListener('click', stopSeat);
+    textarea.addEventListener('mousedown', stopSeat);
+    textarea.addEventListener('input', () => {
+      saveWordsTarget(targetId, textarea.value);
+      syncWordMirrors(targetId, textarea.value, textarea);
+      peek.textContent = textarea.value.trim() ? textarea.value : '— пусто —';
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'whoami-slot-word-actions';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'whoami-btn-check';
+    btn.textContent = 'Проверить';
+    btn.addEventListener('mousedown', stopSeat);
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const open = peek.classList.toggle('whoami-slot-checkpeek--open');
+      peek.textContent = textarea.value.trim() ? textarea.value : '— пусто —';
+      if (open) textarea.classList.remove('whoami-slot-input--concealed');
+      else textarea.classList.add('whoami-slot-input--concealed');
+    });
+
+    actions.appendChild(btn);
+
+    row.appendChild(textarea);
+    row.appendChild(actions);
+    wrap.appendChild(lab);
+    wrap.appendChild(row);
+    wrap.appendChild(peek);
+    root.appendChild(wrap);
   }
 
   function applyMafiaBoardFromRow(mb, maxP, playersNorm) {
@@ -247,6 +383,7 @@
   }
 
   async function refreshFromServer() {
+    if (roomClosedOverlayShown) return;
     if (!supabaseClient || !LOBBY) {
       toast('Нет подключения к базе', 'error');
       return;
@@ -258,11 +395,36 @@
       console.warn('[whoami]', error);
       return;
     }
-    if (!data || data.game !== 'whoami') {
+    if (!data) {
+      try {
+        if (typeof markLobbyHistoryFinished === 'function')
+          void markLobbyHistoryFinished(null, LOBBY, myUserId);
+      } catch (_) {}
+      showWhoamiRoomEndedOverlay(
+        'Комната недоступна',
+        'Этого лобби больше нет — либо удалили, либо код неверный.',
+      );
+      return;
+    }
+    if (data.game !== 'whoami') {
       toast('Комната не найдена или это не режим «Кто я?»', 'error');
       return;
     }
     lobbyRow = data;
+
+    if (data.status === 'ended') {
+      try {
+        if (typeof markLobbyHistoryFinished === 'function')
+          void markLobbyHistoryFinished(data.id, data.code || LOBBY, myUserId);
+        if (typeof window.hlorStats?.recordLobbyEnd === 'function')
+          window.hlorStats.recordLobbyEnd({ lobbyCode: LOBBY });
+      } catch (_) {}
+      showWhoamiRoomEndedOverlay(
+        'Комната закрыта хостом',
+        'Лобби завершено для всех. Окно обновилось автоматически (Realtime).',
+      );
+      return;
+    }
     lastAppliedBoardSeq = Math.max(
       lastAppliedBoardSeq,
       data.mafia_board && Number.isFinite(Number(data.mafia_board.seq)) ? Number(data.mafia_board.seq) : 0,
@@ -277,6 +439,9 @@
     $('hostBadgeHost').classList.toggle('hidden', !isRoomHost());
     $('btnWhoamiHostPanel').classList.toggle('hidden', !isRoomHost());
     $('roomName').textContent = data.name || 'Кто я?';
+
+    $('btnNotebook')?.classList.toggle('hidden', !myUserId);
+    notebookOpen = !!(notebookOpen && myUserId);
 
     const maxP = seatMax();
     ensureSeatMedia(maxP);
@@ -297,11 +462,22 @@
 
     renderGridPreserveIframes(plNorm);
 
-    syncNotesPanel(plNorm);
+    syncNotebookPanel(plNorm);
+    refreshNotebookChrome();
 
-    if (data.status === 'ended') {
-      toast('Комната закрыта хостом', 'error');
-    }
+    try {
+      if (
+        typeof maybeUpsertLobbyHistory === 'function' &&
+        myUserId &&
+        (data.status === 'waiting' || data.status === 'active')
+      ) {
+        const plNorm2 = normalizedPlayers(data);
+        const inPl =
+          plNorm2.some((p) => p && String(p.id) === String(myUserId)) ||
+          String(data.host_id) === String(myUserId);
+        if (inPl) void maybeUpsertLobbyHistory(data, myUserId);
+      }
+    } catch (_) {}
   }
 
   function syncHostForm() {
@@ -390,6 +566,11 @@
     }
 
     cell.appendChild(ov);
+
+    if (myUserId && occupant && String(occupant.id) !== String(myUserId)) {
+      cell.classList.add('mf-slot--whoami-draft');
+      mountSecretWordForTarget(cell, occupant, 'slot-dock');
+    }
   }
 
   function renderGrid(plNorm, preservedMapIn) {
@@ -422,7 +603,10 @@
 
       renderSlotContent(div, i, seatMedia[i], occupant, preserved);
 
-      div.addEventListener('click', () => void maybeClaimSeat(i, occupant));
+      div.addEventListener('click', (ev) => {
+        if (ev.target.closest('.whoami-on-slot') || ev.target.closest('.mf-slot__edit')) return;
+        void maybeClaimSeat(i, occupant);
+      });
 
       g.appendChild(div);
     }
@@ -518,43 +702,50 @@
     toast('Попробуй ещё раз — место заняли параллельно', 'error');
   }
 
-  function syncNotesPanel(plNorm) {
+  /** Содержимое выезжающего блокнота (зеркально полям на карточках) */
+  function syncNotebookPanel(plNorm) {
     const hint = $('notesHintLoggedOut');
-    const list = $('notesList');
-    if (!hint || !list || !myUserId) {
-      hint?.classList.remove('hidden');
-      list?.classList.add('hidden');
+    const list = $('notebookList');
+    if (!hint || !list) return;
+
+    if (!myUserId) {
+      hint.classList.remove('hidden');
+      list.classList.add('hidden');
+      list.innerHTML = '';
       return;
     }
+
     hint.classList.add('hidden');
     list.classList.remove('hidden');
+    list.innerHTML = '';
 
     const others = plNorm.filter((p) => p && String(p.id) !== String(myUserId));
-    const mapNow = {};
-    others.forEach((p) => {
-      mapNow[String(p.id)] = loadWordsMap()[String(p.id)] || '';
-    });
 
-    list.innerHTML = others.length
-      ? others
-          .map((p) => {
-            const id = String(p.id);
-            const val = escHtml(loadWordsMap()[id] || '');
-            const nick = escHtml(p.nickname || 'Игрок');
-            return `<div class="whoami-word-row" data-target="${escHtml(id)}">
-            <label for="w-${escHtml(id)}">Слово для ${nick}</label>
-            <textarea id="w-${escHtml(id)}" maxlength="240" autocomplete="off" rows="2" data-target="${escHtml(id)}">${val}</textarea>
-          </div>`;
-          })
-          .join('')
-      : '<p class="whoami-notes__hint">После входа игроков появится список. Пока один ты — добавь участников или зайди с другого браузера.</p>';
+    if (!others.length) {
+      list.innerHTML = '<p class="whoami-notebook-empty">Когда игроки сядут в слоты, здесь можно править те же строки.</p>';
+      return;
+    }
 
-    list.querySelectorAll('textarea[data-target]').forEach((ta) => {
-      const tid = ta.getAttribute('data-target');
-      ta.addEventListener('input', () => {
-        saveWordsTarget(tid, ta.value);
-      });
-    });
+    others.forEach((p) => mountSecretWordForTarget(list, p, 'book'));
+  }
+
+  function refreshNotebookChrome() {
+    const nb = $('whoamiNotebook');
+    const bk = $('whoamiNotebookBackdrop');
+    const bt = $('btnNotebook');
+    if (!myUserId) {
+      notebookOpen = false;
+      bk?.classList.add('hidden');
+      nb?.classList.add('hidden');
+      bt?.classList.toggle('whoami-notebook-tab--active', false);
+      return;
+    }
+
+    bk?.classList.toggle('hidden', !notebookOpen);
+    nb?.classList.toggle('hidden', !notebookOpen);
+    bk?.setAttribute('aria-hidden', notebookOpen ? 'false' : 'true');
+    nb?.setAttribute('aria-hidden', notebookOpen ? 'false' : 'true');
+    bt?.classList.toggle('whoami-notebook-tab--active', !!notebookOpen);
   }
 
   async function setHostParticipates(play) {
@@ -671,6 +862,26 @@
       if (ev.target.id === 'whoamiSlotModal') closeSlotModal();
     });
 
+    $('btnNotebook')?.addEventListener('click', () => {
+      if (!myUserId) return;
+      notebookOpen = !notebookOpen;
+      refreshNotebookChrome();
+    });
+    $('btnNotebookClose')?.addEventListener('click', () => {
+      notebookOpen = false;
+      refreshNotebookChrome();
+    });
+    $('whoamiNotebookBackdrop')?.addEventListener('click', () => {
+      notebookOpen = false;
+      refreshNotebookChrome();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !notebookOpen) return;
+      notebookOpen = false;
+      refreshNotebookChrome();
+    });
+
     if (supabaseClient) {
       const {
         data: { session },
@@ -688,15 +899,15 @@
 
     await refreshFromServer();
 
-    if (typeof window.hlorStats?.recordTableOpen === 'function' && LOBBY) {
-      window.hlorStats.recordTableOpen(LOBBY);
+    if (!roomClosedOverlayShown && lobbyRow && lobbyRow.status !== 'ended') {
+      if (typeof window.hlorStats?.recordTableOpen === 'function' && LOBBY)
+        window.hlorStats.recordTableOpen(LOBBY, 'whoami');
+      if (typeof window.hlorStats?.startPlayTimer === 'function') window.hlorStats.startPlayTimer();
     }
 
-    /** Realtime — фильтр по коду строки как в Postgres */
-    let rt = null;
-    if (supabaseClient) {
+    if (!roomClosedOverlayShown && supabaseClient) {
       const codeRt = lobbyRow ? String(lobbyRow.code) : LOBBY;
-      rt = supabaseClient
+      whoamiRtCh = supabaseClient
         .channel(`whoami_rt:${codeRt.replace(/[^\w.-]/g, '_')}`)
         .on(
           'postgres_changes',
@@ -704,14 +915,11 @@
           () => void refreshFromServer(),
         )
         .subscribe();
+
+      whoamiPollTimer = window.setInterval(() => void refreshFromServer(), 18000);
     }
 
-    /** Фолбэк-опрос каждые 18 с — если realtime отключён */
-    setInterval(() => void refreshFromServer(), 18000);
-
-    window.addEventListener('beforeunload', () => {
-      if (rt && supabaseClient?.removeChannel) try { supabaseClient.removeChannel(rt); } catch (_) {}
-    });
+    window.addEventListener('beforeunload', () => detachWhoamiRealtime());
   }
 
   document.addEventListener('DOMContentLoaded', () => void bootstrap());

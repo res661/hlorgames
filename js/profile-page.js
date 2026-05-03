@@ -41,9 +41,11 @@ function renderProfileDashboard() {
     if (el) el.textContent = val != null ? String(val) : '—';
   };
 
-  const opens = s.mafiaTableOpens ?? 0;
+  const opensMafia = s.mafiaTableOpens ?? 0;
+  const opensWhoami = s.whoamiTableOpens ?? 0;
   const sc = s.sessionsCompleted ?? 0;
-  setTxt('pf-stat-visits', opens);
+  setTxt('pf-stat-mafia-opens', opensMafia);
+  setTxt('pf-stat-whoami-opens', opensWhoami);
   setTxt('pf-stat-sessions', sc);
   setTxt('pf-stat-time', hs.formatDuration(s.playTimeSeconds || 0));
 

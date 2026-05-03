@@ -1,5 +1,5 @@
 /**
- * Локальная геймификация (localStorage): стол мафии, время, партии до закрытия лобби, достижения.
+ * Локальная геймификация (localStorage): заход в комнаты мафии / «Кто я?», время за столами, закрытые лобби, достижения.
  */
 (function () {
   'use strict';
@@ -8,8 +8,9 @@
 
   function defaults() {
     return {
-      version: 2,
+      version: 3,
       mafiaTableOpens: 0,
+      whoamiTableOpens: 0,
       sessionsCompleted: 0,
       playTimeSeconds: 0,
     };
@@ -17,10 +18,10 @@
 
   function migrate(raw) {
     var o = raw && typeof raw === 'object' ? raw : {};
-    var d = defaults();
     return {
-      version: 2,
+      version: 3,
       mafiaTableOpens: Number(o.mafiaTableOpens) || 0,
+      whoamiTableOpens: Number(o.whoamiTableOpens) || 0,
       sessionsCompleted: Number(o.sessionsCompleted) || 0,
       playTimeSeconds: Number(o.playTimeSeconds) || 0,
     };
@@ -43,14 +44,20 @@
     } catch (_) {}
   }
 
-  function recordTableOpen(lobbyCode) {
+  /**
+   * @param {string} lobbyCode — код комнаты
+   * @param {string} [gameSlug] — «mafia» (по умолчанию) или «whoami»
+   */
+  function recordTableOpen(lobbyCode, gameSlug) {
     var code = String(lobbyCode || '').trim().toUpperCase();
     if (!code) return;
-    var sk = 'hlor_stats_open_' + code;
+    var g = gameSlug === 'whoami' ? 'whoami' : 'mafia';
+    var sk = 'hlor_stats_open_' + code + '_' + g;
     if (sessionStorage.getItem(sk)) return;
     sessionStorage.setItem(sk, '1');
     var stats = load();
-    stats.mafiaTableOpens += 1;
+    if (g === 'whoami') stats.whoamiTableOpens = (Number(stats.whoamiTableOpens) || 0) + 1;
+    else stats.mafiaTableOpens = (Number(stats.mafiaTableOpens) || 0) + 1;
     save(stats);
   }
 
@@ -101,19 +108,20 @@
   function achievementDefs(stats) {
     var s = Object.assign({}, defaults(), stats || {});
     var sc = s.sessionsCompleted || 0;
+    var anyTable = (s.mafiaTableOpens || 0) + (s.whoamiTableOpens || 0);
     return [
       {
         id: 'first_visit',
         icon: '🎲',
         title: 'За столом',
-        desc: 'Один раз зайди в мафию с кодом комнаты на этой сессии',
-        ok: (s.mafiaTableOpens || 0) >= 1,
+        desc: 'Один раз зайди в комнату по коду (мафия или «Кто я?») в этой сессии браузера',
+        ok: anyTable >= 1,
       },
       {
         id: 'finisher',
         icon: '🏁',
         title: 'До финиша лобби',
-        desc: 'Хоть раз останься за столом, когда хост завершил комнату',
+        desc: 'Хоть раз остаёшься в игре, когда хост закрыл лобби (любая игра)',
         ok: sc >= 1,
       },
       {
@@ -127,7 +135,7 @@
         id: 'time_sink',
         icon: '⏱️',
         title: 'Долго в игре',
-        desc: '60+ минут с активным открытым столом мафии',
+        desc: '60+ минут с активной вкладкой мафии или «Кто я?» за столом',
         ok: (s.playTimeSeconds || 0) >= 3600,
       },
       {
@@ -147,7 +155,7 @@
     ];
   }
 
-  /** Среднее время на одну закрытую комнату (грубо, по суммарному времени мафии) */
+  /** Среднее время на одну закрытую комнату (грубо, по суммарному времени за столами) */
   function avgSecondsPerEndedSession(stats) {
     var s = Object.assign({}, defaults(), stats || {});
     var sc = s.sessionsCompleted || 0;

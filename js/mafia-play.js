@@ -1025,7 +1025,7 @@
     applySettings();
     await resolveLobbyAndUser();
     if (LOBBY && typeof window.hlorStats?.recordTableOpen === 'function') {
-      window.hlorStats.recordTableOpen(LOBBY);
+      window.hlorStats.recordTableOpen(LOBBY, 'mafia');
       window.hlorStats.startPlayTimer();
     }
     if (typeof window.hlorSyncSuperadminAdminUi === 'function') {

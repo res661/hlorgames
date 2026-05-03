@@ -23,7 +23,7 @@
       </a>
       <nav class="navbar__links" id="navLinks">
         <a href="index.html" class="nav-link">Главная</a>
-        <a href="play-mafia.html" class="nav-link">Мафия</a>
+        <a href="index.html#how-it-works" class="nav-link">Как играть</a>
         <a href="index.html#games" class="nav-link">Игры</a>
         <a href="profile.html" class="nav-link active">Профиль</a>
       </nav>
@@ -48,7 +48,7 @@
         <h1 id="pf-display-name" class="pf-hero__name">Игрок</h1>
         <p id="pf-email" class="pf-hero__email"></p>
         <p id="pf-guest-note" class="pf-guest-note hidden">
-          Статистика хранится локально в этом браузере (время и партии мафии). Войди, чтобы сохранить ник, цвет или эмодзи‑аватар.
+          Статистика хранится локально в этом браузере (время за столами мафии и «Кто я?», закрытые лобби). Войди, чтобы сохранить ник, цвет или эмодзи‑аватар.
         </p>
         <div class="pf-actions">
           <button type="button" class="btn btn--primary btn--lg" onclick="if(typeof currentUser!=='undefined'&&currentUser)openProfileModal();else openAuthModal('login')" id="pf-btn-settings">
@@ -60,8 +60,8 @@
     </section>
 
     <p class="pf-note">
-      Статистика обновляется на странице «Мафия»: пока вкладка открыта, идёт отсчёт времени за столом. Когда хост завершит лобби, в счётчик
-      добавляется ещё одна «партия до конца». Победы и поражения мы не считаем — они слишком зависят от правил и конца партии без однозначного сигнала с сервера.
+      Счётчики «за стол» идут отдельно для мафии и для «Кто я?». Пока открыта вкладка игры, копится время за столами. Когда хост завершит лобби,
+      в счётчик добавляется одна «участие до закрытия». Победы и поражения не считаем — нет единого правила окончания на сервере.
     </p>
 
     <section aria-labelledby="pf-stats-heading">
@@ -72,9 +72,16 @@
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            Выход за стол мафии
+            Мафия — заход за стол
           </div>
-          <div class="pf-stat-card__num" id="pf-stat-visits">0</div>
+          <div class="pf-stat-card__num" id="pf-stat-mafia-opens">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+            Кто я? — заход в комнату
+          </div>
+          <div class="pf-stat-card__num" id="pf-stat-whoami-opens">0</div>
         </div>
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
@@ -203,7 +210,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/stats.js?v=2"></script>
+  <script src="js/stats.js?v=3"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>
