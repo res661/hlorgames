@@ -684,12 +684,6 @@ async function joinLobby(code, hasPassword) {
     return;
   }
 
-  if (hasPassword) {
-    const pass = prompt('Введи пароль комнаты:');
-    if (pass === null) return;
-    // Здесь можно добавить проверку пароля
-  }
-
   if (!supabaseClient) {
     showToast(`Вход в комнату ${code}`, 'success');
     return;
@@ -709,6 +703,19 @@ async function joinLobby(code, hasPassword) {
       return;
     }
 
+    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
+    if (lobby.password && !joiningAsHost) {
+      const pass =
+        typeof window.hlorPromptRoomPassword === 'function'
+          ? await window.hlorPromptRoomPassword(lobby.name || lobby.code)
+          : null;
+      if (pass === null || pass === undefined) return;
+      if (String(pass).trim() !== String(lobby.password)) {
+        showToast('Неверный пароль', 'error');
+        return;
+      }
+    }
+
     const players = Array.isArray(lobby.players) ? [...lobby.players] : [];
     const maxP = lobby.max_players || gameInfo.maxPlayers;
     const roomCap = maxP;
@@ -717,7 +724,6 @@ async function joinLobby(code, hasPassword) {
       syncMafiaGrid: (lobby.game || gameType) === 'mafia',
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
-    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
 
     if (!alreadyIn && !joiningAsHost) {
       if (lobbyParticipantsCount(players) >= roomCap) {

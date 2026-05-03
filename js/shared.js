@@ -204,6 +204,121 @@
 
   window.hlorSyncSuperadminAdminUi = hlorSyncSuperadminAdminUi;
 
+  /**
+   * Модальное окно пароля комнаты (стиль HlorGames). resolve(null) — отмена.
+   */
+  window.hlorPromptRoomPassword = function (roomLabel) {
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (val) => {
+        if (settled) return;
+        settled = true;
+        try {
+          overlay.remove();
+        } catch (_) {}
+        document.removeEventListener('keydown', onDocKey);
+        resolve(val);
+      };
+
+      const overlay = document.createElement('div');
+      overlay.className = 'hlor-room-pass-overlay';
+
+      const backdrop = document.createElement('div');
+      backdrop.className = 'hlor-room-pass-overlay__backdrop';
+      backdrop.addEventListener('click', () => finish(null));
+
+      const box = document.createElement('div');
+      box.className = 'hlor-room-pass-overlay__box';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+
+      const title = document.createElement('h2');
+      title.className = 'hlor-room-pass-overlay__title';
+      title.textContent = 'Вход в комнату';
+
+      const sub = document.createElement('p');
+      sub.className = 'hlor-room-pass-overlay__sub';
+      sub.textContent = 'Введи пароль, который задал хост.';
+      if (roomLabel) {
+        sub.appendChild(document.createTextNode(' '));
+        const em = document.createElement('strong');
+        em.textContent = String(roomLabel);
+        sub.appendChild(em);
+      }
+
+      const lab = document.createElement('label');
+      lab.className = 'hlor-room-pass-overlay__label';
+      lab.htmlFor = 'hlorRoomPassInput';
+      lab.textContent = 'Пароль';
+
+      const err = document.createElement('p');
+      err.className = 'hlor-room-pass-overlay__err';
+      err.hidden = true;
+
+      const input = document.createElement('input');
+      input.type = 'password';
+      input.id = 'hlorRoomPassInput';
+      input.className = 'hlor-room-pass-overlay__input';
+      input.placeholder = '••••••••';
+      input.autocomplete = 'off';
+
+      const actions = document.createElement('div');
+      actions.className = 'hlor-room-pass-overlay__actions';
+
+      const btnCancel = document.createElement('button');
+      btnCancel.type = 'button';
+      btnCancel.className = 'btn btn--ghost';
+      btnCancel.textContent = 'Отмена';
+      btnCancel.addEventListener('click', () => finish(null));
+
+      const btnOk = document.createElement('button');
+      btnOk.type = 'button';
+      btnOk.className = 'btn btn--primary';
+      btnOk.textContent = 'Войти';
+
+      const submit = () => {
+        err.hidden = true;
+        const v = input.value;
+        if (!String(v || '').trim()) {
+          err.textContent = 'Введи пароль';
+          err.hidden = false;
+          return;
+        }
+        finish(v);
+      };
+
+      btnOk.addEventListener('click', submit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submit();
+        }
+      });
+
+      function onDocKey(e) {
+        if (e.key === 'Escape') finish(null);
+      }
+      document.addEventListener('keydown', onDocKey);
+
+      actions.appendChild(btnCancel);
+      actions.appendChild(btnOk);
+      box.appendChild(title);
+      box.appendChild(sub);
+      box.appendChild(lab);
+      box.appendChild(input);
+      box.appendChild(err);
+      box.appendChild(actions);
+      overlay.appendChild(backdrop);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        try {
+          input.focus();
+        } catch (_) {}
+      }, 40);
+    });
+  };
+
   /** SELECT lobbies по коду из URL/поля и из таблицы (регистр может отличаться). */
   window.hlorFetchLobbyByCode = async function (codeWant) {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) {

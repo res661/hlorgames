@@ -33,15 +33,25 @@
 
   // ── Константы ────────────────────────────────────────────────────────────────
   const TOTAL     = 12;
-  const ROLES_MAP = { 'Мафия':'mafia','Шериф':'sheriff','Доктор':'doctor','Маньяк':'maniac','Любовница':'other','Комиссар':'sheriff','Мирный':'civil' };
+  const ROLES_MAP = {
+    'Мафия': 'mafia',
+    'Шериф': 'sheriff',
+    'Доктор': 'doctor',
+    'Маньяк': 'maniac',
+    'Дон мафии': 'don',
+    'Любовница': 'other',
+    'Комиссар': 'sheriff',
+    'Мирный': 'civil',
+  };
   /** Темы окна «твоя роль» (классы mf-role-reveal--*) */
-  const ROLE_REVEAL_THEMES = ['mafia', 'civil', 'sheriff', 'doctor', 'maniac', 'other'];
+  const ROLE_REVEAL_THEMES = ['mafia', 'civil', 'sheriff', 'doctor', 'maniac', 'don', 'other'];
   const ROLE_REVEAL_ICONS = {
     mafia: '🎭',
     civil: '🏘️',
     sheriff: '⭐',
     doctor: '⚕️',
     maniac: '🔪',
+    don: '🎩',
     other: '💋',
   };
 
@@ -57,11 +67,14 @@
     'Маньяк':    'Действуешь один. Победа — остаться последним живым.',
     'Любовница': 'Ночью блокируешь одного игрока — он не может действовать.',
     'Комиссар':  'Можешь арестовать игрока ночью — он пропускает день.',
+    'Дон мафии':
+      'Просыпаешься с мафией: вместе выбираете жертву. Отдельным ходом проверяешь игрока — это шериф или нет.',
   };
   const STATUS_LBL = { alive:'ЖИВ', dead:'МЁРТВ', extinct:'ВЫБЫЛ' };
   const PHASES = {
     day:   { icon:'☀️', text:'ДЕНЬ — Обсуждение',       css:'ph-day'   },
     night: { icon:'🌙', text:'НОЧЬ — Мафия действует',  css:'ph-night' },
+    don:   { icon:'🎩', text:'НОЧЬ — Дон ищет шерифа',    css:'ph-don'   },
     vote:  { icon:'🗳️', text:'ГОЛОСОВАНИЕ',              css:'ph-vote'  },
     wait:  { icon:'⏳', text:'Ожидание игроков...',      css:'ph-wait'  },
   };
@@ -1672,7 +1685,7 @@
 
   // ── RANDOM EVENT ──────────────────────────────────────────────────────────────
   function toggleRandEvent() {
-    if (phase !== 'night') { toast('Только в фазе Ночь!','error'); return; }
+    if (phase !== 'night' && phase !== 'don') { toast('Только в ночных фазах (Мафия / Дон)!','error'); return; }
     randQueued = !randQueued;
     document.getElementById('btnRandEvent').classList.toggle('mf-btn--blue', randQueued);
     toast(randQueued ? '🎲 Событие запланировано на утро!' : 'Событие отменено');

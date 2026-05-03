@@ -356,6 +356,21 @@ body.mafia-body {
   --rr-ok-border: rgba(216, 180, 254, 0.42);
   --rr-ok-text: rgba(237, 233, 254, 0.95);
 }
+.mf-role-reveal--don {
+  --rr-border: rgba(220, 38, 38, 0.42);
+  --rr-bg-top: rgba(42, 18, 14, 0.99);
+  --rr-bg-bot: rgba(12, 6, 6, 0.99);
+  --rr-glow-a: rgba(185, 28, 28, 0.28);
+  --rr-glow-b: rgba(252, 211, 77, 0.12);
+  --rr-eyebrow: #fde68a;
+  --rr-name: #fecaca;
+  --rr-name-grad-end: #fbbf24;
+  --rr-desc: rgba(214, 198, 186, 0.92);
+  --rr-icon-bg: rgba(153, 27, 27, 0.25);
+  --rr-icon-ring: rgba(251, 191, 36, 0.45);
+  --rr-ok-border: rgba(252, 211, 77, 0.38);
+  --rr-ok-text: #fef3c7;
+}
 .mf-role-reveal--other {
   --rr-border: rgba(244, 114, 182, 0.5);
   --rr-bg-top: rgba(44, 14, 36, 0.99);
@@ -446,6 +461,7 @@ body.mafia-body {
 .mf-slot__name { font-size:.78rem; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .mf-slot__role { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
 .mf-slot__role--mafia   { color:#f87171; }
+.mf-slot__role--don    { color:#fbbf24; font-weight:900; }
 .mf-slot__role--civil   { color:#86efac; }
 .mf-slot__role--sheriff { color:#fde68a; }
 .mf-slot__role--doctor  { color:#bef264; }
@@ -481,41 +497,64 @@ body.mafia-body {
 
 /* ── SIDEBAR ── */
 .mf-sidebar {
-  width: 300px; flex-shrink: 0;
-  display: flex; flex-direction: column;
-  background: var(--mf-card);
-  border-left: 1px solid var(--mf-brd);
+  width: 322px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(20, 24, 20, 0.98) 0%, var(--mf-card) 48%);
+  border-left: 1px solid rgba(200, 255, 78, 0.1);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 .mf-sidebar.hidden { display: none; }
 .mf-sidebar__head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border-bottom: 1px solid var(--mf-brd); flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(200, 255, 78, 0.12);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
 }
-.mf-sidebar__title { font-size:.88rem; font-weight:700; color:var(--mf-text); }
+.mf-sidebar__title { font-size: 0.92rem; font-weight: 800; color: var(--mf-text); letter-spacing: -0.02em; }
 .mf-sidebar__close {
   background:none; border:none; color:var(--mf-muted); cursor:pointer;
   padding:4px; border-radius:5px; font-size:.9rem; transition:all .15s; line-height:1;
 }
 .mf-sidebar__close:hover { background:rgba(255,255,255,.07); color:var(--mf-text); }
-.mf-sidebar__body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:0; }
+.mf-sidebar__body { flex:1; overflow-y:auto; padding:14px 14px 20px; display:flex; flex-direction:column; gap:4px; scroll-behavior:smooth; }
 
 /* ── STABS (sidebar tabs) ── */
 .mf-stabs {
-  display: flex; border-bottom: 1px solid var(--mf-brd); flex-shrink: 0; margin-bottom: 0;
+  display: flex;
+  border-bottom: 1px solid rgba(200, 255, 78, 0.1);
+  flex-shrink: 0;
+  margin: 0 -4px 12px;
+  padding: 0 4px;
+  gap: 2px;
 }
 .mf-stab {
-  flex:1; padding:9px 6px;
-  background:none; border:none; border-bottom:2px solid transparent;
-  color:var(--mf-muted); font-size:.75rem; font-weight:600;
-  cursor:pointer; font-family:inherit; transition:all .15s;
+  flex:1;
+  padding:11px 8px;
+  background:rgba(0,0,0,.18);
+  border:none;
+  border-radius:8px 8px 0 0;
+  border-bottom:2px solid transparent;
+  color:var(--mf-muted);
+  font-size:.76rem;
+  font-weight:700;
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .15s;
 }
 .mf-stab:hover { color:var(--mf-text); }
 .mf-stab.active { color:var(--mf-accent); border-bottom-color:var(--mf-accent); }
 
-.mf-stab-panel { padding-top:12px; }
+.mf-stab-panel { padding-top:4px; }
 .mf-stab-panel.hidden { display:none; }
-.mf-hint { font-size:.73rem; color:var(--mf-muted); margin-bottom:10px; }
+.mf-hint { font-size:.76rem; color:var(--mf-muted); margin-bottom:12px; line-height:1.45; }
+.mf-phase-hint { margin-top: 10px; margin-bottom: 0; padding: 10px 12px; border-radius: 10px; background: rgba(200,255,78,0.06); border: 1px solid rgba(200,255,78,0.12); }
+.mf-phase-hint strong { color: var(--mf-accent); }
 
 /* Host player rows */
 .mf-prow {
@@ -535,17 +574,27 @@ body.mafia-body {
 .mf-prow__state--extinct{ color:var(--mf-dim); }
 
 /* Controls */
-.mf-ctrl { margin-bottom:16px; }
-.mf-ctrl__label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--mf-muted); margin-bottom:7px; }
+.mf-ctrl {
+  margin-bottom: 16px;
+  padding: 12px 12px 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+.mf-ctrl__label { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--mf-muted); margin-bottom:9px; }
 .mf-phase-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.mf-phase-grid--panel { gap: 8px; margin-top: 4px; }
+.mf-phase-btn--wide { grid-column: 1 / -1; }
 .mf-phase-btn {
-  padding:8px 6px;
-  background:rgba(255,255,255,.03); border:1px solid var(--mf-brd);
-  border-radius:7px; color:var(--mf-muted); font-size:.75rem; font-weight:600;
+  padding:10px 8px;
+  min-height: 44px;
+  background:rgba(255,255,255,.04); border:1px solid var(--mf-brd);
+  border-radius:10px; color:var(--mf-muted); font-size:.78rem; font-weight:700;
   cursor:pointer; font-family:inherit; transition:all .15s; text-align:center;
+  line-height: 1.25;
 }
 .mf-phase-btn:hover { background:rgba(200,255,78,.1); border-color:rgba(200,255,78,.32); color:var(--mf-text); }
-.mf-phase-btn.active { background:rgba(200,255,78,.14); border-color:var(--mf-accent); color:var(--mf-accent); }
+.mf-phase-btn.active { background:rgba(200,255,78,.14); border-color:var(--mf-accent); color:var(--mf-accent); box-shadow: 0 0 0 1px rgba(200,255,78,.12); }
 
 .mf-row { display:flex; gap:5px; align-items:center; }
 .mf-col { display:flex; flex-direction:column; gap:5px; }
@@ -694,6 +743,13 @@ body.mafia-body {
 /* ── PHASE BACKGROUNDS ── */
 body.mafia-body.ph-night { background:#050609; }
 body.mafia-body.ph-night .mafia-main { filter: brightness(.78); }
+body.mafia-body.ph-don {
+  background: #0a0706;
+}
+body.mafia-body.ph-don .mafia-topbar {
+  border-bottom-color: rgba(251, 191, 36, 0.22);
+}
+body.mafia-body.ph-don .mafia-main { filter: brightness(0.85); }
 body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3); }
 
 /* ── SLOT MODAL (ведущий) — те же контрасты, что у панели ── */

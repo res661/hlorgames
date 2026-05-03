@@ -871,6 +871,95 @@ section { padding: 80px 24px; }
 }
 .lobby-confirm-ok:hover { background:rgba(239,68,68,0.2); }
 
+/* Модальное окно пароля комнаты (game / main) */
+.hlor-room-pass-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.hlor-room-pass-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 6, 0.88);
+  backdrop-filter: blur(10px);
+}
+.hlor-room-pass-overlay__box {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-card, #121611);
+  border: 1px solid rgba(200, 255, 78, 0.22);
+  border-radius: var(--radius-xl, 16px);
+  padding: 26px 24px 22px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+.hlor-room-pass-overlay__title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text, #f0f2ed);
+  letter-spacing: -0.02em;
+}
+.hlor-room-pass-overlay__sub {
+  margin: 0 0 18px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted, #8a938c);
+}
+.hlor-room-pass-overlay__sub strong {
+  color: var(--lime, #c8ff4e);
+  font-weight: 700;
+}
+.hlor-room-pass-overlay__label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, #8a938c);
+  margin-bottom: 8px;
+}
+.hlor-room-pass-overlay__input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  border: 1px solid rgba(200, 255, 78, 0.28);
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--text, #f0f2ed);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.hlor-room-pass-overlay__input:focus {
+  border-color: var(--lime, #c8ff4e);
+  box-shadow: 0 0 0 2px rgba(200, 255, 78, 0.15);
+}
+.hlor-room-pass-overlay__err {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: #f87171;
+  min-height: 1.2em;
+}
+.hlor-room-pass-overlay__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.hlor-room-pass-overlay__actions .btn {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
 /* nav helpers */
 .nav-separator { color:var(--text-dim); font-size:.75rem; padding:0 2px; pointer-events:none; }
 .nav-link--game { color:var(--lime) !important; font-weight:700; }

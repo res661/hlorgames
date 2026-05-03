@@ -220,6 +220,20 @@ async function joinLobby() {
       return;
     }
 
+    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
+    if (lobby.password && !joiningAsHost) {
+      if (typeof window.hlorPromptRoomPassword !== 'function') {
+        errEl.textContent = 'Нужна актуальная версия сайта (shared.js)';
+        return;
+      }
+      const pass = await window.hlorPromptRoomPassword(lobby.name || lobby.code);
+      if (pass === null || pass === undefined) return;
+      if (String(pass).trim() !== String(lobby.password)) {
+        errEl.textContent = 'Неверный пароль';
+        return;
+      }
+    }
+
     let players = Array.isArray(lobby.players) ? [...lobby.players] : [];
     const maxP = lobby.max_players || 16;
     const seatCtx = {
@@ -227,7 +241,6 @@ async function joinLobby() {
       syncMafiaGrid: lobby.game === 'mafia',
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
-    const joiningAsHost = String(lobby.host_id) === String(currentUser.id);
 
     if (!alreadyIn && !joiningAsHost) {
       let n = 0;
