@@ -75,9 +75,18 @@
     day:   { icon:'☀️', text:'ДЕНЬ — Обсуждение',       css:'ph-day'   },
     night: { icon:'🌙', text:'НОЧЬ — Мафия действует',  css:'ph-night' },
     don:   { icon:'🎩', text:'НОЧЬ — Дон ищет шерифа',    css:'ph-don'   },
+    night_doc:       { icon:'💊', text:'НОЧЬ — Доктор',           css:'ph-night-doc' },
+    night_sheriff:   { icon:'🔍', text:'НОЧЬ — Шериф',            css:'ph-night-sheriff' },
+    night_maniac:    { icon:'🔪', text:'НОЧЬ — Маньяк',          css:'ph-night-maniac' },
+    night_lover:     { icon:'💋', text:'НОЧЬ — Любовница',       css:'ph-night-lover' },
+    night_commissar: { icon:'🎖', text:'НОЧЬ — Комиссар',       css:'ph-night-commissar' },
     vote:  { icon:'🗳️', text:'ГОЛОСОВАНИЕ',              css:'ph-vote'  },
     wait:  { icon:'⏳', text:'Ожидание игроков...',      css:'ph-wait'  },
   };
+  /** Фазы, в которых доступно «рандомное событие» на утро */
+  const NIGHT_LIKE_PHASES = new Set([
+    'night', 'don', 'night_doc', 'night_sheriff', 'night_maniac', 'night_lover', 'night_commissar',
+  ]);
 
   // ── Состояние ────────────────────────────────────────────────────────────────
   let slots        = loadSlots();
@@ -1434,10 +1443,65 @@
       });
     });
 
+    function clampTimerSec(n) {
+      return Math.max(5, Math.min(600, Math.round(Number(n)) || 60));
+    }
+    function syncTimerSecUi() {
+      const inp = document.getElementById('timerSec');
+      if (!inp) return;
+      const sec = clampTimerSec(inp.value);
+      inp.value = String(sec);
+      const disp = document.getElementById('timerSecDisplay');
+      if (disp) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        disp.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      }
+      document.querySelectorAll('.mf-timer-chip').forEach((ch) => {
+        ch.classList.toggle('active', parseInt(ch.dataset.sec, 10) === sec);
+      });
+    }
+
+    document.querySelectorAll('.mf-timer-chip').forEach((ch) => {
+      ch.addEventListener('click', () => {
+        if (!isHostFlag) return;
+        const v = parseInt(ch.dataset.sec, 10);
+        if (!Number.isFinite(v)) return;
+        const inp = document.getElementById('timerSec');
+        if (inp) inp.value = String(clampTimerSec(v));
+        syncTimerSecUi();
+      });
+    });
+    const minus15 = document.getElementById('btnTimerMinus15');
+    const plus15 = document.getElementById('btnTimerPlus15');
+    const timerInp = document.getElementById('timerSec');
+    if (minus15) {
+      minus15.addEventListener('click', () => {
+        if (!isHostFlag) return;
+        if (!timerInp) return;
+        timerInp.value = String(clampTimerSec((parseInt(timerInp.value, 10) || 60) - 15));
+        syncTimerSecUi();
+      });
+    }
+    if (plus15) {
+      plus15.addEventListener('click', () => {
+        if (!isHostFlag) return;
+        if (!timerInp) return;
+        timerInp.value = String(clampTimerSec((parseInt(timerInp.value, 10) || 60) + 15));
+        syncTimerSecUi();
+      });
+    }
+    if (timerInp) {
+      timerInp.addEventListener('input', syncTimerSecUi);
+      timerInp.addEventListener('change', syncTimerSecUi);
+    }
+    syncTimerSecUi();
+
     document.getElementById('btnTimerStart').onclick = () => {
       if (!isHostFlag) return;
-      const sec = parseInt(document.getElementById('timerSec').value) || 60;
-      startTimer(sec, true);
+      if (timerInp) syncTimerSecUi();
+      const sec = parseInt(document.getElementById('timerSec').value, 10) || 60;
+      startTimer(clampTimerSec(sec), true);
     };
     document.getElementById('btnTimerStop').onclick = () => {
       if (!isHostFlag) return;
@@ -1685,7 +1749,7 @@
 
   // ── RANDOM EVENT ──────────────────────────────────────────────────────────────
   function toggleRandEvent() {
-    if (phase !== 'night' && phase !== 'don') { toast('Только в ночных фазах (Мафия / Дон)!','error'); return; }
+    if (!NIGHT_LIKE_PHASES.has(phase)) { toast('Только в ночных фазах!', 'error'); return; }
     randQueued = !randQueued;
     document.getElementById('btnRandEvent').classList.toggle('mf-btn--blue', randQueued);
     toast(randQueued ? '🎲 Событие запланировано на утро!' : 'Событие отменено');

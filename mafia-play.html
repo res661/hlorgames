@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Мафия — HlorGames</title>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/mafia.css?v=3" />
+  <link rel="stylesheet" href="css/mafia.css?v=4" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="mafia-body">
@@ -93,22 +93,45 @@
         <div class="mf-stab-panel hidden mf-for-game-master" id="stab-phases">
           <div class="mf-ctrl">
             <div class="mf-ctrl__label">Фаза игры</div>
+            <div class="mf-phase-sub">День и голосование</div>
             <div class="mf-phase-grid mf-phase-grid--panel">
               <button type="button" class="mf-phase-btn" data-phase="day">☀️ День</button>
-              <button type="button" class="mf-phase-btn" data-phase="night">🌙 Мафия</button>
-              <button type="button" class="mf-phase-btn" data-phase="don">🎩 Дон</button>
               <button type="button" class="mf-phase-btn" data-phase="vote">🗳 Голос</button>
               <button type="button" class="mf-phase-btn mf-phase-btn--wide" data-phase="wait">⏳ Ожидание</button>
             </div>
-            <p class="mf-hint mf-phase-hint">После хода мафии переключись на <strong>Дон</strong> — отдельный ночной ход: дон проверяет, шериф ли игрок (ведущий озвучивает результат).</p>
+            <div class="mf-phase-sub">Ночные ходы по ролям</div>
+            <div class="mf-phase-grid mf-phase-grid--panel">
+              <button type="button" class="mf-phase-btn" data-phase="night">🌙 Мафия</button>
+              <button type="button" class="mf-phase-btn" data-phase="don">🎩 Дон</button>
+              <button type="button" class="mf-phase-btn" data-phase="night_doc">💊 Доктор</button>
+              <button type="button" class="mf-phase-btn" data-phase="night_sheriff">🔍 Шериф</button>
+              <button type="button" class="mf-phase-btn" data-phase="night_maniac">🔪 Маньяк</button>
+              <button type="button" class="mf-phase-btn" data-phase="night_lover">💋 Любовница</button>
+              <button type="button" class="mf-phase-btn" data-phase="night_commissar">🎖 Комиссар</button>
+            </div>
+            <p class="mf-hint mf-phase-hint">Переключай фазы по очереди ночи: мафия и дон — отдельные ходы; затем доктор, шериф и остальные роли по правилам стола. Дон проверяет, шериф ли игрок — результат озвучивает ведущий.</p>
           </div>
           <div class="mf-ctrl">
-            <div class="mf-ctrl__label">Таймер (сек)</div>
-            <div class="mf-row">
-              <input type="number" class="mf-input" id="timerSec" value="60" min="5" max="600"/>
-              <button class="mf-btn mf-btn--blue" id="btnTimerStart">▶</button>
-              <button class="mf-btn mf-btn--dim"  id="btnTimerStop">■</button>
+            <div class="mf-ctrl__label">Таймер</div>
+            <div class="mf-timer-presets" id="timerPresetRow">
+              <button type="button" class="mf-timer-chip" data-sec="30">30 с</button>
+              <button type="button" class="mf-timer-chip" data-sec="45">45 с</button>
+              <button type="button" class="mf-timer-chip" data-sec="60">1 мин</button>
+              <button type="button" class="mf-timer-chip" data-sec="90">1:30</button>
+              <button type="button" class="mf-timer-chip" data-sec="120">2 мин</button>
+              <button type="button" class="mf-timer-chip" data-sec="180">3 мин</button>
             </div>
+            <div class="mf-timer-row">
+              <button type="button" class="mf-btn mf-btn--dim mf-timer-step" id="btnTimerMinus15" title="Минус 15 сек">−15</button>
+              <div class="mf-timer-display" id="timerSecDisplay" title="Текущая длительность">1:00</div>
+              <button type="button" class="mf-btn mf-btn--dim mf-timer-step" id="btnTimerPlus15" title="Плюс 15 сек">+15</button>
+            </div>
+            <div class="mf-timer-actions">
+              <input type="number" class="mf-input mf-timer-input" id="timerSec" value="60" min="5" max="600" title="Секунды (точно)" inputmode="numeric" />
+              <button class="mf-btn mf-btn--blue" id="btnTimerStart">▶ Старт</button>
+              <button class="mf-btn mf-btn--dim" id="btnTimerStop">■ Стоп</button>
+            </div>
+            <p class="mf-hint" style="margin-top:10px;margin-bottom:0">Пресеты и ±15 — без ввода; узкое поле — если нужны точные секунды.</p>
           </div>
           <div class="mf-ctrl">
             <div class="mf-ctrl__label">Действия</div>
@@ -271,6 +294,6 @@
   <script src="js/lobby-seat-utils.js?v=5"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/mf-custom-select.js?v=1"></script>
-  <script src="js/mafia-play.js?v=28"></script>
+  <script src="js/mafia-play.js?v=29"></script>
 </body>
 </html>
