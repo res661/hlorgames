@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     .eq('id', session.user.id)
     .single();
 
-  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
-    showAccessDenied('У тебя нет доступа к панели администратора');
+  if (!profile || profile.role !== 'superadmin') {
+    showAccessDenied('Панель доступна только суперадмину (role = superadmin в таблице profiles)');
     return;
   }
 

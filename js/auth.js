@@ -189,6 +189,9 @@ function translateAuthError(msg) {
 function onUserSignedIn(user) {
   // Вызываем хук страницы если определён (используется в game.js, lobby.js)
   window._onAuthUpdate?.();
+  if (typeof window.hlorSyncSuperadminAdminUi === 'function') {
+    void window.hlorSyncSuperadminAdminUi();
+  }
   const navAuth = document.getElementById('navAuth');
   if (!navAuth) return;
   const isAdmin = ['admin', 'superadmin'].includes(user.role);
@@ -217,7 +220,7 @@ function onUserSignedIn(user) {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         Настройки профиля
       </button>
-      <!-- Кнопка "Админ панель" добавляется только через секретный ввод "admin" -->
+      <!-- Админ-панель: только superadmin в БД (см. shared.js hlorSyncSuperadminAdminUi) -->
       <div class="user-dropdown__divider"></div>
       <button class="user-dropdown__item user-dropdown__item--danger" onclick="handleLogout()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -247,6 +250,9 @@ function closeUserMenuOutside(e) {
 
 function onUserSignedOut() {
   window._onAuthUpdate?.();
+  if (typeof window.hlorSyncSuperadminAdminUi === 'function') {
+    void window.hlorSyncSuperadminAdminUi();
+  }
   const navAuth = document.getElementById('navAuth');
   navAuth.innerHTML = `
     <button class="btn btn--ghost" id="btnLogin">Войти</button>

@@ -6,7 +6,7 @@
  *  - Realtime синхронизацией стола через Supabase Broadcast (без чата)
  *  - Хост-слотом (ведущий не в сетке)
  *  - Управлением фазами, таймером, рандомными событиями
- *  - Секрет «admin» для кнопки админки — в shared.js (один раз на всех страницах)
+ *  - Кнопка «Админ-панель» для superadmin — в shared.js (по данным profiles)
  */
 
 (function () {
@@ -977,6 +977,9 @@
   document.addEventListener('DOMContentLoaded', async () => {
     applySettings();
     await resolveLobbyAndUser();
+    if (typeof window.hlorSyncSuperadminAdminUi === 'function') {
+      void window.hlorSyncSuperadminAdminUi();
+    }
     await refreshPlayerMapFromDb();
     if (!$grid().querySelector('.mf-slot')) renderGrid();
     setupRoleRevealModal();
@@ -1842,7 +1845,7 @@
 
   // ── HOTKEYS ──────────────────────────────────────────────────────────────────
   function setupHotkeys() {
-    // «admin» — только в shared.js: переключает FAB/пункт меню (localStorage). Здесь не дублируем.
+    // Админ-панель: см. shared.js (только superadmin в БД)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeSlotModal();
     });
