@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Профиль и статистика — HlorGames</title>
+  <title>Профиль — HLOR GAMES</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/profile-page.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -38,77 +38,59 @@
       <div class="pf-hero__text">
         <div class="pf-hero__badge">
           <span class="pf-hero__badge-dot"></span>
-          Прогресс и достижения
+          Профиль
         </div>
-        <h1 id="pf-display-name" class="pf-hero__name">Твоя статистика</h1>
+        <h1 id="pf-display-name" class="pf-hero__name">Игрок</h1>
         <p id="pf-email" class="pf-hero__email"></p>
         <p id="pf-guest-note" class="pf-guest-note hidden">
-          Статистика хранится локально в этом браузере. Войди, чтобы сохранить ник и аватар аккаунта.
+          Статистика хранится локально в этом браузере (время и партии мафии). Войди, чтобы сохранить ник, цвет или эмодзи‑аватар.
         </p>
         <div class="pf-actions">
           <button type="button" class="btn btn--primary btn--lg" onclick="if(typeof currentUser!=='undefined'&&currentUser)openProfileModal();else openAuthModal('login')" id="pf-btn-settings">
-            Настройки профиля
+            Ник, аватар
           </button>
-          <a href="game.html?g=mafia" class="btn btn--ghost btn--lg">К каталогу игр</a>
+          <a href="index.html#games" class="btn btn--ghost btn--lg">В каталог игр</a>
         </div>
       </div>
     </section>
 
     <p class="pf-note">
-      Цифры обновляются за столом «Мафия»: когда открыта комната, накапливается время, а если хост завершил лобби,
-      считаются партии и простая победа / поражение по составу живых игроков. Для экспериментальных ролей и нестандартного конца
-      возможны решения «спорная партия».
+      Статистика обновляется на странице «Мафия»: пока вкладка открыта, идёт отсчёт времени за столом. Когда хост завершит лобби, в счётчик
+      добавляется ещё одна «партия до конца». Победы и поражения мы не считаем — они слишком зависят от правил и конца партии без однозначного сигнала с сервера.
     </p>
 
     <section aria-labelledby="pf-stats-heading">
       <h2 id="pf-stats-heading" class="pf-section-title" style="margin-bottom:14px;">
-        Основное
+        Статистика
       </h2>
       <div class="pf-stats-grid">
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            Выход на стол мафии
+            Выход за стол мафии
           </div>
           <div class="pf-stat-card__num" id="pf-stat-visits">0</div>
         </div>
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
-            Партии до конца
+            Закрыто лобби
           </div>
           <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
         </div>
         <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Победы</div>
-          <div class="pf-stat-card__num" id="pf-stat-wins" style="color:var(--green)">0</div>
-        </div>
-        <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Поражения</div>
-          <div class="pf-stat-card__num" id="pf-stat-losses" style="color:var(--red)">0</div>
-        </div>
-        <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Спорных</div>
-          <div class="pf-stat-card__num" id="pf-stat-undecided">0</div>
-        </div>
-        <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Время в партиях мафии
+            Время за столами
           </div>
           <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
         </div>
-        <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Винрейт</div>
-          <div class="pf-stat-card__num" id="pf-stat-winrate">—</div>
-        </div>
-        <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Сейчас серия побед</div>
-          <div class="pf-stat-card__num" id="pf-stat-streak">0</div>
-        </div>
-        <div class="pf-stat-card">
-          <div class="pf-stat-card__label">Рекорд серии</div>
-          <div class="pf-stat-card__num" id="pf-stat-best-streak">0</div>
+        <div class="pf-stat-card pf-stat-card--wide">
+          <div class="pf-stat-card__label pf-stat-card__label--plain">
+            Среднее время на одну закрытую партию
+          </div>
+          <div class="pf-stat-card__num" id="pf-stat-avg-session">—</div>
+          <span class="pf-stat-card__hint">«Время за столами» ÷ «Закрыто лобби» — ориентировочно</span>
         </div>
       </div>
     </section>
@@ -176,13 +158,15 @@
   <div class="modal-overlay" id="profileModal">
     <div class="modal modal--profile">
       <button class="modal__close" id="profileModalClose">✕</button>
-      <h3 class="modal__title">Настройки профиля</h3>
+      <h3 class="modal__title">Ник и аватар</h3>
       <div class="profile-avatar-section">
         <div class="profile-avatar-big" id="profileAvatarBig">?</div>
         <div class="profile-avatar-actions">
           <button class="profile-clear-btn" onclick="clearAvatar()">Сбросить</button>
         </div>
-        <p class="profile-avatar-hint">Выбери аватар</p>
+        <p class="profile-avatar-hint">Цвет буквы из ника</p>
+        <div class="profile-color-grid" id="profileColorGrid"></div>
+        <p class="profile-avatar-hint">Или эмодзи</p>
         <div class="profile-emoji-grid" id="profileEmojiGrid"></div>
       </div>
       <div class="form-group">
@@ -214,7 +198,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/stats.js?v=1"></script>
+  <script src="js/stats.js?v=2"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>

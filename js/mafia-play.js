@@ -507,12 +507,7 @@
       if (data.status === 'ended') {
         try {
           if (typeof window.hlorStats?.recordLobbyEnd === 'function') {
-            window.hlorStats.recordLobbyEnd({
-              lobbyCode: LOBBY,
-              slots,
-              activeSlots,
-              mySlot,
-            });
+            window.hlorStats.recordLobbyEnd({ lobbyCode: LOBBY });
           }
         } catch (_) {}
         showRoomEndedOverlay(

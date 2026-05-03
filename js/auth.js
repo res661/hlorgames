@@ -4,6 +4,12 @@
 
 let currentUser = null;
 
+/** HTML внутри .user-avatar (эмодзи, фото или буква с цветом) — задаётся в profile.js */
+function hlorBuildAvatarInnerFallback(user) {
+  const nick = (user?.nickname || '?')[0]?.toUpperCase() || '?';
+  return `<span class="user-avatar__letter user-avatar__letter--plain">${nick}</span>`;
+}
+
 // ─── Открытие/закрытие ───────────────────────────────────────────────────────
 
 function openAuthModal(tab = 'login') {
@@ -195,41 +201,34 @@ function onUserSignedIn(user) {
   const navAuth = document.getElementById('navAuth');
   if (!navAuth) return;
   const isAdmin = ['admin', 'superadmin'].includes(user.role);
-  const hasPhoto = user.avatar && user.avatar.startsWith('http');
-  const avatarContent = hasPhoto
-    ? `<img src="${user.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
-    : (user.avatar || user.nickname[0].toUpperCase());
   const avatarClass = isAdmin ? 'user-avatar user-avatar--admin' : 'user-avatar';
+  const buildInner =
+    typeof window.hlorBuildAvatarInnerHtml === 'function' ? window.hlorBuildAvatarInnerHtml : hlorBuildAvatarInnerFallback;
+  const avatarInner = buildInner(user);
 
   navAuth.innerHTML = `
-    <div class="navbar__user" id="userMenuTrigger" onclick="toggleUserMenu()">
-      <div class="${avatarClass}" id="navAvatar">${avatarContent}</div>
-      <span class="user-name">${user.nickname}</span>
-      <span class="user-chevron">▾</span>
-    </div>
-    <div class="user-dropdown hidden" id="userDropdown">
-      <div class="user-dropdown__header">
-        <div class="${avatarClass}">${avatarContent}</div>
-        <div>
-          <div class="user-dropdown__name">${user.nickname}</div>
-          <div class="user-dropdown__role">${isAdmin ? (user.role === 'superadmin' ? 'Суперадмин' : 'Админ') : 'Игрок'}</div>
-        </div>
-      </div>
-      <div class="user-dropdown__divider"></div>
-      <a href="profile.html" class="user-dropdown__item" onclick="event.stopPropagation(); document.getElementById('userDropdown')?.classList.add('hidden');">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a2 2 0 012-2h14a2 2 0 012 2v18l-7-4-7 4"/><path d="M8 7h8M8 11h8"/></svg>
-        Профиль и статистика
+    <div class="navbar__auth-signed" id="navbarAuthSigned">
+      <a href="profile.html" class="navbar__user navbar__user--link" onclick="document.getElementById('userDropdown')?.classList.add('hidden')">
+        <div class="${avatarClass}" id="navAvatar">${avatarInner}</div>
+        <span class="user-name">${user.nickname}</span>
       </a>
-      <button class="user-dropdown__item" onclick="openProfileModal()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Настройки (ник, аватар)
+      <button type="button" class="navbar__user-menu-btn" id="userMenuTrigger" onclick="toggleUserMenu(); event.stopPropagation();" aria-label="Меню аккаунта" title="Выход из аккаунта">
+        <span class="user-chevron">▾</span>
       </button>
-      <!-- Админ-панель: только superadmin в БД (см. shared.js hlorSyncSuperadminAdminUi) -->
-      <div class="user-dropdown__divider"></div>
-      <button class="user-dropdown__item user-dropdown__item--danger" onclick="handleLogout()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Выйти
-      </button>
+      <div class="user-dropdown hidden" id="userDropdown">
+        <div class="user-dropdown__header">
+          <div class="${avatarClass}">${avatarInner}</div>
+          <div>
+            <div class="user-dropdown__name">${user.nickname}</div>
+            <div class="user-dropdown__role">${isAdmin ? (user.role === 'superadmin' ? 'Суперадмин' : 'Админ') : 'Игрок'}</div>
+          </div>
+        </div>
+        <div class="user-dropdown__divider"></div>
+        <button class="user-dropdown__item user-dropdown__item--danger" onclick="handleLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Выйти
+        </button>
+      </div>
     </div>
   `;
 
@@ -244,9 +243,9 @@ function toggleUserMenu() {
 }
 
 function closeUserMenuOutside(e) {
-  const trigger  = document.getElementById('userMenuTrigger');
   const dropdown = document.getElementById('userDropdown');
-  if (dropdown && trigger && !trigger.contains(e.target)) {
+  const wrap = document.getElementById('navbarAuthSigned');
+  if (dropdown && wrap && !wrap.contains(e.target)) {
     dropdown.classList.add('hidden');
     document.removeEventListener('click', closeUserMenuOutside);
   }

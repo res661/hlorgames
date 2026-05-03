@@ -47,15 +47,32 @@ body.pf-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.85rem;
-  font-weight: 800;
-  color: var(--lime);
+  overflow: hidden;
   flex-shrink: 0;
   z-index: 1;
 }
 
-.pf-hero__avatar[data-mode='emoji'] {
-  font-size: 3.2rem;
+.pf-hero__avatar .user-avatar__emoji {
+  font-size: 3rem;
+  line-height: 1;
+  font-family: var(--font), 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+}
+
+.pf-hero__avatar .user-avatar__letter {
+  width: 100%;
+  height: 100%;
+  font-size: 2.85rem;
+  font-weight: 900;
+}
+
+.pf-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.pf-hero__avatar--guest {
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -142,9 +159,19 @@ body.pf-page {
   gap: 6px;
 }
 
-.pf-stat-card__label svg {
-  opacity: 0.55;
-  flex-shrink: 0;
+.pf-stat-card__label--plain {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pf-stat-card__hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.35;
 }
 
 .pf-stat-card__num {

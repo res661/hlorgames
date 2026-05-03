@@ -1,6 +1,5 @@
 /**
- * Локальная геймификация (localStorage): визиты к столу, время в мафии, партии до конца лобби, победы по состоянию стола.
- * Синхронизация между устройствами — отдельной задачей (нужно поле в profiles в Supabase).
+ * Локальная геймификация (localStorage): стол мафии, время, партии до закрытия лобби, достижения.
  */
 (function () {
   'use strict';
@@ -9,15 +8,21 @@
 
   function defaults() {
     return {
-      version: 1,
+      version: 2,
       mafiaTableOpens: 0,
       sessionsCompleted: 0,
-      wins: 0,
-      losses: 0,
-      undecided: 0,
       playTimeSeconds: 0,
-      winStreak: 0,
-      bestWinStreak: 0,
+    };
+  }
+
+  function migrate(raw) {
+    var o = raw && typeof raw === 'object' ? raw : {};
+    var d = defaults();
+    return {
+      version: 2,
+      mafiaTableOpens: Number(o.mafiaTableOpens) || 0,
+      sessionsCompleted: Number(o.sessionsCompleted) || 0,
+      playTimeSeconds: Number(o.playTimeSeconds) || 0,
     };
   }
 
@@ -26,7 +31,7 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaults();
       var o = JSON.parse(raw);
-      return Object.assign({}, defaults(), o);
+      return migrate(o);
     } catch (_) {
       return defaults();
     }
@@ -38,42 +43,6 @@
     } catch (_) {}
   }
 
-  /** Команда по названию роли (для побед при закрытии лобби) */
-  function playerFaction(role) {
-    if (!role) return null;
-    if (role === 'Маньяк') return 'maniac';
-    if (role === 'Мафия' || role === 'Дон мафии') return 'mafia';
-    return 'town';
-  }
-
-  /**
-   * Грубая оценка исхода по живым слотам (когда хост завершил комнату).
-   */
-  function winningFaction(slots, activeSlots) {
-    var n = Math.min(Number(activeSlots) || 12, (slots && slots.length) || 12);
-    var mafia = 0,
-      town = 0,
-      maniac = 0,
-      i,
-      s,
-      r;
-    for (i = 0; i < n; i++) {
-      s = slots[i];
-      if (!s || s.status !== 'alive') continue;
-      r = s.role || '';
-      if (r === 'Маньяк') maniac++;
-      else if (r === 'Мафия' || r === 'Дон мафии') mafia++;
-      else if (r) town++;
-    }
-
-    if (mafia > 0 && mafia >= town) return 'mafia';
-    if (mafia === 0 && maniac > 0 && town === 0) return maniac === 1 ? 'maniac' : 'unknown';
-    if (mafia === 0 && maniac > 0 && town > 0) return 'unknown';
-    if (mafia === 0) return 'town';
-    return 'unknown';
-  }
-
-  /** Один счётчик «посетил стол» за сессию браузера на комнату */
   function recordTableOpen(lobbyCode) {
     var code = String(lobbyCode || '').trim().toUpperCase();
     if (!code) return;
@@ -85,7 +54,6 @@
     save(stats);
   }
 
-  /** Хост закрыл лобби — одна запись на комнату за сессию */
   function recordLobbyEnd(payload) {
     var code = String((payload && payload.lobbyCode) || '').trim().toUpperCase();
     if (!code) return;
@@ -93,37 +61,8 @@
     if (sessionStorage.getItem(sk)) return;
     sessionStorage.setItem(sk, '1');
 
-    var slots = payload.slots || [];
-    var activeSlots = payload.activeSlots;
-    var mySlot = typeof payload.mySlot === 'number' ? payload.mySlot : -1;
-
     var stats = load();
     stats.sessionsCompleted += 1;
-
-    var myRole =
-      mySlot >= 0 && slots[mySlot] && slots[mySlot].role ? slots[mySlot].role : null;
-    var fac = winningFaction(slots, activeSlots);
-    var mine = playerFaction(myRole);
-
-    if (mySlot < 0 || !mine) {
-      save(stats);
-      return;
-    }
-
-    if (fac === 'unknown') {
-      stats.undecided += 1;
-      save(stats);
-      return;
-    }
-
-    if (mine === fac) {
-      stats.wins += 1;
-      stats.winStreak += 1;
-      if (stats.winStreak > stats.bestWinStreak) stats.bestWinStreak = stats.winStreak;
-    } else {
-      stats.losses += 1;
-      stats.winStreak = 0;
-    }
     save(stats);
   }
 
@@ -161,50 +100,59 @@
 
   function achievementDefs(stats) {
     var s = Object.assign({}, defaults(), stats || {});
+    var sc = s.sessionsCompleted || 0;
     return [
       {
         id: 'first_visit',
         icon: '🎲',
         title: 'За столом',
-        desc: 'Открой мафию с кодом комнаты',
+        desc: 'Один раз зайди в мафию с кодом комнаты на этой сессии',
         ok: (s.mafiaTableOpens || 0) >= 1,
+      },
+      {
+        id: 'finisher',
+        icon: '🏁',
+        title: 'До финиша лобби',
+        desc: 'Хоть раз останься за столом, когда хост завершил комнату',
+        ok: sc >= 1,
       },
       {
         id: 'soldier',
         icon: '🃏',
         title: 'Ветеран',
-        desc: '10 партий закрытых хостом (ты был за столом)',
-        ok: (s.sessionsCompleted || 0) >= 10,
-      },
-      {
-        id: 'finisher',
-        icon: '🏁',
-        title: 'До финала',
-        desc: 'Дождись пока комнату завершат',
-        ok: (s.sessionsCompleted || 0) >= 1,
-      },
-      {
-        id: 'winner',
-        icon: '🏆',
-        title: 'На стороне сильных',
-        desc: 'Хотя бы одна победа по нашей простой модели результата',
-        ok: (s.wins || 0) >= 1,
-      },
-      {
-        id: 'streak',
-        icon: '🔥',
-        title: 'Зачёт серии',
-        desc: '3 победы подряд (пока считаем подряд в одной вкладке)',
-        ok: (s.bestWinStreak || 0) >= 3,
+        desc: '10 завершённых лобби, пока ты был за столом',
+        ok: sc >= 10,
       },
       {
         id: 'time_sink',
         icon: '⏱️',
-        title: 'Не жаль времени',
-        desc: '60+ минут в мафии (вкладка на столе активна)',
+        title: 'Долго в игре',
+        desc: '60+ минут с активным открытым столом мафии',
         ok: (s.playTimeSeconds || 0) >= 3600,
       },
+      {
+        id: 'marathon',
+        icon: '🌙',
+        title: 'Ночная смена',
+        desc: '5+ часов суммарно за столами',
+        ok: (s.playTimeSeconds || 0) >= 5 * 3600,
+      },
+      {
+        id: 'steady',
+        icon: '📊',
+        title: 'Стабильно',
+        desc: '10+ партий до конца — продолжаем набивать счётчик',
+        ok: sc >= 25,
+      },
     ];
+  }
+
+  /** Среднее время на одну закрытую комнату (грубо, по суммарному времени мафии) */
+  function avgSecondsPerEndedSession(stats) {
+    var s = Object.assign({}, defaults(), stats || {});
+    var sc = s.sessionsCompleted || 0;
+    if (!sc) return null;
+    return Math.round((s.playTimeSeconds || 0) / sc);
   }
 
   window.hlorStats = {
@@ -216,5 +164,6 @@
     stopPlayTimer: stopPlayTimer,
     formatDuration: formatDuration,
     achievementDefs: achievementDefs,
+    avgSecondsPerEndedSession: avgSecondsPerEndedSession,
   };
 })();

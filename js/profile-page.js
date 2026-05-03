@@ -1,14 +1,6 @@
 /**
- * profile.html — навигация и отрисовка дашборда из hlorStats
+ * profile.html — навигация и дашборд hlorStats
  */
-
-function formatWinRate(stats) {
-  const w = stats.wins || 0;
-  const l = stats.losses || 0;
-  const t = w + l;
-  if (!t) return '—';
-  return Math.round((w / t) * 100) + '%';
-}
 
 function renderProfileHero() {
   const nameEl = document.getElementById('pf-display-name');
@@ -20,29 +12,21 @@ function renderProfileHero() {
   guestNote?.classList.toggle('hidden', !!u);
 
   if (emailEl) {
-    emailEl.textContent = email || 'Войди, чтобы сохранять ник и аватар между устройствами';
-    emailEl.style.opacity = email ? '' : '0.75';
+    emailEl.textContent = email || 'Войди в аккаунт — сохранится ник, аватар и роль между устройствами';
+    emailEl.style.opacity = email ? '' : '0.82';
   }
 
-  let label = '';
   if (avatarEl) {
-    if (u?.avatar?.startsWith('http')) {
-      avatarEl.innerHTML = `<img src="${u.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
-    } else if (u?.avatar && !u.avatar.startsWith('http')) {
-      avatarEl.textContent = u.avatar;
-      avatarEl.dataset.mode = 'emoji';
-    } else if (u?.nickname?.[0]) {
-      avatarEl.textContent = u.nickname[0].toUpperCase();
-      avatarEl.dataset.mode = '';
+    if (typeof window.hlorBuildAvatarInnerHtml === 'function' && u) {
+      avatarEl.innerHTML = window.hlorBuildAvatarInnerHtml(u);
     } else {
       avatarEl.textContent = '👋';
-      avatarEl.dataset.mode = 'emoji';
     }
+    avatarEl.classList.toggle('pf-hero__avatar--guest', !u);
   }
 
   if (nameEl) {
-    label = u?.nickname || '';
-    nameEl.textContent = label ? label : 'Твоя статистика';
+    nameEl.textContent = u?.nickname || 'Игрок';
   }
 }
 
@@ -57,15 +41,17 @@ function renderProfileDashboard() {
     if (el) el.textContent = val != null ? String(val) : '—';
   };
 
-  setTxt('pf-stat-visits', s.mafiaTableOpens ?? 0);
-  setTxt('pf-stat-sessions', s.sessionsCompleted ?? 0);
-  setTxt('pf-stat-wins', s.wins ?? 0);
-  setTxt('pf-stat-losses', s.losses ?? 0);
-  setTxt('pf-stat-undecided', s.undecided ?? 0);
+  const opens = s.mafiaTableOpens ?? 0;
+  const sc = s.sessionsCompleted ?? 0;
+  setTxt('pf-stat-visits', opens);
+  setTxt('pf-stat-sessions', sc);
   setTxt('pf-stat-time', hs.formatDuration(s.playTimeSeconds || 0));
-  setTxt('pf-stat-winrate', formatWinRate(s));
-  setTxt('pf-stat-streak', s.winStreak ?? 0);
-  setTxt('pf-stat-best-streak', s.bestWinStreak ?? 0);
+
+  const avgSec = hs.avgSecondsPerEndedSession(s);
+  setTxt(
+    'pf-stat-avg-session',
+    avgSec == null ? '—' : hs.formatDuration(avgSec),
+  );
 
   const grid = document.getElementById('pf-achievements');
   if (!grid) return;
