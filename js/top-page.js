@@ -128,13 +128,24 @@ async function loadTopBoard() {
     .limit(100);
 
   if (error) {
-    const msg = String(error.message || error);
-    const missing = /leaderboard_stats|42P01|schema cache/i.test(msg);
-    tbody.innerHTML = `<tr><td colspan="4" style="padding:18px;color:var(--red)">${
-      missing
-        ? 'Таблица топа не найдена — выполни SQL из supabase/leaderboard.sql в Supabase.'
-        : escapeHtml(msg)
-    }</td></tr>`;
+    const msgFull = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' — ');
+    const code = error.code != null ? String(error.code) : '';
+    const hints = `${msgFull} ${code}`;
+    console.warn('[top] leaderboard_stats:', error);
+    const missingTable =
+      /\b(PGRST205|PGRST115)\b/i.test(hints) ||
+      /\b42P01\b/.test(hints) ||
+      (/\brelation\b/i.test(msgFull) && /\bdoes\s+not\s+exist\b/i.test(msgFull)) ||
+      /could not find the table\b/i.test(msgFull) ||
+      /schema cache/i.test(msgFull);
+    const hintSql = missingTable
+      ? '<br/><span style="font-size:0.85em;opacity:0.92">Если таблицы ещё нет — выполни в этом же проекте Supabase (как в <code>js/supabase-client.js</code>) весь файл <code>supabase/leaderboard.sql</code>.</span>'
+      : '';
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:18px;color:var(--red);line-height:1.55">${
+      missingTable
+        ? 'Таблица топа не видна через API или не создана.'
+        : escapeHtml(String(error.message || error))
+    }${hintSql}<br/><span style="font-size:0.82em;opacity:0.9">Подробнее: консоль браузера (F12) → строка с <code>[top] leaderboard_stats</code>${code ? ' — код: <code>' + escapeHtml(code) + '</code>' : ''}</span></td></tr>`;
     return;
   }
 

@@ -67,7 +67,7 @@ begin
     select distinct x.uid, 1
     from (
       select (elem ->> 'id')::uuid as uid
-      from jsonb_array_elements(coalesce(new.players, '[]'::jsonb)) as elem
+      from jsonb_array_elements(coalesce(new.players::jsonb, '[]'::jsonb)) as elem
       where (elem ->> 'id') is not null
         and (elem ->> 'id') ~* '^[0-9a-f-]{36}$'
       union
@@ -87,7 +87,8 @@ drop trigger if exists leaderboard_on_lobby_touch on public.lobbies;
 create trigger leaderboard_on_lobby_touch
   after insert or update of status, players on public.lobbies
   for each row
-  execute procedure public.leaderboard_on_lobby_touch();
+  execute function public.leaderboard_on_lobby_touch();
+-- Если Postgres ругается на EXECUTE FUNCTION — замени на: EXECUTE PROCEDURE public.leaderboard_on_lobby_touch();
 
 -- ─── Снимок за выбранный UTC-день (удобно ставить pg_cron на 00:05 UTC) ────
 
@@ -161,6 +162,7 @@ create policy leaderboard_snapshot_read
   to anon, authenticated
   using (true);
 
+grant usage on schema public to anon, authenticated;
 grant select on table public.leaderboard_stats to anon, authenticated;
 grant select on table public.leaderboard_snapshot to anon, authenticated;
 
