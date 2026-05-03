@@ -82,13 +82,19 @@
       return;
     }
 
-    _buf += e.key.toLowerCase();
-    if (_buf.length > 5) _buf = _buf.slice(-5);
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
 
-    if (_buf === 'admin') {
-      _buf = '';
-      void _handleAdminToggleAsync();
+    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+      _buf += e.key.toLowerCase();
+      if (_buf.length > 5) _buf = _buf.slice(-5);
+      if (_buf === 'admin') {
+        _buf = '';
+        void _handleAdminToggleAsync();
+      }
+      return;
     }
+
+    _buf = '';
   });
 
   async function _resolveUserForSecret() {
@@ -107,7 +113,7 @@
   async function _handleAdminToggleAsync() {
     const user = await _resolveUserForSecret();
     if (!user) {
-      _toast('Сначала войди в аккаунт', 'error');
+      _toast('Войди в аккаунт на сайте, затем набери admin (латинскими буквами, не в поле ввода)', 'error');
       return;
     }
 
@@ -119,9 +125,12 @@
     _applySecretAdminUI(_unlocked);
 
     if (_unlocked) {
-      _toast('🔑 Режим администратора включён', 'success');
+      _toast(
+        '🔑 Ярлык админки включён: справа снизу кнопка «Админ» или пункт в меню аватара. Набери снова admin — выключить.',
+        'success',
+      );
     } else {
-      _toast('Режим администратора выключен');
+      _toast('Ярлык админки выключен. Снова набери admin, чтобы вернуть.');
     }
   }
 
@@ -152,6 +161,11 @@
 
   window.isSecretAdminUiEnabled = () => _unlocked;
 
+  /** То же, что набрать «admin» с клавиатуры (переключить ярлык admin.html). */
+  window.hlorToggleSecretAdminUi = () => {
+    void _handleAdminToggleAsync();
+  };
+
   /** SELECT lobbies по коду из URL/поля и из таблицы (регистр может отличаться). */
   window.hlorFetchLobbyByCode = async function (codeWant) {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) {
@@ -166,6 +180,9 @@
       if (error) lastErr = error;
       else if (data) return { data, error: null };
     }
+    return { data: null, error: lastErr };
+  };
+
   /** Уведомить все открытые mafia-play этой комнаты перечитать lobbies (состав слотов). */
   window.hlorBroadcastMafiaRoomPayload = function (roomCode, payload) {
     if (typeof supabaseClient === 'undefined' || !supabaseClient || !roomCode) return;

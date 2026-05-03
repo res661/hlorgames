@@ -6,7 +6,7 @@
  *  - Realtime синхронизацией стола через Supabase Broadcast (без чата)
  *  - Хост-слотом (ведущий не в сетке)
  *  - Управлением фазами, таймером, рандомными событиями
- *  - Горячей клавишей «admin» → суперадмин
+ *  - Секрет «admin» для кнопки админки — в shared.js (один раз на всех страницах)
  */
 
 (function () {
@@ -1842,24 +1842,9 @@
 
   // ── HOTKEYS ──────────────────────────────────────────────────────────────────
   function setupHotkeys() {
-    // Секретный ввод «admin»
-    let buf = '';
-    document.addEventListener('keydown', e => {
-      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
-      if (e.key === 'Escape') { closeSlotModal(); }
-      buf += e.key.toLowerCase();
-      if (buf.length > 5) buf = buf.slice(-5);
-      if (buf === 'admin') {
-        buf = '';
-        // Пробуем дать суперадмина через supabase если доступно
-        if (typeof supabaseClient !== 'undefined' && supabaseClient && myUserId) {
-          supabaseClient.from('profiles').update({ role:'superadmin' }).eq('id', myUserId)
-            .then(({ error }) => {
-              if (!error) toast('👑 Статус суперадмина получен!','success');
-              else toast('Ошибка: ' + error.message,'error');
-            });
-        }
-      }
+    // «admin» — только в shared.js: переключает FAB/пункт меню (localStorage). Здесь не дублируем.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSlotModal();
     });
   }
 
