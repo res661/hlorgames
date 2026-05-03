@@ -267,7 +267,7 @@ async function loadLobbies() {
       return;
     }
 
-    const gameNames = { mafia: '🕵️ Мафия', bunker: '🏚️ Бункер', alias: '🗣️ Алиас' };
+    const gameNames = { mafia: '🕵️ Мафия', bunker: '🏚️ Бункер', alias: '🗣️ Алиас', whoami: '❔ Кто я?' };
     wrap.innerHTML = `
       <table class="a-table">
         <thead>

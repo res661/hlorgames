@@ -81,6 +81,10 @@
       title: 'Алиас онлайн — HLOR GAMES',
       desc: 'Объясняй слова без созвучных подсказок. Команды, таймер, очки.',
     },
+    whoami: {
+      title: 'Кто я? — HLOR GAMES',
+      desc: 'Тайные слова только в твоём браузере, слоты и опционально камеры. Отдельная комната как у мафии.',
+    },
   };
 
   var root = typeof document !== 'undefined' ? document.documentElement : null;
@@ -119,6 +123,7 @@
   if (/play-mafia\.html$/i.test(path)) shareSlug = 'mafia';
   else if (/play-bunker\.html$/i.test(path)) shareSlug = 'bunker';
   else if (/play-alias\.html$/i.test(path)) shareSlug = 'alias';
+  else if (/play-whoami\.html$/i.test(path)) shareSlug = 'whoami';
 
   if (pageKind === 'profile') {
     bundle = {
@@ -145,7 +150,7 @@
   } else if (pageKind === 'game') {
     bundle = {
       title: 'Игры онлайн — HLOR GAMES',
-      desc: 'Мафия, бункер и алиас: создай комнату или присоединись по коду.',
+      desc: 'Мафия, бункер, алиас и «Кто я?»: создай комнату или присоединись по коду.',
     };
     bundle.canonicalPath = path ? path + search : '/game.html';
   } else if (pageKind === 'lobby') {
@@ -160,6 +165,12 @@
       desc: 'Игровой стол: фазы, голосование, чат ведущего.',
     };
     bundle.canonicalPath = path ? path + search : '/mafia-play.html';
+  } else if (pageKind === 'whoami-play') {
+    bundle = {
+      title: 'Комната «Кто я?» — HLOR GAMES',
+      desc: 'Секретные слова на устройстве, камеры опционально, слоты за столом.',
+    };
+    bundle.canonicalPath = path ? path + search : '/whoami-play.html';
   } else if (pageKind === 'admin') {
     bundle = {
       title: 'Админ — HLOR GAMES',
@@ -169,7 +180,7 @@
   } else {
     bundle = {
       title: 'HLOR GAMES — играй с друзьями онлайн',
-      desc: 'Мафия, бункер и алиас в браузере. Лобби, код комнаты, без установки.',
+      desc: 'Мафия, бункер, алиас и «Кто я?» в браузере. Лобби, код комнаты, без установки.',
     };
     bundle.canonicalPath = path + search || '/';
   }

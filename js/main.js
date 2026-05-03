@@ -160,9 +160,10 @@ async function createLobby() {
     if (error) throw error;
 
     if (typeof setActiveLobby === 'function') {
+      const gameUi = selectedGame === 'mafia' || selectedGame === 'whoami';
       setActiveLobby(String(code).toUpperCase(), selectedGame, code, {
         roomStatus: 'waiting',
-        viewOrigin: selectedGame === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: gameUi ? 'game' : 'lobby',
         isHost: true,
       });
     }
@@ -239,6 +240,7 @@ async function joinLobby() {
     const seatCtx = {
       host_id: lobby.host_id,
       syncMafiaGrid: lobby.game === 'mafia',
+      hostParticipatesSeat: lobby.game === 'whoami' && !!lobby.host_plays,
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
 
@@ -279,9 +281,10 @@ async function joinLobby() {
     const isHostJoin = String(lobby.host_id) === String(currentUser.id);
 
     if (typeof setActiveLobby === 'function') {
+      const gameUi = gameKey === 'mafia' || gameKey === 'whoami';
       setActiveLobby(String(lobby.code).toUpperCase(), gameKey, lobby.name || lobby.code, {
         roomStatus: lobby.status === 'active' ? 'active' : 'waiting',
-        viewOrigin: gameKey === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: gameUi ? 'game' : 'lobby',
         isHost: isHostJoin,
       });
     }
@@ -293,6 +296,10 @@ async function joinLobby() {
     setTimeout(() => {
       if (gameKey === 'mafia') {
         window.location.href = `mafia-play.html?code=${encodeURIComponent(lobby.code)}&role=${
+          isHostJoin ? 'host' : 'player'
+        }&t=${bust}`;
+      } else if (gameKey === 'whoami') {
+        window.location.href = `whoami-play.html?code=${encodeURIComponent(lobby.code)}&role=${
           isHostJoin ? 'host' : 'player'
         }&t=${bust}`;
       } else {

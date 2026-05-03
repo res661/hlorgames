@@ -45,6 +45,7 @@ const GAMES_INFO = {
   mafia:  { name: 'Мафия',   emoji: '🕵️', color: '#7c4dff', meta: '4–12 игроков · 30–60 мин', min: 4, max: 12 },
   bunker: { name: 'Бункер',  emoji: '🏚️', color: '#f59e0b', meta: '4–16 игроков · 20–40 мин', min: 4, max: 16 },
   alias:  { name: 'Алиас',   emoji: '🗣️', color: '#22c55e', meta: '4–20 игроков · 15–30 мин', min: 4, max: 20 },
+  whoami: { name: 'Кто я?',  emoji: '❔', color: '#38bdf8', meta: '2–12 игроков · офлайн-записки для других', min: 2, max: 12 },
 };
 
 let lobbyCode    = null;
@@ -60,6 +61,7 @@ function lobbySeatCtx(row) {
   return {
     host_id: row.host_id,
     syncMafiaGrid: row.game === 'mafia',
+    hostParticipatesSeat: row.game === 'whoami' && !!row.host_plays,
   };
 }
 
@@ -284,19 +286,24 @@ async function loadLobby() {
 
     if (typeof setActiveLobby === 'function' && (synced.status === 'waiting' || synced.status === 'active')) {
       const isHm = !!(currentUser && String(synced.host_id) === String(currentUser.id));
+      const isGameUi = synced.game === 'mafia' || synced.game === 'whoami';
       setActiveLobby(synced.code, synced.game, synced.name || synced.code, {
         roomStatus: synced.status === 'active' ? 'active' : 'waiting',
-        viewOrigin: synced.game === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: isGameUi ? 'game' : 'lobby',
         isHost: isHm,
       });
     }
 
-    /* Мафия — один экран со столом и «камерами» (mafia-play); lobby.html только для бункера/алиаса */
-    if (synced.game === 'mafia' && (synced.status === 'waiting' || synced.status === 'active')) {
+    /* Мафия / «Кто я?» — отдельный экран комнаты; lobby.html только для бункера/алиаса */
+    if ((synced.game === 'mafia' || synced.game === 'whoami') && (synced.status === 'waiting' || synced.status === 'active')) {
       const isHm = currentUser && String(synced.host_id) === String(currentUser.id);
       const roleQ = isHm ? 'host' : 'player';
       stopLobbyTimers();
-      window.location.replace(`mafia-play.html?code=${encodeURIComponent(lobbyCode)}&role=${encodeURIComponent(roleQ)}&t=${Date.now()}`);
+      if (synced.game === 'mafia') {
+        window.location.replace(`mafia-play.html?code=${encodeURIComponent(lobbyCode)}&role=${encodeURIComponent(roleQ)}&t=${Date.now()}`);
+      } else {
+        window.location.replace(`whoami-play.html?code=${encodeURIComponent(lobbyCode)}&role=${encodeURIComponent(roleQ)}&t=${Date.now()}`);
+      }
       return;
     }
 
@@ -429,10 +436,12 @@ function renderLobby(lobby) {
     togglePasswordField();
   }
 
-  document.getElementById('lbGoGamePanel')?.classList.toggle('hidden', lobby.status !== 'active' || lobby.game !== 'mafia');
+  document.getElementById('lbGoGamePanel')?.classList.toggle('hidden', lobby.status !== 'active' || (lobby.game !== 'mafia' && lobby.game !== 'whoami'));
   const goLink = document.getElementById('lbGoGameLink');
   if (goLink && lobby.game === 'mafia') {
     goLink.href = `mafia-play.html?code=${encodeURIComponent(String(lobby.code || lobbyCode || ''))}`;
+  } else if (goLink && lobby.game === 'whoami') {
+    goLink.href = `whoami-play.html?code=${encodeURIComponent(String(lobby.code || lobbyCode || ''))}`;
   }
 
   // Статус бар
@@ -570,6 +579,9 @@ async function startGame() {
     if (game === 'mafia') {
       stopLobbyTimers();
       window.location.href = `mafia-play.html?code=${lobbyCode}&role=host`;
+    } else if (game === 'whoami') {
+      stopLobbyTimers();
+      window.location.href = `whoami-play.html?code=${lobbyCode}&role=host`;
     } else {
       await loadLobby();
     }

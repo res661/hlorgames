@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru" data-hlor-page="whoami-play">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Комната «Кто я?» — секретные слова на вашем устройстве и опциональные камеры." />
+  <link rel="icon" href="img/logo.png" type="image/png" />
+  <link rel="apple-touch-icon" href="img/logo.png" />
+  <title>Кто я? — HlorGames</title>
+  <script src="js/site-config.js"></script>
+  <script src="js/seo-meta.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/mafia.css?v=5" />
+  <link rel="stylesheet" href="css/whoami.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="mafia-body">
+
+  <header class="mafia-topbar">
+    <div class="mafia-topbar__left">
+      <a href="index.html" class="mafia-logo">
+        <img src="img/logo.png" alt="" style="width:20px;height:20px;object-fit:contain;"/>
+        <span>HLOR GAMES</span>
+      </a>
+      <div class="mafia-vr"></div>
+      <span class="mafia-phase" id="phaseBar">
+        <span id="phaseIcon">❔</span>
+        <span id="phaseText">Кто я?</span>
+      </span>
+      <span class="whoami-code-pill hidden" id="roomCodeDisplay" title="Код комнаты"></span>
+    </div>
+
+    <div class="mafia-topbar__center">
+      <span class="mafia-room-name" id="roomName">Кто я?</span>
+    </div>
+
+    <div class="mafia-topbar__right">
+      <div class="mf-host-badge hidden" id="hostBadgeHost">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Создатель
+      </div>
+      <button type="button" class="mf-top-btn hidden" id="btnWhoamiHostPanel">Настройки</button>
+      <button type="button" class="mf-top-btn mf-top-btn--leave" id="btnLeaveLobby" title="Выйти из комнаты">Выйти</button>
+      <a href="javascript:history.back()" class="mf-top-btn">← Назад</a>
+    </div>
+  </header>
+
+  <div class="mafia-workspace whoami-workspace" id="workspace">
+    <main class="mafia-main whoami-main" id="whoamiMain">
+      <div class="whoami-intro" id="whoamiIntro">
+        <p class="whoami-intro__hint">Занимаешь место по нажатию на свободный слот. Слова ты пишешь ниже — <strong>только ты</strong> их видишь в этом браузере.</p>
+      </div>
+      <div class="mafia-grid whoami-grid" id="whoamiGrid"></div>
+    </main>
+
+    <aside class="whoami-notes" id="whoamiNotesAside" aria-label="Секретные слова">
+      <div class="whoami-notes__head">
+        <span class="whoami-notes__title">Мои слова для других</span>
+      </div>
+      <div class="whoami-notes__hint" id="notesHintLoggedOut">Войди, чтобы сохранять слова на этом устройстве.</div>
+      <div class="whoami-notes__list hidden" id="notesList"></div>
+    </aside>
+
+    <aside class="mf-sidebar mf-sidebar--host hidden" id="hostSidebarWhoami">
+      <div class="mf-sidebar__head">
+        <span class="mf-sidebar__title">Комната</span>
+        <button type="button" class="mf-sidebar__close" id="btnCloseHostWhoami">✕</button>
+      </div>
+      <div class="mf-sidebar__body whoami-host-body">
+        <div class="whoami-host-panel">
+          <label class="whoami-checkbox">
+            <input type="checkbox" id="chkWhoamiHostPlays" />
+            <span>Я тоже играю (занимаю место как обычный участник)</span>
+          </label>
+          <p class="whoami-host-muted">Выключено — ты только управляешь камерами в слотах и наблюдаешь состав.</p>
+        </div>
+        <div class="whoami-host-panel">
+          <label class="whoami-label">Сетка: колонок</label>
+          <input type="number" class="whoami-num" id="whoamiGridCols" min="2" max="5" step="1" value="3" />
+        </div>
+        <p class="whoami-board-warn hidden" id="whoamiBoardWarn">Добавь колонку <code class="whoami-code">mafia_board</code> к таблице <code class="whoami-code">lobbies</code> (SQL в репозитории), если сохранение ссылок на камеры не работает.</p>
+        <button type="button" class="btn btn--danger-solid whoami-close-all" id="btnWhoamiEndLobby">Закрыть комнату для всех</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Модальное редактирование слота камеры -->
+  <div class="mf-slot-modal-overlay hidden" id="whoamiSlotModal">
+    <div class="mf-slot-modal" role="dialog" aria-modal="true">
+      <div class="mf-slot-modal__head">
+        <span id="whoamiModalTitle">Слот</span>
+        <button type="button" class="mf-slot-modal__x" id="whoamiModalClose">✕</button>
+      </div>
+      <div class="mf-slot-modal__body">
+        <div class="mf-ctrl">
+          <label class="whoami-label">VDO.Ninja / ссылка на просмотр</label>
+          <input type="text" class="mf-input" id="whoamiModalVdo" placeholder="Комната или полный URL" />
+          <div class="mf-slot-modal__hint">Пустое поле — без видео. Игроки могут включать голос только без трансляции.</div>
+        </div>
+        <div class="whoami-slot-modal-actions">
+          <button type="button" class="btn btn--primary" id="whoamiModalSave">Сохранить</button>
+          <button type="button" class="btn btn--ghost" id="whoamiModalClearCam">Убрать камеру</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/lobby-seat-utils.js?v=5"></script>
+  <script src="js/lobby-indicator.js?v=7"></script>
+  <script src="js/stats.js?v=2"></script>
+  <script src="js/whoami-play.js?v=1"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /**
  * GAME.JS — Страница игры: создание лобби, активные и завершённые комнаты
- * URL: game.html?g=mafia | game.html?g=bunker | game.html?g=alias
+ * URL: game.html?g=mafia | game.html?g=bunker | game.html?g=alias | game.html?g=whoami
  */
 
 // ─── ДАННЫЕ ОБ ИГРАХ ─────────────────────────────────────────────────────────
@@ -55,6 +55,23 @@ const GAMES = {
       'Команда угадывает за отведённое время (обычно 60 сек)',
       'За каждое угаданное слово — 1 очко',
       'Побеждает команда с наибольшим количеством очков',
+    ],
+  },
+  whoami: {
+    name:       'Кто я?',
+    emoji:      `<svg viewBox="0 0 36 36" fill="none" width="32" height="32"><circle cx="18" cy="18" r="16" fill="rgba(56,189,248,0.12)" stroke="rgba(56,189,248,0.35)" stroke-width="1.5"/><text x="18" y="24" text-anchor="middle" font-size="18" fill="#38bdf8" font-family="system-ui,sans-serif" font-weight="800">?</text></svg>`,
+    color:      '#38bdf8',
+    desc:       'Каждый тайно придумывает слово другим игрокам. Записки живут только в твоём браузере. Опционально подключайте камеры (VDO.Ninja).',
+    meta:       '👥 2–12 игроков · ⏱ свой темп',
+    minPlayers: 2,
+    maxPlayers: 12,
+    defaultMax: 8,
+    rules: [
+      'Зайдите в слот за столом; хост может не играть, только управлять комнатой',
+      'Каждый участник видит секцию «слово для…» только у себя: никто другой текст не узнаёт, пока вы сами его не озвучите',
+      'Камеры не обязательны: можно играть только голосом; хост вставляет ссылку трансляции в слот (как в мафии)',
+      'Слова не отправляются на сервер HLOR — только ники и занятость мест в лобби',
+      'Разгадывайте и задавайте вопросы по правилам, которые вы согласуете офлайн',
     ],
   },
 };
@@ -359,6 +376,19 @@ function enterRoomFromMyLobbyList(row) {
     return;
   }
 
+  if (g === 'whoami' && (row.status === 'waiting' || row.status === 'active')) {
+    if (typeof setActiveLobby === 'function') {
+      setActiveLobby(code, g, row.name || code, {
+        roomStatus: st,
+        viewOrigin: 'game',
+        isHost,
+      });
+    }
+    const roleQ = isHost ? 'host' : 'player';
+    window.location.href = `whoami-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
+    return;
+  }
+
   if (typeof setActiveLobby === 'function') {
     setActiveLobby(code, g, row.name || code, {
       roomStatus: st,
@@ -460,14 +490,22 @@ async function handleCreateLobby(e) {
 
   if (!supabaseClient) {
     if (typeof setActiveLobby === 'function') {
+      const gameUi = gameType === 'mafia' || gameType === 'whoami';
       setActiveLobby(String(code).toUpperCase(), gameType, name, {
         roomStatus: 'waiting',
-        viewOrigin: gameType === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: gameUi ? 'game' : 'lobby',
         isHost: true,
       });
     }
     showToast(`Комната создана! Код: ${code}`, 'success');
-    setTimeout(() => window.location.href = `lobby.html?code=${code}`, 500);
+    setTimeout(() => {
+      window.location.href =
+        gameType === 'mafia'
+          ? `mafia-play.html?code=${code}&role=host`
+          : gameType === 'whoami'
+            ? `whoami-play.html?code=${code}&role=host`
+            : `lobby.html?code=${code}`;
+    }, 500);
     btn.disabled = false;
     btn.textContent = 'Создать комнату';
     return;
@@ -497,18 +535,21 @@ async function handleCreateLobby(e) {
     if (error) throw error;
 
     if (typeof setActiveLobby === 'function') {
+      const gameUi = gameType === 'mafia' || gameType === 'whoami';
       setActiveLobby(String(code).toUpperCase(), gameType, name, {
         roomStatus: 'waiting',
-        viewOrigin: gameType === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: gameUi ? 'game' : 'lobby',
         isHost: true,
       });
     }
 
     showToast(`Комната «${name}» создана!`, 'success');
-    // Мафия → сразу на игровую страницу как хост
+    // Мафия / Кто я? → сразу на игровую страницу как хост
     setTimeout(() => {
       if (gameType === 'mafia') {
         window.location.href = `mafia-play.html?code=${code}&role=host`;
+      } else if (gameType === 'whoami') {
+        window.location.href = `whoami-play.html?code=${code}&role=host`;
       } else {
         window.location.href = `lobby.html?code=${code}`;
       }
@@ -722,6 +763,7 @@ async function joinLobby(code, hasPassword) {
     const seatCtx = {
       host_id: lobby.host_id,
       syncMafiaGrid: (lobby.game || gameType) === 'mafia',
+      hostParticipatesSeat: (lobby.game || gameType) === 'whoami' && !!lobby.host_plays,
     };
     const alreadyIn = players.some((p) => String(p.id) === String(currentUser.id));
 
@@ -746,12 +788,15 @@ async function joinLobby(code, hasPassword) {
       }
     }
 
+    const destGame = lobby.game || gameType;
+    const isGameUi = destGame === 'mafia' || destGame === 'whoami';
+
     const bust = Date.now();
     const isHostUser = String(lobby.host_id) === String(currentUser.id);
     if (typeof setActiveLobby === 'function') {
-      setActiveLobby(String(lobby.code).toUpperCase(), lobby.game || gameType, lobby.name || lobby.code, {
+      setActiveLobby(String(lobby.code).toUpperCase(), destGame, lobby.name || lobby.code, {
         roomStatus: lobby.status === 'active' ? 'active' : 'waiting',
-        viewOrigin: (lobby.game || gameType) === 'mafia' ? 'game' : 'lobby',
+        viewOrigin: isGameUi ? 'game' : 'lobby',
         isHost: isHostUser,
       });
     }
@@ -760,9 +805,14 @@ async function joinLobby(code, hasPassword) {
     const hostJoin = String(lobby.host_id) === String(currentUser.id);
     const codeInUrl = lobby.code;
     setTimeout(() => {
-      if (gameType === 'mafia') {
+      if (destGame === 'mafia') {
         const roleQ = hostJoin ? 'host' : 'player';
         window.location.href = `mafia-play.html?code=${encodeURIComponent(codeInUrl)}&role=${roleQ}&t=${bust}`;
+        return;
+      }
+      if (destGame === 'whoami') {
+        const roleQ = hostJoin ? 'host' : 'player';
+        window.location.href = `whoami-play.html?code=${encodeURIComponent(codeInUrl)}&role=${roleQ}&t=${bust}`;
         return;
       }
       window.location.href = `lobby.html?code=${encodeURIComponent(codeInUrl)}&t=${bust}`;

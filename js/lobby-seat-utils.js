@@ -94,11 +94,15 @@
   /**
    * @param {Array} players
    * @param {number} maxP число мест за столом
-   * @param {{host_id?:string,syncMafiaGrid?:boolean}|null} lobbyCtx — host_id обязателен для фильтрации хоста из входного массива
+   * @param {{host_id?:string,syncMafiaGrid?:boolean,hostParticipatesSeat?:boolean}|null} lobbyCtx — host_id обязателен для фильтрации хоста из входного массива; hostParticipatesSeat — хост остаётся в players[] (напр. «Кто я?»)
    */
   function normalizeLobbySlotsForSave(players, maxP, lobbyCtx) {
     const hid = lobbyCtx && lobbyCtx.host_id != null ? String(lobbyCtx.host_id) : null;
-    let list = hid ? stripHostFromLobbyPlayers(players, lobbyCtx.host_id) : dedupeLobbyPlayers(players);
+    const hostInSeats = lobbyCtx && lobbyCtx.hostParticipatesSeat === true;
+    let list =
+      hid && !hostInSeats
+        ? stripHostFromLobbyPlayers(players, lobbyCtx.host_id)
+        : dedupeLobbyPlayers(players);
 
     /* Из БД часто приходит только mafia_slot — без этого слот остаётся пустым и лобби «не видит» занятость. */
     for (const p of list) {

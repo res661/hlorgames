@@ -12,7 +12,7 @@ const LOBBY_KEY = 'hlor_active_lobby_v3';
 const LEGACY_LOBBY_KEYS = ['hlor_active_lobby', 'hlor_active_lobby_v2'];
 const SESSION_DISMISS_KEY = 'hlor_lobby_indicator_dismiss';
 
-const GAME_EMOJIS = { mafia: '🕵️', bunker: '🏚️', alias: '🗣️' };
+const GAME_EMOJIS = { mafia: '🕵️', bunker: '🏚️', alias: '🗣️', whoami: '❔' };
 
 function mergeLobbyPayload(code, game, name, extras) {
   const c = String(code || '').toUpperCase();
@@ -183,6 +183,7 @@ function renderLobbyIndicator() {
   // Не дублируем на том же коде уже в интерфейсе лобби / мафии
   if ((pathnameHas('lobby.html') || pathnameHas('/lobby')) && urlC === mine) return;
   if ((pathnameHas('mafia-play.html') || pathnameHas('/mafia-play')) && urlC === mine) return;
+  if ((pathnameHas('whoami-play.html') || pathnameHas('/whoami-play')) && urlC === mine) return;
 
   const emoji = GAME_EMOJIS[lobby.game] || '🎮';
   const { label, safeNm, sub } = buildIndicatorTexts(lobby);
@@ -254,6 +255,16 @@ async function goToActiveLobby() {
         window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
         return;
       }
+      if (data.game === 'whoami') {
+        let uid = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
+        if (!uid) {
+          const { data: s } = await supabaseClient.auth.getSession();
+          uid = s?.session?.user?.id ?? null;
+        }
+        const roleQ = uid && String(data.host_id) === String(uid) ? 'host' : 'player';
+        window.location.href = `whoami-play.html?code=${encodeURIComponent(code)}&role=${encodeURIComponent(roleQ)}&t=${bust}`;
+        return;
+      }
       window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
       return;
     } catch (_) {}
@@ -262,6 +273,10 @@ async function goToActiveLobby() {
   /* Нет ответа API — по сохранённому профилю комнаты */
   if (lobby.game === 'mafia') {
     window.location.href = `mafia-play.html?code=${encodeURIComponent(code)}&t=${bust}`;
+    return;
+  }
+  if (lobby.game === 'whoami') {
+    window.location.href = `whoami-play.html?code=${encodeURIComponent(code)}&t=${bust}`;
     return;
   }
   window.location.href = `lobby.html?code=${encodeURIComponent(code)}&t=${bust}`;
