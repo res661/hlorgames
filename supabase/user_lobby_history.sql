@@ -4,7 +4,9 @@
 create table if not exists public.user_lobby_history (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  lobby_id uuid references public.lobbies (id) on delete set null,
+  -- FK на lobbies намеренно без ссылки: иначе CREATE падает, если lobbies ещё нет,
+  -- и тогда история профиля не создаётся вообще. Код клиента не требует FK.
+  lobby_id uuid,
   lobby_code text not null,
   game text not null default 'mafia',
   room_name text,
@@ -23,6 +25,11 @@ create index if not exists idx_user_lobby_history_user_time
 
 alter table public.user_lobby_history enable row level security;
 
+drop policy if exists user_lobby_history_select_own on public.user_lobby_history;
+drop policy if exists user_lobby_history_insert_own on public.user_lobby_history;
+drop policy if exists user_lobby_history_update_own on public.user_lobby_history;
+drop policy if exists user_lobby_history_delete_own on public.user_lobby_history;
+
 create policy user_lobby_history_select_own
   on public.user_lobby_history for select to authenticated
   using (auth.uid() = user_id);
@@ -38,3 +45,7 @@ create policy user_lobby_history_update_own
 create policy user_lobby_history_delete_own
   on public.user_lobby_history for delete to authenticated
   using (auth.uid() = user_id);
+
+-- Проверка: в Table Editor должна появиться таблица user_lobby_history.
+-- При ошибке из сайта выполни здесь же:
+--   select tablename from pg_tables where schemaname='public' and tablename='user_lobby_history';
