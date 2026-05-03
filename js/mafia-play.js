@@ -304,7 +304,12 @@
         : pl.filter(Boolean);
       if (deduped.length < maxP) {
         dirty = true;
-        pl.push({ id: myUserId, nickname: myNickname || 'Игрок', ready: false });
+        pl.push({
+          id: myUserId,
+          nickname: myNickname || 'Игрок',
+          ready: false,
+          joined_at: Date.now(),
+        });
       }
     }
 
@@ -722,6 +727,7 @@
           ready: ix >= 0 ? !!pl[ix].ready : false,
           slot: targetIdx,
           mafia_slot: targetIdx,
+          ...(ix < 0 ? { joined_at: Date.now() } : {}),
         };
         if (ix >= 0) pl[ix] = assign;
         else pl.push(assign);
@@ -755,19 +761,6 @@
     toast('Не сохранилось место за столом: ' + (lastSaveErr?.message || 'ошибка'), 'error');
   }
 
-  /** Индекс первого свободного места 0 … max−1 по данным комнаты (очередь «кто первый занял — тот ниже номер»). */
-  function getFirstFreeMafiaSlot(max) {
-    const taken = new Set();
-    for (const p of lobbyPlayersRaw) {
-      const idx = seatedGridIndexFromPlayerRow(p, max);
-      if (!Number.isNaN(idx)) taken.add(idx);
-    }
-    for (let j = 0; j < max; j++) {
-      if (!taken.has(j)) return j;
-    }
-    return -1;
-  }
-
   async function maybeAutoAssignWaitingSeat() {
     if (!myUserId || !supabaseClient || !LOBBY) return false;
     recomputeGameMasterFlags();
@@ -775,16 +768,52 @@
     const meRow = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
     if (!meRow) return false;
     if (!Number.isNaN(seatedGridIndexFromPlayerRow(meRow, activeSlots))) return false;
-    const target = getFirstFreeMafiaSlot(activeSlots);
-    if (target < 0) return false;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const t = attempt === 0 ? target : getFirstFreeMafiaSlot(activeSlots);
-      if (t < 0) return false;
-      await upsertPlayerMafiaSlot(t, myUserId);
-      await refreshPlayerMapFromDb();
-      const me2 = lobbyPlayersRaw.find((p) => String(p.id) === String(myUserId));
-      if (me2 && !Number.isNaN(seatedGridIndexFromPlayerRow(me2, activeSlots))) return true;
-      await new Promise((r) => setTimeout(r, 90 + attempt * 130));
+
+    const seatKey =
+      window.LobbySeatUtils && typeof window.LobbySeatUtils.stableLobbyPlayersSeatsKey === 'function'
+        ? window.LobbySeatUtils.stableLobbyPlayersSeatsKey
+        : (pl) => JSON.stringify(pl || []);
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await fetchLobbyMaybeSingle('*');
+      if (error || !data || data.status !== 'waiting') return false;
+
+      let pl = (Array.isArray(data.players) ? data.players : []).filter(
+        (p) => p && String(p.id) !== String(data.host_id),
+      );
+      const maxP = Math.max(1, Math.min(TOTAL, Number(data.max_players) || 8));
+      const ctxRow = { host_id: data.host_id, syncMafiaGrid: data.game === 'mafia' };
+
+      const meDb = pl.find((p) => String(p.id) === String(myUserId));
+      if (meDb && !Number.isNaN(seatedGridIndexFromPlayerRow(meDb, maxP))) {
+        await refreshPlayerMapFromDb();
+        return true;
+      }
+
+      if (!window.LobbySeatUtils || typeof window.LobbySeatUtils.normalizeLobbySlotsForSave !== 'function') {
+        return false;
+      }
+      const norm = window.LobbySeatUtils.normalizeLobbySlotsForSave(pl, maxP, ctxRow);
+      const meN = norm.find((p) => String(p.id) === String(myUserId));
+      if (!meN || Number.isNaN(seatedGridIndexFromPlayerRow(meN, maxP))) {
+        return false;
+      }
+
+      if (seatKey(norm) === seatKey(pl)) {
+        await refreshPlayerMapFromDb();
+        return true;
+      }
+
+      const { error: upErr } = await supabaseClient
+        .from('lobbies')
+        .update({ players: norm })
+        .eq('code', lobbyCodeForDb());
+      if (!upErr) {
+        pingPeersLobbyPlayersChanged();
+        await refreshPlayerMapFromDb();
+        return true;
+      }
+      await new Promise((r) => setTimeout(r, 80 + attempt * 100));
     }
     return false;
   }

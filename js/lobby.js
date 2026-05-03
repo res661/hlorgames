@@ -455,8 +455,6 @@ function renderSlots(lobby) {
     const p = lobbyPlayerAtSeat(players, i);
     if (p) {
       const isMe      = String(p.id) === String(currentUser?.id);
-      const isHostP   = String(p.id) === String(hostId);
-      const initials  = (p.nickname || '?')[0].toUpperCase();
       const busyOther = !isMe;
       const cls = [
         'lb-slot',
@@ -478,7 +476,7 @@ function renderSlots(lobby) {
           <div class="lb-slot-avatar" style="background:${strToColor(p.id || p.nickname)}">${initials}</div>
           <div class="lb-slot-info">
             <span class="lb-slot-name">${esc(p.nickname || 'Игрок')}</span>
-            <span class="lb-slot-status">${isHostP ? '👑 Ведущий' : 'Игрок'}</span>
+            <span class="lb-slot-status">Игрок</span>
           </div>
           ${clearHtml}
           ${kickHtml}

@@ -724,7 +724,12 @@ async function joinLobby(code, hasPassword) {
         showToast('Комната заполнена', 'error');
         return;
       }
-      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
+      players.push({
+        id: currentUser.id,
+        nickname: currentUser.nickname,
+        ready: false,
+        joined_at: Date.now(),
+      });
     }
 
     if (window.LobbySeatUtils && lobby.status === 'waiting') {

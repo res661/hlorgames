@@ -242,7 +242,12 @@ async function joinLobby() {
         errEl.textContent = 'Комната заполнена';
         return;
       }
-      players.push({ id: currentUser.id, nickname: currentUser.nickname, ready: false });
+      players.push({
+        id: currentUser.id,
+        nickname: currentUser.nickname,
+        ready: false,
+        joined_at: Date.now(),
+      });
     }
 
     if (window.LobbySeatUtils && lobby.status === 'waiting') {

@@ -13,7 +13,7 @@ create table if not exists public.lobbies (
   status        text not null default 'waiting',
   max_players   int not null default 8,
   password      text,
-  players       jsonb not null default '[]'::jsonb,
+  players       jsonb not null default '[]'::jsonb, -- элементы: id, nickname, ready, slot, optional mafia_slot, joined_at (number ms — порядок слотов; отдельная колонка не нужна)
   presenter_id  uuid,
   mafia_chat    jsonb not null default '[]'::jsonb,
   lobby_chat    jsonb not null default '[]'::jsonb,
