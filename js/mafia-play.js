@@ -34,6 +34,21 @@
   // ── Константы ────────────────────────────────────────────────────────────────
   const TOTAL     = 12;
   const ROLES_MAP = { 'Мафия':'mafia','Шериф':'sheriff','Доктор':'doctor','Маньяк':'maniac','Любовница':'other','Комиссар':'sheriff','Мирный':'civil' };
+  /** Темы окна «твоя роль» (классы mf-role-reveal--*) */
+  const ROLE_REVEAL_THEMES = ['mafia', 'civil', 'sheriff', 'doctor', 'maniac', 'other'];
+  const ROLE_REVEAL_ICONS = {
+    mafia: '🎭',
+    civil: '🏘️',
+    sheriff: '⭐',
+    doctor: '⚕️',
+    maniac: '🔪',
+    other: '💋',
+  };
+
+  function stripRoleRevealTheme(overlay) {
+    if (!overlay || !overlay.classList) return;
+    ROLE_REVEAL_THEMES.forEach((k) => overlay.classList.remove(`mf-role-reveal--${k}`));
+  }
   const ROLES_INFO = {
     'Мирный':    'Найди мафию голосованием. Победа — исключить всех мафиози.',
     'Мафия':     'Ночью выбираете жертву. Победа — сравняться по числу с мирными.',
@@ -931,6 +946,7 @@
   function closeRoleReveal() {
     const overlay = document.getElementById('roleRevealOverlay');
     if (!overlay) return;
+    stripRoleRevealTheme(overlay);
     overlay.classList.add('hidden');
     overlay.setAttribute('aria-hidden', 'true');
     if (!roomClosedOverlayShown) document.body.style.overflow = '';
@@ -940,10 +956,14 @@
     const overlay = document.getElementById('roleRevealOverlay');
     const rn = document.getElementById('roleRevealRoleName');
     const dh = document.getElementById('roleRevealHint');
+    const iconEl = document.getElementById('roleRevealIcon');
     if (!overlay || !rn) return;
     const cls = ROLES_MAP[role] || 'other';
+    stripRoleRevealTheme(overlay);
+    overlay.classList.add(`mf-role-reveal--${cls}`);
+    if (iconEl) iconEl.textContent = ROLE_REVEAL_ICONS[cls] || ROLE_REVEAL_ICONS.other;
     rn.textContent = role;
-    rn.className = `mf-role-reveal__name mf-slot__role--${cls}`;
+    rn.className = `mf-role-reveal__name mf-role-reveal__name--${cls}`;
     if (dh) dh.textContent = subtitle || ROLES_INFO[role] || '';
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');

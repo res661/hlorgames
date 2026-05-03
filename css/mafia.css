@@ -152,46 +152,224 @@ body.mafia-body {
 
 
 .mf-role-reveal {
+  --rr-border: rgba(167, 139, 250, 0.45);
+  --rr-bg-top: rgba(22, 16, 38, 0.99);
+  --rr-bg-bot: rgba(6, 8, 14, 0.99);
+  --rr-glow-a: rgba(124, 58, 237, 0.22);
+  --rr-glow-b: rgba(167, 139, 250, 0.12);
+  --rr-eyebrow: rgba(253, 230, 138, 0.92);
+  --rr-name: #f5f0ff;
+  --rr-name-grad-end: #c4b5fd;
+  --rr-desc: rgba(180, 186, 198, 0.92);
+  --rr-icon-bg: rgba(167, 139, 250, 0.18);
+  --rr-icon-ring: rgba(196, 181, 253, 0.45);
+  --rr-ok-border: rgba(255, 255, 255, 0.38);
+  --rr-ok-text: rgba(229, 231, 235, 0.95);
+  --rr-ok-hover: rgba(255, 255, 255, 0.08);
+
   position: fixed; inset: 0; z-index: 95000;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
 }
 .mf-role-reveal.hidden { display: none !important; }
 .mf-role-reveal__backdrop {
-  position: absolute; inset: 0; background: rgba(4, 6, 10, .88);
-  backdrop-filter: blur(8px);
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(30, 20, 50, 0.5), rgba(4, 6, 10, 0.92));
+  backdrop-filter: blur(10px);
 }
 .mf-role-reveal__box {
   position: relative; z-index: 1;
-  max-width: 420px; width: 100%;
-  padding: 26px 24px;
-  border-radius: 14px;
-  border: 1px solid rgba(167, 139, 250, 0.4);
-  background: linear-gradient(165deg, rgba(22, 16, 38, .98), rgba(8, 10, 16, .99));
-  box-shadow: 0 24px 64px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255,255,255,.06);
+  overflow: hidden;
+  max-width: 440px; width: 100%;
+  padding: 28px 26px 26px;
+  border-radius: 18px;
+  border: 1px solid var(--rr-border);
+  background: linear-gradient(168deg, var(--rr-bg-top) 0%, var(--rr-bg-bot) 100%);
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.82),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 80px var(--rr-glow-a);
   text-align: center;
 }
+.mf-role-reveal:not(.hidden) .mf-role-reveal__box {
+  animation: mfRoleRevealPop 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes mfRoleRevealPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.mf-role-reveal__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 70%;
+  background: radial-gradient(ellipse at 50% 0%, var(--rr-glow-b), transparent 62%);
+  opacity: 0.95;
+}
+.mf-role-reveal__icon-ring {
+  margin: 0 auto 16px;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center; justify-content: center;
+  background: var(--rr-icon-bg);
+  border: 2px solid var(--rr-icon-ring);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.mf-role-reveal__icon {
+  font-size: 2.15rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
 .mf-role-reveal__eyebrow {
-  font-size: .72rem; font-weight: 800;
-  letter-spacing: .14em;
+  font-size: 0.68rem; font-weight: 800;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(253, 230, 138, .85);
-  margin: 0 0 14px;
+  color: var(--rr-eyebrow);
+  margin: 0 0 12px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
 }
 .mf-role-reveal__name {
-  font-size: 1.75rem;
+  font-size: clamp(1.65rem, 5vw, 2.05rem);
   font-weight: 900;
-  line-height: 1.25;
-  margin-bottom: 12px;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, .5);
+  line-height: 1.18;
+  margin: 0 0 14px;
+  letter-spacing: -0.02em;
+  color: var(--rr-name);
+  background: linear-gradient(135deg, var(--rr-name) 0%, var(--rr-name-grad-end) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 24px var(--rr-glow-a));
+}
+/* Fallback if clip not supported */
+@supports not (background-clip: text) {
+  .mf-role-reveal__name {
+    -webkit-text-fill-color: unset;
+    color: var(--rr-name);
+    background: none;
+  }
 }
 .mf-role-reveal__desc {
-  font-size: .85rem; line-height: 1.5;
-  color: var(--mf-muted); margin: 0 0 22px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--rr-desc);
+  margin: 0 0 24px;
+  max-width: 34em;
+  margin-left: auto;
+  margin-right: auto;
 }
 .mf-role-reveal__ok {
-  width: 100%; padding: 11px !important;
-  font-size: .86rem !important;
+  width: 100%;
+  padding: 12px 16px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  border: 1px solid var(--rr-ok-border) !important;
+  color: var(--rr-ok-text) !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s !important;
+}
+.mf-role-reveal__ok:hover {
+  background: var(--rr-ok-hover) !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+  color: #fff !important;
+}
+.mf-role-reveal__ok:focus-visible {
+  outline: 2px solid var(--rr-eyebrow);
+  outline-offset: 2px;
+}
+
+/* ─── Темы по ролям ─── */
+.mf-role-reveal--mafia {
+  --rr-border: rgba(248, 113, 113, 0.55);
+  --rr-bg-top: rgba(40, 12, 18, 0.98);
+  --rr-bg-bot: rgba(8, 4, 6, 0.99);
+  --rr-glow-a: rgba(220, 38, 38, 0.28);
+  --rr-glow-b: rgba(248, 113, 113, 0.22);
+  --rr-eyebrow: #fecdd3;
+  --rr-name: #fecaca;
+  --rr-name-grad-end: #f87171;
+  --rr-desc: rgba(211, 186, 189, 0.9);
+  --rr-icon-bg: rgba(239, 68, 68, 0.22);
+  --rr-icon-ring: rgba(252, 165, 165, 0.55);
+  --rr-ok-border: rgba(252, 165, 165, 0.45);
+  --rr-ok-text: #fecdd3;
+}
+.mf-role-reveal--civil {
+  --rr-border: rgba(74, 222, 128, 0.45);
+  --rr-bg-top: rgba(10, 28, 18, 0.98);
+  --rr-bg-bot: rgba(4, 12, 8, 0.99);
+  --rr-glow-a: rgba(16, 185, 129, 0.2);
+  --rr-glow-b: rgba(110, 231, 183, 0.18);
+  --rr-eyebrow: #fef9c3;
+  --rr-name: #bbf7d0;
+  --rr-name-grad-end: #4ade80;
+  --rr-desc: rgba(186, 212, 196, 0.9);
+  --rr-icon-bg: rgba(34, 197, 94, 0.18);
+  --rr-icon-ring: rgba(134, 239, 172, 0.5);
+  --rr-ok-border: rgba(167, 243, 208, 0.4);
+  --rr-ok-text: #d1fae5;
+}
+.mf-role-reveal--sheriff {
+  --rr-border: rgba(250, 204, 21, 0.5);
+  --rr-bg-top: rgba(38, 30, 8, 0.98);
+  --rr-bg-bot: rgba(12, 10, 4, 0.99);
+  --rr-glow-a: rgba(234, 179, 8, 0.22);
+  --rr-glow-b: rgba(253, 230, 138, 0.2);
+  --rr-eyebrow: #fde047;
+  --rr-name: #fff7c2;
+  --rr-name-grad-end: #facc15;
+  --rr-desc: rgba(214, 203, 176, 0.9);
+  --rr-icon-bg: rgba(202, 138, 4, 0.22);
+  --rr-icon-ring: rgba(253, 224, 71, 0.55);
+  --rr-ok-border: rgba(253, 224, 71, 0.4);
+  --rr-ok-text: #fef3c7;
+}
+.mf-role-reveal--doctor {
+  --rr-border: rgba(45, 212, 191, 0.48);
+  --rr-bg-top: rgba(8, 28, 26, 0.98);
+  --rr-bg-bot: rgba(4, 14, 14, 0.99);
+  --rr-glow-a: rgba(13, 148, 136, 0.2);
+  --rr-glow-b: rgba(94, 234, 212, 0.16);
+  --rr-eyebrow: #99f6e4;
+  --rr-name: #ccfbf1;
+  --rr-name-grad-end: #2dd4bf;
+  --rr-desc: rgba(178, 210, 206, 0.92);
+  --rr-icon-bg: rgba(15, 118, 110, 0.22);
+  --rr-icon-ring: rgba(45, 212, 191, 0.5);
+  --rr-ok-border: rgba(153, 246, 228, 0.42);
+  --rr-ok-text: #ccfbf1;
+}
+.mf-role-reveal--maniac {
+  --rr-border: rgba(192, 132, 252, 0.55);
+  --rr-bg-top: rgba(32, 18, 52, 0.99);
+  --rr-bg-bot: rgba(8, 6, 16, 0.99);
+  --rr-glow-a: rgba(126, 34, 206, 0.32);
+  --rr-glow-b: rgba(192, 132, 252, 0.22);
+  --rr-eyebrow: rgba(253, 230, 138, 0.92);
+  --rr-name: #ede9fe;
+  --rr-name-grad-end: #c4b5fd;
+  --rr-desc: rgba(196, 190, 214, 0.92);
+  --rr-icon-bg: rgba(147, 51, 234, 0.2);
+  --rr-icon-ring: rgba(196, 181, 253, 0.55);
+  --rr-ok-border: rgba(216, 180, 254, 0.42);
+  --rr-ok-text: rgba(237, 233, 254, 0.95);
+}
+.mf-role-reveal--other {
+  --rr-border: rgba(244, 114, 182, 0.5);
+  --rr-bg-top: rgba(44, 14, 36, 0.99);
+  --rr-bg-bot: rgba(14, 6, 16, 0.99);
+  --rr-glow-a: rgba(219, 39, 119, 0.22);
+  --rr-glow-b: rgba(251, 113, 133, 0.14);
+  --rr-eyebrow: #fbcfe8;
+  --rr-name: #fce7f3;
+  --rr-name-grad-end: #f472b6;
+  --rr-desc: rgba(214, 190, 206, 0.92);
+  --rr-icon-bg: rgba(219, 39, 119, 0.18);
+  --rr-icon-ring: rgba(244, 114, 182, 0.5);
+  --rr-ok-border: rgba(251, 207, 232, 0.4);
+  --rr-ok-text: #fce7f3;
 }
 
 .mafia-workspace {
