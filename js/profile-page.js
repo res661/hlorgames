@@ -161,11 +161,17 @@ async function refreshLobbyHistory() {
       .join('');
   } catch (e) {
     const msg = String(e?.message || e || '');
-    const missing =
-      msg.includes('user_lobby_history') || msg.includes('42P01') || msg.includes('schema cache');
-    mount.innerHTML = missing
-      ? '<p class="pf-history-error">Таблица истории ещё не создана — выполни SQL из файла <code>supabase/user_lobby_history.sql</code> в Supabase.</p>'
-      : `<p class="pf-history-error">Не удалось загрузить историю: ${escapeHtml(msg)}</p>`;
+    const code = e?.code != null ? String(e.code) : '';
+    const hints = `${msg} ${code}`;
+    // Не использовать имя таблицы в фильтре: в тексте ошибок RLS/прав тоже встречается user_lobby_history.
+    const missingTable =
+      /\b42P01\b/.test(hints) ||
+      /\bdoes not exist\b/i.test(msg) ||
+      /schema cache/i.test(msg) ||
+      /\b(PGRST205|PGRST115)\b/i.test(hints);
+    mount.innerHTML = missingTable
+      ? '<p class="pf-history-error">Таблица истории ещё не создана или Supabase её не видит — выполни SQL из <code>supabase/user_lobby_history.sql</code> в том же проекте, где лежит <code>js/supabase-client.js</code>, затем подожди минуту и обнови страницу.</p>'
+      : `<p class="pf-history-error">Не удалось загрузить историю: ${escapeHtml(msg)}${code ? ` <code>${escapeHtml(code)}</code>` : ''}</p>`;
   }
 }
 
