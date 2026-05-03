@@ -116,6 +116,8 @@ async function refreshLobbyHistory() {
   mount.innerHTML = '<div class="pf-history-loading">Загрузка…</div>';
 
   try {
+    await supabaseClient.auth.getSession();
+
     const { data, error } = await supabaseClient
       .from('user_lobby_history')
       .select('*')
@@ -160,17 +162,25 @@ async function refreshLobbyHistory() {
       })
       .join('');
   } catch (e) {
-    const msg = String(e?.message || e || '');
+    const msgRaw = [
+      e?.message,
+      e?.details,
+      e?.hint,
+    ]
+      .filter(Boolean)
+      .join(' — ');
+    const msg = msgRaw ? String(msgRaw) : String(e || '');
     const code = e?.code != null ? String(e.code) : '';
     const hints = `${msg} ${code}`;
-    // Не использовать имя таблицы в фильтре: в тексте ошибок RLS/прав тоже встречается user_lobby_history.
+    console.warn('[profile] user_lobby_history:', e);
     const missingTable =
       /\b42P01\b/.test(hints) ||
-      /\bdoes not exist\b/i.test(msg) ||
+      (/\brelation\b/i.test(msg) && /\bdoes\s+not\s+exist\b/i.test(msg)) ||
+      /could not find the table\b/i.test(msg) ||
       /schema cache/i.test(msg) ||
       /\b(PGRST205|PGRST115)\b/i.test(hints);
     mount.innerHTML = missingTable
-      ? '<p class="pf-history-error">Таблица истории ещё не создана или Supabase её не видит — выполни SQL из <code>supabase/user_lobby_history.sql</code> в том же проекте, где лежит <code>js/supabase-client.js</code>, затем подожди минуту и обнови страницу.</p>'
+      ? '<p class="pf-history-error">Таблица не видна через API или её нет. Запусти в Supabase заново актуальный <code>supabase/user_lobby_history.sql</code> в <strong>том же проекте</strong>, что и <code>SUPABASE_URL</code> в <code>js/supabase-client.js</code> (там есть <code>GRANT</code> и <code>NOTIFY pgrst</code>). Затем Ctrl+F5 на странице. В DevTools → Console смотри строку <code>[profile] user_lobby_history:</code> — там точная причина.</p>'
       : `<p class="pf-history-error">Не удалось загрузить историю: ${escapeHtml(msg)}${code ? ` <code>${escapeHtml(code)}</code>` : ''}</p>`;
   }
 }

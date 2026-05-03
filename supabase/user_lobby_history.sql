@@ -46,6 +46,14 @@ create policy user_lobby_history_delete_own
   on public.user_lobby_history for delete to authenticated
   using (auth.uid() = user_id);
 
+-- Права для API (anon/authenticated через PostgREST). Без них иногда ошибка как «нет таблицы».
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on table public.user_lobby_history to authenticated;
+grant select, insert, update, delete on table public.user_lobby_history to service_role;
+
+-- Обновить кэш схемы PostgREST сразу после создания таблицы
+notify pgrst, 'reload schema';
+
 -- Проверка: в Table Editor должна появиться таблица user_lobby_history.
 -- При ошибке из сайта выполни здесь же:
 --   select tablename from pg_tables where schemaname='public' and tablename='user_lobby_history';
