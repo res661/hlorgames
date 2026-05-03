@@ -54,12 +54,11 @@ function renderProfileDashboard() {
   );
 
   const grid = document.getElementById('pf-achievements');
-  if (!grid) return;
-
-  const defs = hs.achievementDefs(s);
-  grid.innerHTML = defs
-    .map(
-      (a) => `
+  if (grid) {
+    const defs = hs.achievementDefs(s);
+    grid.innerHTML = defs
+      .map(
+        (a) => `
       <div class="pf-achievement ${a.ok ? 'pf-achievement--got' : 'pf-achievement--locked'}" role="article">
         <span class="pf-achievement__icon" aria-hidden="true">${a.icon}</span>
         <div class="pf-achievement__meta">
@@ -67,13 +66,107 @@ function renderProfileDashboard() {
           <p class="pf-achievement__desc">${escapeHtml(a.desc)}</p>
         </div>
       </div>`,
-    )
-    .join('');
+      )
+      .join('');
 
-  const done = defs.filter((d) => d.ok).length;
-  const bar = document.getElementById('pf-achievements-bar');
-  if (bar)
-    bar.style.width = defs.length ? Math.min(100, Math.round((done / defs.length) * 100)) + '%' : '0%';
+    const done = defs.filter((d) => d.ok).length;
+    const bar = document.getElementById('pf-achievements-bar');
+    if (bar)
+      bar.style.width = defs.length ? Math.min(100, Math.round((done / defs.length) * 100)) + '%' : '0%';
+  }
+
+  void refreshLobbyHistory();
+}
+
+const HISTORY_GAME_NAMES = { mafia: 'Мафия', bunker: 'Бункер', alias: 'Алиас' };
+
+function formatHistoryWhen(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+  } catch {
+    return '—';
+  }
+}
+
+function historyStatusPill(row) {
+  if (row.finished_at) {
+    return { text: 'Закрыто', cls: 'pf-history-pill--done' };
+  }
+  const st = String(row.lobby_status_last || '');
+  if (st === 'active') return { text: 'Игра', cls: 'pf-history-pill--active' };
+  if (st === 'waiting') return { text: 'Лобби', cls: 'pf-history-pill' };
+  if (st === 'ended') return { text: 'Закрыто', cls: 'pf-history-pill--done' };
+  return { text: st || '—', cls: 'pf-history-pill' };
+}
+
+async function refreshLobbyHistory() {
+  const mount = document.getElementById('pf-lobby-history');
+  if (!mount) return;
+
+  const u = typeof currentUser !== 'undefined' && currentUser ? currentUser : null;
+  if (!u?.id || typeof supabaseClient === 'undefined' || !supabaseClient) {
+    mount.innerHTML =
+      '<p class="pf-history-empty">Войди в аккаунт — список комнат появится здесь и сохранится между устройствами.</p>';
+    return;
+  }
+
+  mount.innerHTML = '<div class="pf-history-loading">Загрузка…</div>';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('user_lobby_history')
+      .select('*')
+      .eq('user_id', u.id)
+      .order('last_seen_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    const rows = Array.isArray(data) ? data : [];
+    if (!rows.length) {
+      mount.innerHTML =
+        '<p class="pf-history-empty">Пока пусто — зайди в лобби или за стол мафии под этим аккаунтом.</p>';
+      return;
+    }
+
+    mount.innerHTML = rows
+      .map((row) => {
+        const code = escapeHtml(row.lobby_code || '—');
+        const titleRaw = row.room_name && String(row.room_name).trim() ? row.room_name : row.lobby_code;
+        const title = escapeHtml(titleRaw || 'Комната');
+        const game = HISTORY_GAME_NAMES[row.game] || escapeHtml(row.game || 'игра');
+        const st = historyStatusPill(row);
+        const rolePill = row.was_host
+          ? '<span class="pf-history-pill pf-history-pill--host">Хост</span>'
+          : '<span class="pf-history-pill">Игрок</span>';
+
+        return `
+          <article class="pf-history-card">
+            <div class="pf-history-card__title">${title}</div>
+            <div class="pf-history-card__code">${code}</div>
+            <div class="pf-history-card__tags">
+              <span class="pf-history-pill pf-history-pill--game">${game}</span>
+              ${rolePill}
+              <span class="pf-history-pill ${escapeHtml(st.cls)}">${escapeHtml(st.text)}</span>
+            </div>
+            <div class="pf-history-card__times">
+              Последний раз: ${formatHistoryWhen(row.last_seen_at)} · Первый заход: ${formatHistoryWhen(row.first_seen_at)}
+              ${row.finished_at ? `<br/>Финиш: ${formatHistoryWhen(row.finished_at)}` : ''}
+            </div>
+          </article>`;
+      })
+      .join('');
+  } catch (e) {
+    const msg = String(e?.message || e || '');
+    const missing =
+      msg.includes('user_lobby_history') || msg.includes('42P01') || msg.includes('schema cache');
+    mount.innerHTML = missing
+      ? '<p class="pf-history-error">Таблица истории ещё не создана — выполни SQL из файла <code>supabase/user_lobby_history.sql</code> в Supabase.</p>'
+      : `<p class="pf-history-error">Не удалось загрузить историю: ${escapeHtml(msg)}</p>`;
+  }
 }
 
 function escapeHtml(t) {

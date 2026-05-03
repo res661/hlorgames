@@ -256,6 +256,9 @@ async function loadLobby() {
 
     if (data.status === 'ended') {
       stopLobbyTimers();
+      if (currentUser && typeof markLobbyHistoryFinished === 'function') {
+        void markLobbyHistoryFinished(data.id, data.code);
+      }
       if (typeof clearActiveLobby === 'function') clearActiveLobby();
       showError(
         'Комната закрыта',
@@ -268,6 +271,16 @@ async function loadLobby() {
     synced = await persistLobbySlotsIfOutOfSync(synced);
 
     lobbyData = synced;
+
+    if (currentUser && synced && (synced.status === 'waiting' || synced.status === 'active')) {
+      const uid = currentUser.id;
+      const inside =
+        String(synced.host_id) === String(uid) ||
+        (synced.players || []).some((p) => p && String(p.id) === String(uid));
+      if (inside && typeof maybeUpsertLobbyHistory === 'function') {
+        void maybeUpsertLobbyHistory(synced);
+      }
+    }
 
     if (typeof setActiveLobby === 'function' && (synced.status === 'waiting' || synced.status === 'active')) {
       const isHm = !!(currentUser && String(synced.host_id) === String(currentUser.id));
@@ -587,6 +600,9 @@ async function leaveAndExit() {
 
   if (isHost) {
     await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
+    if (typeof markLobbyHistoryFinished === 'function') {
+      void markLobbyHistoryFinished(lobbyData?.id, lobbyCode);
+    }
   } else {
     const { data: freshRow, error: fetchErr } = await supabaseClient
       .from('lobbies')
@@ -644,6 +660,9 @@ async function closeLobby() {
   if (typeof clearActiveLobby === 'function') clearActiveLobby();
   stopLobbyTimers();
   await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCode);
+  if (typeof markLobbyHistoryFinished === 'function') {
+    void markLobbyHistoryFinished(lobbyData?.id, lobbyCode);
+  }
   showToast('Лобби закрыто', 'success');
   goBack();
 }

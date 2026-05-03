@@ -501,11 +501,19 @@
         return;
       }
       if (!data) {
+        try {
+          if (typeof markLobbyHistoryFinished === 'function') {
+            void markLobbyHistoryFinished(null, LOBBY, myUserId);
+          }
+        } catch (_) {}
         showRoomEndedOverlay('Комната недоступна', 'Этого лобби больше нет — либо удалили, либо код неверный.');
         return;
       }
       if (data.status === 'ended') {
         try {
+          if (typeof markLobbyHistoryFinished === 'function') {
+            void markLobbyHistoryFinished(data.id, data.code || LOBBY, myUserId);
+          }
           if (typeof window.hlorStats?.recordLobbyEnd === 'function') {
             window.hlorStats.recordLobbyEnd({ lobbyCode: LOBBY });
           }
@@ -578,6 +586,18 @@
         refreshTopBarBadges();
         renderHostPlayers();
       }
+      try {
+        if (
+          typeof maybeUpsertLobbyHistory === 'function' &&
+          myUserId &&
+          (data.status === 'waiting' || data.status === 'active')
+        ) {
+          const inh =
+            String(data.host_id) === String(myUserId) ||
+            (data.players || []).some((p) => p && String(p.id) === String(myUserId));
+          if (inh) void maybeUpsertLobbyHistory(data, myUserId);
+        }
+      } catch (_) {}
       ensureLobbyRowRealtimeAttached();
     } catch (_) {}
     finally {
