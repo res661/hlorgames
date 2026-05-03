@@ -175,6 +175,35 @@
     } catch (_) {}
   }
 
+  /** Локальные заметки к номеру места (любые: пустой слот, своё место) */
+  function scratchStorageKey(uid) {
+    const code = lobbyCodeForDb().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'local';
+    return `hlor_whoami_scratch:${code}:${uid || 'anon'}`;
+  }
+
+  function loadScratchMap() {
+    try {
+      const raw = localStorage.getItem(scratchStorageKey(myUserId));
+      if (!raw) return {};
+      const o = JSON.parse(raw);
+      return o && typeof o === 'object' ? o : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveScratchSeat(seatIndex, text) {
+    if (!myUserId) return;
+    const key = String(Number(seatIndex));
+    const cur = loadScratchMap();
+    const t = String(text ?? '');
+    if (!t.trim()) delete cur[key];
+    else cur[key] = t;
+    try {
+      localStorage.setItem(scratchStorageKey(myUserId), JSON.stringify(cur));
+    } catch (_) {}
+  }
+
   function textareasWordFor(targetUserId) {
     const tid = String(targetUserId || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     return Array.from(document.querySelectorAll(`textarea[data-word-for="${tid}"]`));
@@ -183,84 +212,140 @@
   function syncWordMirrors(targetUserId, value, exclude) {
     textareasWordFor(targetUserId).forEach((ta) => {
       if (ta !== exclude) ta.value = value || '';
-      const peek = ta.closest('.whoami-on-slot')?.querySelector('.whoami-slot-checkpeek');
-      if (peek && peek.classList.contains('whoami-slot-checkpeek--open'))
-        peek.textContent = ta.value.trim() ? ta.value : '— пусто —';
+    });
+  }
+
+  function scratchSeatSelector(ix) {
+    const k = String(ix).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `textarea[data-scratch-seat="${k}"]`;
+  }
+
+  function syncScratchMirrors(ix, value, exclude) {
+    document.querySelectorAll(scratchSeatSelector(ix)).forEach((ta) => {
+      if (ta !== exclude) ta.value = value || '';
     });
   }
 
   /**
-   * Подпись + поле + «Проверить» для одной цели; клики не пробивают выбор места за столом.
+   * Подсказка «кто ты?» другому игроку — лист блокнота + глаз (размывает строку без фокуса).
+   * variant slot-pane — узкая колонка в карточке; иначе — лист в боковом блокноте.
    */
   function mountSecretWordForTarget(root, targetPlayer, variant) {
     if (!targetPlayer || !targetPlayer.id) return;
     const targetId = String(targetPlayer.id);
     const nick = targetPlayer.nickname || 'Игрок';
+    const compact = variant === 'slot-pane';
 
-    const wrap = document.createElement('div');
-    wrap.className = variant === 'slot-dock' ? 'whoami-on-slot slot-dock' : 'whoami-on-slot whoami-on-slot--book';
+    const sheet = document.createElement('div');
+    sheet.className =
+      'whoami-nb-sheet ' + (compact ? 'whoami-nb-sheet--slot' : 'whoami-nb-sheet--drawer');
 
     const stopSeat = (ev) => ev.stopPropagation();
-    wrap.addEventListener('click', stopSeat);
-    wrap.addEventListener('mousedown', stopSeat);
+    sheet.addEventListener('click', stopSeat);
+    sheet.addEventListener('mousedown', stopSeat);
 
-    const lab = document.createElement('label');
-    lab.className = 'whoami-slot-word-label';
-    lab.textContent = `Загадать для · ${nick}`;
+    const lab = document.createElement('span');
+    lab.className = 'whoami-nb-sheet__label';
+    lab.textContent = `Кто ты? · ${nick}`;
+
+    const hint = document.createElement('span');
+    hint.className = 'whoami-nb-sheet__hint';
+    hint.textContent = 'Видно только тебе. Глаз — быстро показать то, что написал.';
 
     const row = document.createElement('div');
-    row.className = 'whoami-slot-word-row';
+    row.className = 'whoami-nb-sheet__row';
 
     const textarea = document.createElement('textarea');
-    textarea.className = 'whoami-slot-input whoami-slot-input--concealed';
-    textarea.maxLength = 240;
+    textarea.className = 'whoami-nb-lined whoami-nb-lined--private whoami-nb-lined--blurred';
+    textarea.maxLength = 280;
     textarea.autocomplete = 'off';
     textarea.dataset.wordFor = targetId;
-    textarea.placeholder = 'слово (угадывает другой)';
+    textarea.placeholder = 'Образ, подсказка, слово или что угодно для этого места…';
+    textarea.rows = compact ? 3 : 6;
     textarea.value = loadWordsMap()[targetId] || '';
 
-    const peek = document.createElement('div');
-    peek.className = 'whoami-slot-checkpeek';
+    const eye = document.createElement('button');
+    eye.type = 'button';
+    eye.className = 'whoami-nb-eye';
+    eye.title = 'Показать / скрыть написанное';
+    eye.setAttribute('aria-label', 'Показать или скрыть текст');
+    eye.setAttribute('aria-pressed', 'false');
+    eye.innerHTML = '👁';
+
+    function setRevealed(isOpen) {
+      eye.setAttribute('aria-pressed', isOpen ? 'true' : 'false');
+      textarea.classList.toggle('whoami-nb-lined--blurred', !isOpen);
+    }
+
+    eye.addEventListener('mousedown', stopSeat);
+    eye.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const nextOpen = eye.getAttribute('aria-pressed') !== 'true';
+      if (!nextOpen) textarea.blur();
+      setRevealed(nextOpen);
+    });
 
     textarea.addEventListener('focus', () => {
-      textarea.classList.remove('whoami-slot-input--concealed');
+      textarea.classList.remove('whoami-nb-lined--blurred');
+      eye.setAttribute('aria-pressed', 'true');
     });
     textarea.addEventListener('blur', () => {
-      if (!peek.classList.contains('whoami-slot-checkpeek--open')) textarea.classList.add('whoami-slot-input--concealed');
+      textarea.classList.add('whoami-nb-lined--blurred');
+      eye.setAttribute('aria-pressed', 'false');
     });
     textarea.addEventListener('click', stopSeat);
     textarea.addEventListener('mousedown', stopSeat);
     textarea.addEventListener('input', () => {
       saveWordsTarget(targetId, textarea.value);
       syncWordMirrors(targetId, textarea.value, textarea);
-      peek.textContent = textarea.value.trim() ? textarea.value : '— пусто —';
     });
-
-    const actions = document.createElement('div');
-    actions.className = 'whoami-slot-word-actions';
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'whoami-btn-check';
-    btn.textContent = 'Проверить';
-    btn.addEventListener('mousedown', stopSeat);
-    btn.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const open = peek.classList.toggle('whoami-slot-checkpeek--open');
-      peek.textContent = textarea.value.trim() ? textarea.value : '— пусто —';
-      if (open) textarea.classList.remove('whoami-slot-input--concealed');
-      else textarea.classList.add('whoami-slot-input--concealed');
-    });
-
-    actions.appendChild(btn);
 
     row.appendChild(textarea);
-    row.appendChild(actions);
-    wrap.appendChild(lab);
-    wrap.appendChild(row);
-    wrap.appendChild(peek);
-    root.appendChild(wrap);
+    row.appendChild(eye);
+    sheet.appendChild(lab);
+    if (!compact) sheet.appendChild(hint);
+    sheet.appendChild(row);
+    root.appendChild(sheet);
+  }
+
+  /** Черновик к номеру места (пустое место или ты сидишь здесь); только локально в браузере. */
+  function mountScratchPad(root, seatIndex, subtitle, variant) {
+    if (!myUserId) return;
+    const compact = variant === 'slot-pane';
+    const sheet = document.createElement('div');
+    sheet.className =
+      'whoami-nb-sheet ' + (compact ? 'whoami-nb-sheet--slot' : 'whoami-nb-sheet--drawer');
+
+    const stopSeat = (ev) => ev.stopPropagation();
+    sheet.addEventListener('click', stopSeat);
+    sheet.addEventListener('mousedown', stopSeat);
+
+    const lab = document.createElement('span');
+    lab.className = 'whoami-nb-sheet__label';
+    lab.textContent = subtitle;
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'whoami-nb-lined';
+    textarea.maxLength = 520;
+    textarea.autocomplete = 'off';
+    textarea.dataset.scratchSeat = String(seatIndex);
+    textarea.placeholder =
+      compact ? 'Черновик… можно что угодно' : 'Свободные заметки: догадки, план игры…';
+    textarea.rows = compact ? 4 : 6;
+    const smap = loadScratchMap();
+    textarea.value = smap[String(seatIndex)] || '';
+
+    textarea.addEventListener('click', stopSeat);
+    textarea.addEventListener('mousedown', stopSeat);
+    textarea.addEventListener('input', () => {
+      saveScratchSeat(seatIndex, textarea.value);
+      syncScratchMirrors(seatIndex, textarea.value, textarea);
+    });
+
+    sheet.appendChild(lab);
+    sheet.appendChild(textarea);
+    root.appendChild(sheet);
   }
 
   function applyMafiaBoardFromRow(mb, maxP, playersNorm) {
@@ -497,7 +582,7 @@
     const m = new Map();
     gridEl()?.querySelectorAll('.mf-slot[data-i]').forEach((cell) => {
       const ix = parseInt(cell.getAttribute('data-i'), 10);
-      const ifr = cell.querySelector('iframe.mf-slot__video');
+      const ifr = cell.querySelector('.whoami-slot-media-pane iframe.mf-slot__video');
       if (!Number.isNaN(ix) && ifr?.src) m.set(ix, ifr);
     });
     return m;
@@ -518,6 +603,9 @@
     const prevSrc = prev ? prev.getAttribute('src') || '' : '';
     const reuse = !!(prev && wantHref && prevSrc === wantHref);
 
+    const mediaPane = document.createElement('div');
+    mediaPane.className = 'whoami-slot-media-pane';
+
     if (wantHref) {
       const ifel = reuse ? prev : document.createElement('iframe');
       if (!reuse) ifel.className = 'mf-slot__video';
@@ -526,12 +614,12 @@
       ifel.allow = 'microphone *;camera *';
       ifel.title = pname ? `Камера · ${pname}` : 'Камера';
       if (!reuse || ifel.getAttribute('src') !== wantHref) ifel.setAttribute('src', wantHref);
-      cell.appendChild(ifel);
+      mediaPane.appendChild(ifel);
     } else {
       const ph = document.createElement('div');
       ph.className = 'mf-slot__ph';
       ph.innerHTML = '<span class="mf-slot__ph-icon">🎦</span><span>Пусто · без трансляции</span>';
-      cell.appendChild(ph);
+      mediaPane.appendChild(ph);
     }
 
     const ov = document.createElement('div');
@@ -551,7 +639,8 @@
     info.appendChild(st);
     ov.appendChild(info);
 
-    if (occupant && myUserId && String(occupant.id) === String(myUserId)) cell.classList.add('mf-slot--whoami-highlight');
+    if (occupant && myUserId && String(occupant.id) === String(myUserId))
+      cell.classList.add('mf-slot--whoami-highlight');
 
     if (isRoomHost()) {
       const ed = document.createElement('button');
@@ -565,11 +654,25 @@
       ov.appendChild(ed);
     }
 
-    cell.appendChild(ov);
+    mediaPane.appendChild(ov);
+    cell.appendChild(mediaPane);
 
-    if (myUserId && occupant && String(occupant.id) !== String(myUserId)) {
-      cell.classList.add('mf-slot--whoami-draft');
-      mountSecretWordForTarget(cell, occupant, 'slot-dock');
+    if (myUserId) {
+      cell.classList.add('mf-slot--whoami-notes');
+      const notePane = document.createElement('div');
+      notePane.className = 'whoami-slot-note-pane';
+
+      const occupiedByOther =
+        !!(occupant && occupant.id != null && String(occupant.id) !== String(myUserId));
+
+      if (occupiedByOther) {
+        cell.classList.add('mf-slot--whoami-busy-other');
+        mountSecretWordForTarget(notePane, occupant, 'slot-pane');
+      } else {
+        const subtitle = occupant ? `Твоё место · заметки` : `${ix + 1} · черновик (никто не сидит)`;
+        mountScratchPad(notePane, ix, subtitle, 'slot-pane');
+      }
+      cell.appendChild(notePane);
     }
   }
 
@@ -588,23 +691,21 @@
 
     for (let i = 0; i < maxP; i++) {
       const occupant = playerAtSeat(pl, i);
-      const name = occupant ? occupant.nickname || 'Игрок' : '';
       const cls = ['mf-slot', occupant ? 'mf-slot--alive mf-slot--whoami-seat' : 'mf-slot--extinct mf-slot--whoami-seat'];
-      if (occupant && occupant.id != null && myUserId && String(occupant.id) !== String(myUserId)) cls.push('mf-slot--whoami-busy-other');
 
       const div = document.createElement('div');
       div.className = cls.join(' ');
       div.setAttribute('data-i', String(i));
+
+      renderSlotContent(div, i, seatMedia[i], occupant, preserved);
 
       const num = document.createElement('span');
       num.className = 'mf-slot__num';
       num.textContent = String(i + 1);
       div.appendChild(num);
 
-      renderSlotContent(div, i, seatMedia[i], occupant, preserved);
-
       div.addEventListener('click', (ev) => {
-        if (ev.target.closest('.whoami-on-slot') || ev.target.closest('.mf-slot__edit')) return;
+        if (ev.target.closest('.whoami-nb-sheet') || ev.target.closest('.mf-slot__edit')) return;
         void maybeClaimSeat(i, occupant);
       });
 
@@ -702,7 +803,7 @@
     toast('Попробуй ещё раз — место заняли параллельно', 'error');
   }
 
-  /** Содержимое выезжающего блокнота (зеркально полям на карточках) */
+  /** Содержимое правого блокнота — зеркало полей на слотах + черновики мест */
   function syncNotebookPanel(plNorm) {
     const hint = $('notesHintLoggedOut');
     const list = $('notebookList');
@@ -719,14 +820,40 @@
     list.classList.remove('hidden');
     list.innerHTML = '';
 
-    const others = plNorm.filter((p) => p && String(p.id) !== String(myUserId));
+    const maxP = seatMax();
+    const pl = Array.isArray(plNorm) ? plNorm : [];
 
-    if (!others.length) {
-      list.innerHTML = '<p class="whoami-notebook-empty">Когда игроки сядут в слоты, здесь можно править те же строки.</p>';
-      return;
+    const hPlayers = document.createElement('div');
+    hPlayers.className = 'whoami-nb-drawer-divider';
+    hPlayers.textContent = 'Для других за столом';
+    list.appendChild(hPlayers);
+
+    const others = pl.filter((p) => p && String(p.id) !== String(myUserId));
+    if (others.length) others.forEach((p) => mountSecretWordForTarget(list, p, 'drawer'));
+    else {
+      const msg = document.createElement('p');
+      msg.className = 'whoami-notebook-empty';
+      msg.textContent =
+        'Пока нет других игроков — странички «кто ты?» появятся, когда они сядут на места.';
+      list.appendChild(msg);
     }
 
-    others.forEach((p) => mountSecretWordForTarget(list, p, 'book'));
+    const hScratch = document.createElement('div');
+    hScratch.className = 'whoami-nb-drawer-divider';
+    hScratch.textContent = 'Черновики по местам (можно даже если место свободно)';
+    list.appendChild(hScratch);
+
+    for (let i = 0; i < maxP; i++) {
+      const occ = playerAtSeat(pl, i);
+      if (!occ || String(occ.id) === String(myUserId)) {
+        mountScratchPad(
+          list,
+          i,
+          occ ? `Место ${i + 1} · ты (${occ.nickname || 'игрок'})` : `Место ${i + 1} · свободно`,
+          'drawer',
+        );
+      }
+    }
   }
 
   function refreshNotebookChrome() {
@@ -735,17 +862,19 @@
     const bt = $('btnNotebook');
     if (!myUserId) {
       notebookOpen = false;
-      bk?.classList.add('hidden');
-      nb?.classList.add('hidden');
+      bk?.classList.remove('whoami-notebook-backdrop--open');
+      nb?.classList.remove('whoami-notebook--open');
       bt?.classList.toggle('whoami-notebook-tab--active', false);
+      document.body.style.overflow = '';
       return;
     }
 
-    bk?.classList.toggle('hidden', !notebookOpen);
-    nb?.classList.toggle('hidden', !notebookOpen);
+    bk?.classList.toggle('whoami-notebook-backdrop--open', !!notebookOpen);
+    nb?.classList.toggle('whoami-notebook--open', !!notebookOpen);
     bk?.setAttribute('aria-hidden', notebookOpen ? 'false' : 'true');
     nb?.setAttribute('aria-hidden', notebookOpen ? 'false' : 'true');
     bt?.classList.toggle('whoami-notebook-tab--active', !!notebookOpen);
+    document.body.style.overflow = notebookOpen ? 'hidden' : '';
   }
 
   async function setHostParticipates(play) {
