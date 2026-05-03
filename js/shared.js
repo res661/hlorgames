@@ -1,12 +1,109 @@
 /**
  * SHARED.JS — утилиты на всех страницах
- * Ссылка «Админ-панель» только у пользователей с role = superadmin в profiles (через БД).
+ * «Админ-панель» только у superadmin в БД.
+ * Суперадмин может скрыть/показать ярлык: набрать admin (латиницей, не в поле ввода).
  */
 
 (function () {
   'use strict';
 
   const LS_ADMIN_LEGACY = 'hlor_secret_admin_ui';
+  /** '1' или отсутствует — показывать кнопку; '0' — скрыть (только UI, роль в БД не меняется). */
+  const LS_SUPERADMIN_PANEL = 'hlor_superadmin_panel_visible';
+
+  function superadminPanelVisiblePref() {
+    try {
+      return localStorage.getItem(LS_SUPERADMIN_PANEL) !== '0';
+    } catch {
+      return true;
+    }
+  }
+
+  function _toast(msg, type = '') {
+    if (typeof showToast === 'function') {
+      showToast(msg, type);
+      return;
+    }
+    let t = document.getElementById('toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'toast';
+      t.className = 'toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  async function _resolveProfileRole() {
+    if (typeof currentUser !== 'undefined' && currentUser?.id && currentUser.role) {
+      return currentUser.role;
+    }
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session?.user) return null;
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        return profile?.role || 'user';
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  async function _handleSuperadminAdminKeyboardToggle() {
+    const role = await _resolveProfileRole();
+    if (role !== 'superadmin') return;
+
+    let justHidden = true;
+    try {
+      const cur = localStorage.getItem(LS_SUPERADMIN_PANEL);
+      if (cur === '0') {
+        localStorage.setItem(LS_SUPERADMIN_PANEL, '1');
+        justHidden = false;
+      } else {
+        localStorage.setItem(LS_SUPERADMIN_PANEL, '0');
+        justHidden = true;
+      }
+    } catch (_) {}
+
+    await hlorSyncSuperadminAdminUi();
+
+    if (justHidden) {
+      _toast('Панель скрыта. Набери снова admin — вернуть кнопку «Админ-панель».', '');
+    } else {
+      _toast('Кнопка «Админ-панель» снова показана.', 'success');
+    }
+  }
+
+  let _adminBuf = '';
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) {
+      _adminBuf = '';
+      return;
+    }
+
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+
+    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+      _adminBuf += e.key.toLowerCase();
+      if (_adminBuf.length > 5) _adminBuf = _adminBuf.slice(-5);
+      if (_adminBuf === 'admin') {
+        _adminBuf = '';
+        void _handleSuperadminAdminKeyboardToggle();
+      }
+      return;
+    }
+
+    _adminBuf = '';
+  });
 
   function removeSuperadminAdminLinks() {
     document.getElementById('superadminAdminBtn')?.remove();
@@ -59,7 +156,7 @@
     fab.href = 'admin.html';
     fab.className = 'hlor-secret-admin-fab';
     fab.textContent = 'Админ-панель';
-    fab.title = 'Панель суперадмина';
+    fab.title = 'Панель суперадмина (набери admin — скрыть кнопку)';
     document.body.appendChild(fab);
   }
 
@@ -87,6 +184,7 @@
     }
 
     if (role !== 'superadmin') return;
+    if (!superadminPanelVisiblePref()) return;
 
     if (document.getElementById('userDropdown')) {
       injectSuperadminDropdownButton();
