@@ -1,5 +1,5 @@
 /**
- * WHOAMI-PLAY.JS — комната «Кто я?»: слоты + опционально VDO (mafia_board), секретные слова в localStorage.
+ * WHOAMI-PLAY.JS — слоты, слова под ником (localStorage по коду комнаты), блокнот для свободных заметок.
  */
 (function () {
   'use strict';
@@ -26,7 +26,7 @@
   /** индекс слота в модалке камеры или -1 */
   let modalSlotIndex = -1;
 
-  /** Выезжающее меню блокнота (зеркально полям на карточках) */
+  /** Выезжающий блокнот только для свободных заметок (слова — только под никами на столе). */
   let notebookOpen = false;
 
   let roomClosedOverlayShown = false;
@@ -68,6 +68,7 @@
   function showWhoamiRoomEndedOverlay(title, subtitle) {
     if (roomClosedOverlayShown) return;
     roomClosedOverlayShown = true;
+    clearWhoamiLobbyLocalDrafts();
     detachWhoamiRealtime();
     try {
       if (typeof window.hlorStats?.stopPlayTimer === 'function') window.hlorStats.stopPlayTimer();
@@ -167,185 +168,84 @@
   function saveWordsTarget(targetUserId, text) {
     if (!myUserId || !targetUserId) return;
     const cur = loadWordsMap();
-    const t = String(text || '').trim();
-    if (!t) delete cur[targetUserId];
-    else cur[targetUserId] = t;
+    const raw = String(text ?? '');
+    if (!raw.trim()) delete cur[targetUserId];
+    else cur[targetUserId] = raw;
     try {
       localStorage.setItem(wordsStorageKey(myUserId), JSON.stringify(cur));
     } catch (_) {}
   }
 
-  /** Локальные заметки к номеру места (любые: пустой слот, своё место) */
-  function scratchStorageKey(uid) {
+  /** Свободные заметки только в блокноте справа */
+  function journalStorageKey(uid) {
     const code = lobbyCodeForDb().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'local';
-    return `hlor_whoami_scratch:${code}:${uid || 'anon'}`;
+    return `hlor_whoami_journal:${code}:${uid || 'anon'}`;
   }
 
-  function loadScratchMap() {
-    try {
-      const raw = localStorage.getItem(scratchStorageKey(myUserId));
-      if (!raw) return {};
-      const o = JSON.parse(raw);
-      return o && typeof o === 'object' ? o : {};
-    } catch {
-      return {};
-    }
+  function sanitizedLobbyLsCode() {
+    return (
+      String(LOBBY || lobbyCodeForDb() || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, '') || 'local'
+    );
   }
 
-  function saveScratchSeat(seatIndex, text) {
-    if (!myUserId) return;
-    const key = String(Number(seatIndex));
-    const cur = loadScratchMap();
-    const t = String(text ?? '');
-    if (!t.trim()) delete cur[key];
-    else cur[key] = t;
+  /** Слова под никами + блокнот комнаты сбрасываются когда лобби закрыто */
+  function clearWhoamiLobbyLocalDrafts() {
+    const c = sanitizedLobbyLsCode();
+    const uid = myUserId ? String(myUserId) : '';
+    if (!uid) return;
     try {
-      localStorage.setItem(scratchStorageKey(myUserId), JSON.stringify(cur));
+      localStorage.removeItem(`hlor_whoami_words:${c}:${uid}`);
+      localStorage.removeItem(`hlor_whoami_journal:${c}:${uid}`);
     } catch (_) {}
   }
 
-  function textareasWordFor(targetUserId) {
-    const tid = String(targetUserId || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return Array.from(document.querySelectorAll(`textarea[data-word-for="${tid}"]`));
-  }
-
-  function syncWordMirrors(targetUserId, value, exclude) {
-    textareasWordFor(targetUserId).forEach((ta) => {
-      if (ta !== exclude) ta.value = value || '';
-    });
-  }
-
-  function scratchSeatSelector(ix) {
-    const k = String(ix).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `textarea[data-scratch-seat="${k}"]`;
-  }
-
-  function syncScratchMirrors(ix, value, exclude) {
-    document.querySelectorAll(scratchSeatSelector(ix)).forEach((ta) => {
-      if (ta !== exclude) ta.value = value || '';
-    });
-  }
-
-  /**
-   * Подсказка «кто ты?» другому игроку — лист блокнота + глаз (размывает строку без фокуса).
-   * variant slot-pane — узкая колонка в карточке; иначе — лист в боковом блокноте.
-   */
-  function mountSecretWordForTarget(root, targetPlayer, variant) {
-    if (!targetPlayer || !targetPlayer.id) return;
-    const targetId = String(targetPlayer.id);
-    const nick = targetPlayer.nickname || 'Игрок';
-    const compact = variant === 'slot-pane';
-
-    const sheet = document.createElement('div');
-    sheet.className =
-      'whoami-nb-sheet ' + (compact ? 'whoami-nb-sheet--slot' : 'whoami-nb-sheet--drawer');
-
-    const stopSeat = (ev) => ev.stopPropagation();
-    sheet.addEventListener('click', stopSeat);
-    sheet.addEventListener('mousedown', stopSeat);
-
-    const lab = document.createElement('span');
-    lab.className = 'whoami-nb-sheet__label';
-    lab.textContent = `Кто ты? · ${nick}`;
-
-    const hint = document.createElement('span');
-    hint.className = 'whoami-nb-sheet__hint';
-    hint.textContent = 'Видно только тебе. Глаз — быстро показать то, что написал.';
-
-    const row = document.createElement('div');
-    row.className = 'whoami-nb-sheet__row';
-
-    const textarea = document.createElement('textarea');
-    textarea.className = 'whoami-nb-lined whoami-nb-lined--private whoami-nb-lined--blurred';
-    textarea.maxLength = 280;
-    textarea.autocomplete = 'off';
-    textarea.dataset.wordFor = targetId;
-    textarea.placeholder = 'Образ, подсказка, слово или что угодно для этого места…';
-    textarea.rows = compact ? 3 : 6;
-    textarea.value = loadWordsMap()[targetId] || '';
-
-    const eye = document.createElement('button');
-    eye.type = 'button';
-    eye.className = 'whoami-nb-eye';
-    eye.title = 'Показать / скрыть написанное';
-    eye.setAttribute('aria-label', 'Показать или скрыть текст');
-    eye.setAttribute('aria-pressed', 'false');
-    eye.innerHTML = '👁';
-
-    function setRevealed(isOpen) {
-      eye.setAttribute('aria-pressed', isOpen ? 'true' : 'false');
-      textarea.classList.toggle('whoami-nb-lined--blurred', !isOpen);
+  function loadJournal() {
+    try {
+      return localStorage.getItem(journalStorageKey(myUserId)) || '';
+    } catch {
+      return '';
     }
-
-    eye.addEventListener('mousedown', stopSeat);
-    eye.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const nextOpen = eye.getAttribute('aria-pressed') !== 'true';
-      if (!nextOpen) textarea.blur();
-      setRevealed(nextOpen);
-    });
-
-    textarea.addEventListener('focus', () => {
-      textarea.classList.remove('whoami-nb-lined--blurred');
-      eye.setAttribute('aria-pressed', 'true');
-    });
-    textarea.addEventListener('blur', () => {
-      textarea.classList.add('whoami-nb-lined--blurred');
-      eye.setAttribute('aria-pressed', 'false');
-    });
-    textarea.addEventListener('click', stopSeat);
-    textarea.addEventListener('mousedown', stopSeat);
-    textarea.addEventListener('input', () => {
-      saveWordsTarget(targetId, textarea.value);
-      syncWordMirrors(targetId, textarea.value, textarea);
-    });
-
-    row.appendChild(textarea);
-    row.appendChild(eye);
-    sheet.appendChild(lab);
-    if (!compact) sheet.appendChild(hint);
-    sheet.appendChild(row);
-    root.appendChild(sheet);
   }
 
-  /** Черновик к номеру места (пустое место или ты сидишь здесь); только локально в браузере. */
-  function mountScratchPad(root, seatIndex, subtitle, variant) {
+  function saveJournal(text) {
     if (!myUserId) return;
-    const compact = variant === 'slot-pane';
-    const sheet = document.createElement('div');
-    sheet.className =
-      'whoami-nb-sheet ' + (compact ? 'whoami-nb-sheet--slot' : 'whoami-nb-sheet--drawer');
+    try {
+      localStorage.setItem(journalStorageKey(myUserId), String(text ?? ''));
+    } catch (_) {}
+  }
 
-    const stopSeat = (ev) => ev.stopPropagation();
-    sheet.addEventListener('click', stopSeat);
-    sheet.addEventListener('mousedown', stopSeat);
+  /** Одна тонкая строка под ником (localStorage этой комнаты; F5 сохраняет, до закрытия лобби). */
+  function mountMiniWordNearNick(infoCol, occupant) {
+    if (!myUserId || !occupant?.id || String(occupant.id) === String(myUserId)) return;
+    const tid = String(occupant.id);
+    const stopSeat = (ev) => {
+      ev.stopPropagation();
+    };
 
-    const lab = document.createElement('span');
-    lab.className = 'whoami-nb-sheet__label';
-    lab.textContent = subtitle;
+    const wrap = document.createElement('div');
+    wrap.className = 'whoami-slot-word-micro';
 
-    const textarea = document.createElement('textarea');
-    textarea.className = 'whoami-nb-lined';
-    textarea.maxLength = 520;
-    textarea.autocomplete = 'off';
-    textarea.dataset.scratchSeat = String(seatIndex);
-    textarea.placeholder =
-      compact ? 'Черновик… можно что угодно' : 'Свободные заметки: догадки, план игры…';
-    textarea.rows = compact ? 4 : 6;
-    const smap = loadScratchMap();
-    textarea.value = smap[String(seatIndex)] || '';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'whoami-slot-word-micro__inp';
+    inp.maxLength = 120;
+    inp.autocomplete = 'off';
+    inp.dataset.wordFor = tid;
+    inp.placeholder = 'Слово…';
+    inp.value = loadWordsMap()[tid] || '';
 
-    textarea.addEventListener('click', stopSeat);
-    textarea.addEventListener('mousedown', stopSeat);
-    textarea.addEventListener('input', () => {
-      saveScratchSeat(seatIndex, textarea.value);
-      syncScratchMirrors(seatIndex, textarea.value, textarea);
+    inp.addEventListener('mousedown', stopSeat);
+    inp.addEventListener('click', stopSeat);
+    inp.addEventListener('input', () => {
+      const flat = inp.value.replace(/\r?\n/g, ' ');
+      if (flat !== inp.value) inp.value = flat;
+      saveWordsTarget(tid, inp.value);
     });
 
-    sheet.appendChild(lab);
-    sheet.appendChild(textarea);
-    root.appendChild(sheet);
+    wrap.appendChild(inp);
+    infoCol.appendChild(wrap);
   }
 
   function applyMafiaBoardFromRow(mb, maxP, playersNorm) {
@@ -582,7 +482,7 @@
     const m = new Map();
     gridEl()?.querySelectorAll('.mf-slot[data-i]').forEach((cell) => {
       const ix = parseInt(cell.getAttribute('data-i'), 10);
-      const ifr = cell.querySelector('.whoami-slot-media-pane iframe.mf-slot__video');
+      const ifr = cell.querySelector('iframe.mf-slot__video');
       if (!Number.isNaN(ix) && ifr?.src) m.set(ix, ifr);
     });
     return m;
@@ -603,9 +503,6 @@
     const prevSrc = prev ? prev.getAttribute('src') || '' : '';
     const reuse = !!(prev && wantHref && prevSrc === wantHref);
 
-    const mediaPane = document.createElement('div');
-    mediaPane.className = 'whoami-slot-media-pane';
-
     if (wantHref) {
       const ifel = reuse ? prev : document.createElement('iframe');
       if (!reuse) ifel.className = 'mf-slot__video';
@@ -614,12 +511,12 @@
       ifel.allow = 'microphone *;camera *';
       ifel.title = pname ? `Камера · ${pname}` : 'Камера';
       if (!reuse || ifel.getAttribute('src') !== wantHref) ifel.setAttribute('src', wantHref);
-      mediaPane.appendChild(ifel);
+      cell.appendChild(ifel);
     } else {
       const ph = document.createElement('div');
       ph.className = 'mf-slot__ph';
       ph.innerHTML = '<span class="mf-slot__ph-icon">🎦</span><span>Пусто · без трансляции</span>';
-      mediaPane.appendChild(ph);
+      cell.appendChild(ph);
     }
 
     const ov = document.createElement('div');
@@ -636,6 +533,12 @@
     st.textContent = pname ? 'В игре' : 'Свободно';
 
     info.appendChild(nameEl);
+
+    if (myUserId && occupant && occupant.id != null && String(occupant.id) !== String(myUserId)) {
+      cell.classList.add('mf-slot--whoami-busy-other');
+      mountMiniWordNearNick(info, occupant);
+    }
+
     info.appendChild(st);
     ov.appendChild(info);
 
@@ -654,26 +557,7 @@
       ov.appendChild(ed);
     }
 
-    mediaPane.appendChild(ov);
-    cell.appendChild(mediaPane);
-
-    if (myUserId) {
-      cell.classList.add('mf-slot--whoami-notes');
-      const notePane = document.createElement('div');
-      notePane.className = 'whoami-slot-note-pane';
-
-      const occupiedByOther =
-        !!(occupant && occupant.id != null && String(occupant.id) !== String(myUserId));
-
-      if (occupiedByOther) {
-        cell.classList.add('mf-slot--whoami-busy-other');
-        mountSecretWordForTarget(notePane, occupant, 'slot-pane');
-      } else {
-        const subtitle = occupant ? `Твоё место · заметки` : `${ix + 1} · черновик (никто не сидит)`;
-        mountScratchPad(notePane, ix, subtitle, 'slot-pane');
-      }
-      cell.appendChild(notePane);
-    }
+    cell.appendChild(ov);
   }
 
   function renderGrid(plNorm, preservedMapIn) {
@@ -705,7 +589,7 @@
       div.appendChild(num);
 
       div.addEventListener('click', (ev) => {
-        if (ev.target.closest('.whoami-nb-sheet') || ev.target.closest('.mf-slot__edit')) return;
+        if (ev.target.closest('.whoami-slot-word-micro') || ev.target.closest('.mf-slot__edit')) return;
         void maybeClaimSeat(i, occupant);
       });
 
@@ -803,8 +687,8 @@
     toast('Попробуй ещё раз — место заняли параллельно', 'error');
   }
 
-  /** Содержимое правого блокнота — зеркало полей на слотах + черновики мест */
-  function syncNotebookPanel(plNorm) {
+  /** Правый блокнот — только свободный текст (слова к игрокам только на слотах). */
+  function syncNotebookPanel(_plNorm) {
     const hint = $('notesHintLoggedOut');
     const list = $('notebookList');
     if (!hint || !list) return;
@@ -820,40 +704,20 @@
     list.classList.remove('hidden');
     list.innerHTML = '';
 
-    const maxP = seatMax();
-    const pl = Array.isArray(plNorm) ? plNorm : [];
+    const sheet = document.createElement('div');
+    sheet.className = 'whoami-nb-sheet whoami-nb-sheet--drawer whoami-journal-wrap';
 
-    const hPlayers = document.createElement('div');
-    hPlayers.className = 'whoami-nb-drawer-divider';
-    hPlayers.textContent = 'Для других за столом';
-    list.appendChild(hPlayers);
+    const ta = document.createElement('textarea');
+    ta.id = 'whoamiNotebookJournal';
+    ta.className = 'whoami-nb-lined whoami-journal-free';
+    ta.rows = 14;
+    ta.maxLength = 12000;
+    ta.autocomplete = 'off';
+    ta.value = loadJournal();
+    ta.addEventListener('input', () => saveJournal(ta.value));
 
-    const others = pl.filter((p) => p && String(p.id) !== String(myUserId));
-    if (others.length) others.forEach((p) => mountSecretWordForTarget(list, p, 'drawer'));
-    else {
-      const msg = document.createElement('p');
-      msg.className = 'whoami-notebook-empty';
-      msg.textContent =
-        'Пока нет других игроков — странички «кто ты?» появятся, когда они сядут на места.';
-      list.appendChild(msg);
-    }
-
-    const hScratch = document.createElement('div');
-    hScratch.className = 'whoami-nb-drawer-divider';
-    hScratch.textContent = 'Черновики по местам (можно даже если место свободно)';
-    list.appendChild(hScratch);
-
-    for (let i = 0; i < maxP; i++) {
-      const occ = playerAtSeat(pl, i);
-      if (!occ || String(occ.id) === String(myUserId)) {
-        mountScratchPad(
-          list,
-          i,
-          occ ? `Место ${i + 1} · ты (${occ.nickname || 'игрок'})` : `Место ${i + 1} · свободно`,
-          'drawer',
-        );
-      }
-    }
+    sheet.appendChild(ta);
+    list.appendChild(sheet);
   }
 
   function refreshNotebookChrome() {
@@ -973,6 +837,7 @@
       try {
         const { error } = await supabaseClient.from('lobbies').update({ status: 'ended' }).eq('code', lobbyCodeForDb());
         if (error) throw error;
+        clearWhoamiLobbyLocalDrafts();
         if (typeof clearActiveLobby === 'function') clearActiveLobby();
         window.location.href = 'game.html?g=whoami';
       } catch (e) {

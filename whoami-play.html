@@ -11,7 +11,7 @@
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/mafia.css?v=5" />
-  <link rel="stylesheet" href="css/whoami.css?v=3" />
+  <link rel="stylesheet" href="css/whoami.css?v=6" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="mafia-body">
@@ -52,23 +52,19 @@
     <div class="whoami-notebook__page">
       <div class="whoami-notebook__toolbar">
         <span class="whoami-notebook__title">Блокнот</span>
-        <span class="whoami-notebook__sub">Всё хранится только у тебя в браузере — как настоящая тетрадь справа</span>
         <button type="button" class="mf-top-btn mf-top-btn--narrow" id="btnNotebookClose">Закрыть</button>
       </div>
-      <div id="notesHintLoggedOut" class="whoami-notebook__guest hidden">Войди в аккаунт — включатся странички заметок на слотах и здесь.</div>
+      <div id="notesHintLoggedOut" class="whoami-notebook__guest hidden">Войди в аккаунт.</div>
       <div id="notebookList" class="whoami-notebook__list hidden"></div>
     </div>
   </section>
 
   <div class="mafia-workspace whoami-workspace" id="workspace">
     <main class="mafia-main whoami-main" id="whoamiMain">
-      <div class="whoami-intro" id="whoamiIntro">
-        <p class="whoami-intro__hint">Тапни свободное место чтобы сесть. <strong>Справа на карточке</strong> — лист блокнота: подсказка «кто ты?» для других игроков или просто черновик на пустом месте. Кнопка «📓 Блокнот» открывает те же строки большой страницей <strong>справа на экране</strong>.</p>
-      </div>
       <div class="mafia-grid whoami-grid" id="whoamiGrid"></div>
     </main>
 
-      <aside class="mf-sidebar mf-sidebar--host mf-sidebar--whoami-host hidden" id="hostSidebarWhoami">
+    <aside class="mf-sidebar mf-sidebar--host mf-sidebar--whoami-host hidden" id="hostSidebarWhoami">
       <div class="mf-sidebar__head">
         <span class="mf-sidebar__title">Создатель · комната</span>
         <button type="button" class="mf-sidebar__close" id="btnCloseHostWhoami">✕</button>
@@ -133,6 +129,6 @@
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-history.js?v=1"></script>
   <script src="js/stats.js?v=3"></script>
-  <script src="js/whoami-play.js?v=5"></script>
+  <script src="js/whoami-play.js?v=7"></script>
 </body>
 </html>

@@ -1,38 +1,49 @@
 /* Дополнения к странице whoami-play (базово mafia-body + mafia.css) */
 
 :root {
-  --whoami-note-w: clamp(102px, 28vw, 132px);
   --whoami-paper: rgba(246, 240, 220, 0.96);
-  --whoami-paper-muted: rgba(230, 220, 200, 0.55);
 }
 
+/* Рабочая зона: стол слева, панель создателя справа — не столбик «сверху-вниз» */
 .whoami-workspace.mafia-workspace {
-  display: flex;
-  flex-direction: column;
+  flex: 1 1 0%;
   min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* Панель «Кто я?» слегка отделяем по стилю; удобно рядом с кнопкой «Настройки» в топбаре */
+.mafia-workspace .mf-sidebar--whoami-host {
+  border-left-color: rgba(56, 189, 248, 0.18);
+  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.4);
+}
+
+.mafia-workspace .mf-sidebar--whoami-host:not(.hidden) {
+  flex-shrink: 0;
+}
+
+@media (min-width: 641px) {
+  .mafia-workspace .mf-sidebar--whoami-host:not(.hidden) {
+    animation: whoami-host-panel-in 0.22s ease-out;
+  }
+}
+
+@keyframes whoami-host-panel-in {
+  from {
+    opacity: 0.85;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .whoami-main {
   overflow: auto;
   flex: 1;
-}
-
-.whoami-intro {
-  padding: 0.75rem 1rem;
-  flex-shrink: 0;
-}
-
-.whoami-intro__hint {
-  margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: var(--mf-muted, #6b7870);
-  max-width: 52rem;
-}
-
-.whoami-intro__hint strong {
-  color: var(--mf-accent, #c8ff4e);
-  font-weight: 700;
 }
 
 .whoami-grid {
@@ -82,7 +93,7 @@
   pointer-events: auto;
 }
 
-/* Панель — выезд справа, обложка + «страницы» */
+/* Панель — выезд справа */
 .whoami-notebook {
   position: fixed;
   top: 0;
@@ -141,19 +152,14 @@
   font-size: 1rem;
   color: var(--mf-text);
   letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
 }
 
 .whoami-notebook__title::before {
   content: '📖 ';
   opacity: 0.85;
   font-weight: normal;
-}
-
-.whoami-notebook__sub {
-  font-size: 0.74rem;
-  color: var(--mf-muted);
-  flex: 1 1 200px;
-  min-width: 0;
 }
 
 .whoami-notebook__guest {
@@ -173,81 +179,57 @@
   min-height: 0;
 }
 
-/* Слот: медиазона + опционально колонка «страниц» справа */
-.whoami-slot-media-pane {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes {
-  padding: 0;
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes .whoami-slot-media-pane {
-  right: var(--whoami-note-w);
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes .whoami-slot-note-pane {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: var(--whoami-note-w);
-  z-index: 5;
+.whoami-journal-wrap {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: rgba(14, 16, 12, 0.96);
-  border-left: 1px solid rgba(200, 255, 78, 0.1);
+  min-height: 0;
 }
 
-.mf-slot--whoami-seat.mf-slot--whoami-notes .mf-slot__video {
+.whoami-journal-wrap textarea.whoami-journal-free {
+  flex: 1 1 auto;
+  min-height: min(72vh, 520px);
+}
+
+/* Одна узкая строка «слово» под ником на карточке места */
+.whoami-slot-word-micro {
+  margin: 1px 0 2px;
+  min-width: 0;
+}
+
+.whoami-slot-word-micro__inp {
   width: 100%;
-  height: 100%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes .mf-slot__ph {
-  height: 100%;
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes .mf-slot__ov {
-  left: 0;
-  right: auto;
-  width: calc(100% + 2px);
   max-width: 100%;
   box-sizing: border-box;
-}
-
-.mf-slot--whoami-seat.mf-slot--whoami-notes:hover .mf-slot__edit {
-  right: calc(var(--whoami-note-w) + 6px);
-}
-
-/* ── Общая «бумага» блокнота (слот или боковая панель) ─────────── */
-.whoami-nb-sheet {
-  flex: 1 1 auto;
-  min-height: 0;
   margin: 0;
-  padding: 6px 6px 6px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 249, 0.92);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.whoami-slot-word-micro__inp::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.whoami-slot-word-micro__inp:focus {
+  outline: none;
+  border-color: rgba(200, 255, 78, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Лист блокнота в выезжающей панели */
+.whoami-nb-sheet {
+  margin: 0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
-
-.whoami-nb-sheet--slot {
-  min-height: 72px;
-  background: linear-gradient(180deg, var(--whoami-paper) 0%, #efe8dc 88%);
-  overflow: auto;
-}
-
-.whoami-nb-sheet--slot .whoami-nb-lined {
-  min-height: 56px;
 }
 
 .whoami-nb-sheet--drawer {
@@ -257,66 +239,43 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 3px 4px 0 rgba(0, 0, 0, 0.08);
 }
 
-.whoami-nb-sheet::before {
-  content: '';
-  display: block;
-  height: 3px;
-  margin: -2px 2px 4px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06) 38%, transparent);
-  opacity: 0.7;
-}
-
 .whoami-nb-sheet__label {
   display: block;
-  font-size: 0.53rem;
+  font-size: 0.56rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: rgba(55, 50, 40, 0.55);
-  margin: 2px 2px 3px;
-  line-height: 1.25;
+  margin: 0 2px 4px;
 }
 
-.whoami-nb-sheet__hint {
-  font-size: 0.62rem;
-  color: rgba(55, 50, 40, 0.45);
-  margin: -1px 2px 3px;
-  line-height: 1.35;
-}
-
-.whoami-nb-sheet__area {
-  position: relative;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* Линованная страница */
 .whoami-nb-lined {
-  flex: 1 1 auto;
-  min-height: 48px;
-  max-height: 100%;
   width: 100%;
-  resize: none;
+  min-height: 72px;
+  resize: vertical;
   box-sizing: border-box;
   border: none;
   border-radius: 4px;
   margin: 0;
-  padding: 5px 5px;
+  padding: 7px 6px;
   font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 0.66rem;
-  line-height: 1.52;
+  font-size: 0.72rem;
+  line-height: 1.5;
   color: rgba(42, 36, 30, 0.92);
-  background-color: transparent;
+  background-color: rgba(255, 255, 255, 0.25);
   background-image: repeating-linear-gradient(
     transparent,
-    transparent calc(1.52em - 1px),
-    rgba(100, 90, 70, 0.15) calc(1.52em - 1px),
-    rgba(100, 90, 70, 0.15) 1.52em
+    transparent calc(1.5em - 1px),
+    rgba(100, 90, 70, 0.14) calc(1.5em - 1px),
+    rgba(100, 90, 70, 0.14) 1.5em
   );
   background-attachment: local;
+}
+
+.whoami-journal-free {
+  min-height: 180px;
+  font-family: inherit;
+  font-size: 0.78rem;
 }
 
 .whoami-nb-lined::placeholder {
@@ -326,75 +285,10 @@
 
 .whoami-nb-lined:focus {
   outline: none;
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(255, 255, 255, 0.45);
 }
 
-.whoami-nb-lined.whoami-nb-lined--private {
-  filter: grayscale(0.12);
-}
-
-.whoami-nb-lined.whoami-nb-lined--blurred:not(:focus) {
-  color: rgba(42, 36, 30, 0.18);
-  text-shadow: none;
-}
-
-.whoami-nb-sheet__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.whoami-nb-eye {
-  flex-shrink: 0;
-  width: 29px;
-  height: 29px;
-  margin-top: 2px;
-  padding: 0;
-  border-radius: 7px;
-  border: 1px solid rgba(90, 80, 60, 0.22);
-  background: rgba(255, 255, 255, 0.5);
-  color: rgba(55, 50, 40, 0.75);
-  font-size: 0.92rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.12s ease;
-}
-
-.whoami-nb-eye:hover {
-  background: rgba(255, 255, 255, 0.85);
-  transform: scale(1.06);
-}
-
-.whoami-nb-eye[aria-pressed='true'] {
-  background: rgba(200, 255, 78, 0.35);
-  border-color: rgba(120, 140, 60, 0.45);
-}
-
-.whoami-nb-drawer-divider {
-  font-size: 0.62rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 245, 0.38);
-  margin: 4px 0 2px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(200, 255, 78, 0.1);
-}
-
-.whoami-notebook-empty {
-  margin: 0;
-  font-size: 0.82rem;
-  color: var(--mf-muted);
-  line-height: 1.45;
-}
-
-.whoami-nb-sheet--drawer + .whoami-nb-sheet--drawer {
-  margin-top: 6px;
-}
-
-/* Панель хоста Whoami — карточки */
+/* Панель хоста Whoami */
 .mf-sidebar--whoami-host .whoami-host-body--fancy {
   display: flex;
   flex-direction: column;
@@ -525,19 +419,9 @@
 }
 
 .mf-slot--whoami-seat.mf-slot--whoami-busy-other {
-  opacity: 0.94;
+  opacity: 0.98;
 }
 
 .mf-slot--whoami-seat.mf-slot--whoami-highlight {
   outline: 2px solid rgba(200, 255, 78, 0.42);
-}
-
-@media (max-width: 520px) {
-  :root {
-    --whoami-note-w: clamp(92px, 26vw, 118px);
-  }
-
-  .whoami-nb-lined {
-    font-size: 0.62rem;
-  }
 }
