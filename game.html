@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-hlor-page="game">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Мафия, бункер и алиас: создай комнату или присоединись по коду." />
   <link rel="icon" href="img/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title id="pageTitle">Игра — HlorGames</title>
+  <script>
+    try {
+      window.__HLOR_GAME_QUERY__ = new URLSearchParams(location.search).get('g') || '';
+    } catch (e) {
+      window.__HLOR_GAME_QUERY__ = '';
+    }
+  </script>
+  <script src="js/site-config.js"></script>
+  <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/game.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
