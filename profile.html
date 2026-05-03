@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Профиль и статистика — HlorGames</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/profile-page.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="pf-page">
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__container">
+      <a href="index.html" class="navbar__logo">
+        <img src="img/logo.png" class="logo-icon" alt="HlorGames" />
+        <span class="logo-text">HLOR GAMES</span>
+      </a>
+      <nav class="navbar__links" id="navLinks">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="game.html?g=mafia" class="nav-link">Мафия</a>
+        <a href="index.html#games" class="nav-link">Игры</a>
+        <a href="profile.html" class="nav-link active">Профиль</a>
+      </nav>
+      <div class="navbar__auth" id="navAuth">
+        <button class="btn btn--ghost" id="btnLogin">Войти</button>
+        <button class="btn btn--primary" id="btnRegister">Регистрация</button>
+      </div>
+      <button class="navbar__burger" id="burgerBtn" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="pf-main">
+    <section class="pf-hero" aria-labelledby="pf-display-name">
+      <div id="pf-hero-avatar" class="pf-hero__avatar" aria-hidden="true">👋</div>
+      <div class="pf-hero__text">
+        <div class="pf-hero__badge">
+          <span class="pf-hero__badge-dot"></span>
+          Прогресс и достижения
+        </div>
+        <h1 id="pf-display-name" class="pf-hero__name">Твоя статистика</h1>
+        <p id="pf-email" class="pf-hero__email"></p>
+        <p id="pf-guest-note" class="pf-guest-note hidden">
+          Статистика хранится локально в этом браузере. Войди, чтобы сохранить ник и аватар аккаунта.
+        </p>
+        <div class="pf-actions">
+          <button type="button" class="btn btn--primary btn--lg" onclick="if(typeof currentUser!=='undefined'&&currentUser)openProfileModal();else openAuthModal('login')" id="pf-btn-settings">
+            Настройки профиля
+          </button>
+          <a href="game.html?g=mafia" class="btn btn--ghost btn--lg">К каталогу игр</a>
+        </div>
+      </div>
+    </section>
+
+    <p class="pf-note">
+      Цифры обновляются за столом «Мафия»: когда открыта комната, накапливается время, а если хост завершил лобби,
+      считаются партии и простая победа / поражение по составу живых игроков. Для экспериментальных ролей и нестандартного конца
+      возможны решения «спорная партия».
+    </p>
+
+    <section aria-labelledby="pf-stats-heading">
+      <h2 id="pf-stats-heading" class="pf-section-title" style="margin-bottom:14px;">
+        Основное
+      </h2>
+      <div class="pf-stats-grid">
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+            Выход на стол мафии
+          </div>
+          <div class="pf-stat-card__num" id="pf-stat-visits">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
+            Партии до конца
+          </div>
+          <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Победы</div>
+          <div class="pf-stat-card__num" id="pf-stat-wins" style="color:var(--green)">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Поражения</div>
+          <div class="pf-stat-card__num" id="pf-stat-losses" style="color:var(--red)">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Спорных</div>
+          <div class="pf-stat-card__num" id="pf-stat-undecided">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Время в партиях мафии
+          </div>
+          <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Винрейт</div>
+          <div class="pf-stat-card__num" id="pf-stat-winrate">—</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Сейчас серия побед</div>
+          <div class="pf-stat-card__num" id="pf-stat-streak">0</div>
+        </div>
+        <div class="pf-stat-card">
+          <div class="pf-stat-card__label">Рекорд серии</div>
+          <div class="pf-stat-card__num" id="pf-stat-best-streak">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="pf-achievements-heading">
+      <h2 id="pf-achievements-heading" class="pf-section-title">
+        Достижения
+        <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Разблокируй всё через игру</span>
+      </h2>
+      <div class="pf-achievements-track" aria-hidden="true">
+        <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
+      </div>
+      <div class="pf-achievements-grid" id="pf-achievements"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__container">
+      <div class="footer__logo">
+        <img src="img/logo.png" alt="" style="width:20px;height:20px;object-fit:contain;" />
+        HLOR GAMES
+      </div>
+      <span class="footer__copy">Made with ♥ by <strong>RESWAKE</strong></span>
+    </div>
+  </footer>
+
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal__close" id="modalClose">✕</button>
+      <div class="modal__tabs">
+        <button class="modal__tab active" id="tabLogin" onclick="switchTab('login')">Войти</button>
+        <button class="modal__tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
+      </div>
+      <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Войти</button>
+      </form>
+      <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Никнейм</label>
+          <input type="text" class="form-input" id="regNickname" placeholder="Крутой игрок" required minlength="2" maxlength="20" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Минимум 6 символов" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="form-error" id="registerError"></div>
+        <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal modal--profile">
+      <button class="modal__close" id="profileModalClose">✕</button>
+      <h3 class="modal__title">Настройки профиля</h3>
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-big" id="profileAvatarBig">?</div>
+        <div class="profile-avatar-actions">
+          <button class="profile-clear-btn" onclick="clearAvatar()">Сбросить</button>
+        </div>
+        <p class="profile-avatar-hint">Выбери аватар</p>
+        <div class="profile-emoji-grid" id="profileEmojiGrid"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Никнейм</label>
+        <input type="text" class="form-input" id="profileNickname" placeholder="Твой ник" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed" />
+      </div>
+      <div class="form-error" id="profileError"></div>
+      <div class="profile-success hidden" id="profileSuccess">✓ Сохранено!</div>
+      <button class="btn btn--primary btn--full" onclick="saveProfile()">Сохранить</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function showToast(msg, type) {
+      type = type || 'success';
+      var el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      clearTimeout(window.__pfToastT);
+      window.__pfToastT = setTimeout(function () { el.classList.remove('show'); }, 3000);
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/stats.js?v=1"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/lobby-indicator.js?v=7"></script>
+  <script src="js/lobby-seat-utils.js?v=5"></script>
+  <script src="js/profile-page.js"></script>
+</body>
+</html>

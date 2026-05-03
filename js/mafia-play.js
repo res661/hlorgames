@@ -505,6 +505,16 @@
         return;
       }
       if (data.status === 'ended') {
+        try {
+          if (typeof window.hlorStats?.recordLobbyEnd === 'function') {
+            window.hlorStats.recordLobbyEnd({
+              lobbyCode: LOBBY,
+              slots,
+              activeSlots,
+              mySlot,
+            });
+          }
+        } catch (_) {}
         showRoomEndedOverlay(
           'Комната закрыта хостом',
           'Лобби завершено для всех. Окно обновилось автоматически (Realtime).',
@@ -999,6 +1009,10 @@
   document.addEventListener('DOMContentLoaded', async () => {
     applySettings();
     await resolveLobbyAndUser();
+    if (LOBBY && typeof window.hlorStats?.recordTableOpen === 'function') {
+      window.hlorStats.recordTableOpen(LOBBY);
+      window.hlorStats.startPlayTimer();
+    }
     if (typeof window.hlorSyncSuperadminAdminUi === 'function') {
       void window.hlorSyncSuperadminAdminUi();
     }

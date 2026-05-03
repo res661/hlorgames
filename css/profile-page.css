@@ -1,0 +1,273 @@
+/* ── Страница профиля / статистики ───────────────────────────── */
+
+body.pf-page {
+  min-height: 100vh;
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(200, 255, 78, 0.08), transparent),
+    var(--bg);
+}
+
+.pf-main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: clamp(84px, 12vw, 120px) 20px 64px;
+}
+
+.pf-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) 1fr;
+  gap: 24px;
+  align-items: center;
+  padding: 28px 28px 28px clamp(22px, 4vw, 32px);
+  background: linear-gradient(135deg, rgba(14, 17, 14, 0.98) 0%, rgba(20, 25, 20, 0.92) 100%);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lime), var(--shadow);
+  margin-bottom: 26px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pf-hero::before {
+  content: '';
+  position: absolute;
+  inset: auto -30% -50% auto;
+  width: min(520px, 90vw);
+  height: min(520px, 90vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 255, 78, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.pf-hero__avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-lg);
+  background: rgba(200, 255, 78, 0.1);
+  border: 2px solid rgba(200, 255, 78, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.85rem;
+  font-weight: 800;
+  color: var(--lime);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.pf-hero__avatar[data-mode='emoji'] {
+  font-size: 3.2rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pf-hero__text {
+  z-index: 1;
+}
+
+.pf-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lime);
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.pf-hero__badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--lime);
+  box-shadow: 0 0 12px var(--lime);
+}
+
+.pf-hero__name {
+  font-size: clamp(1.65rem, 4vw, 2.05rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.pf-hero__email {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  max-width: 56ch;
+  line-height: 1.5;
+}
+
+.pf-guest-note {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(200, 255, 78, 0.06);
+  border: 1px solid rgba(200, 255, 78, 0.12);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 52ch;
+}
+
+.pf-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.pf-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 16px;
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.pf-stat-card:hover {
+  border-color: rgba(200, 255, 78, 0.2);
+  transform: translateY(-2px);
+}
+
+.pf-stat-card__label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pf-stat-card__label svg {
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.pf-stat-card__num {
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-stat-card--wide {
+  grid-column: span 2;
+}
+
+.pf-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 22px;
+  padding-left: 2px;
+  max-width: 68ch;
+}
+
+.pf-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pf-achievements-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.pf-achievements-track__bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--lime-dim), var(--lime));
+  transition: width 0.4s ease;
+}
+
+.pf-achievements-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pf-achievement {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.15);
+  transition: background 0.2s;
+}
+
+.pf-achievement__icon {
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.pf-achievement__meta {
+  flex: 1;
+}
+
+.pf-achievement__title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.pf-achievement__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.pf-achievement--got {
+  border-color: rgba(200, 255, 78, 0.22);
+  background: rgba(200, 255, 78, 0.04);
+}
+
+.pf-achievement--locked {
+  opacity: 0.55;
+}
+
+.pf-lock {
+  font-size: 0.85rem;
+}
+
+.pf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@media (max-width: 760px) {
+  .pf-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .pf-hero__avatar {
+    margin: 0 auto;
+  }
+
+  .pf-hero__email,
+  .pf-guest-note {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .pf-stat-card--wide {
+    grid-column: span 1;
+  }
+}

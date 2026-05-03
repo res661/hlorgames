@@ -216,9 +216,13 @@ function onUserSignedIn(user) {
         </div>
       </div>
       <div class="user-dropdown__divider"></div>
+      <a href="profile.html" class="user-dropdown__item" onclick="event.stopPropagation(); document.getElementById('userDropdown')?.classList.add('hidden');">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a2 2 0 012-2h14a2 2 0 012 2v18l-7-4-7 4"/><path d="M8 7h8M8 11h8"/></svg>
+        Профиль и статистика
+      </a>
       <button class="user-dropdown__item" onclick="openProfileModal()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Настройки профиля
+        Настройки (ник, аватар)
       </button>
       <!-- Админ-панель: только superadmin в БД (см. shared.js hlorSyncSuperadminAdminUi) -->
       <div class="user-dropdown__divider"></div>
