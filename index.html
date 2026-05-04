@@ -11,6 +11,7 @@
   <script src="js/seo-meta.js"></script>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/home.css?v=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -72,18 +73,18 @@
       </div>
 
       <div class="hero__content">
-        <h1 class="hero__title">
+        <h1 class="hero__title home-hero-in">
           Игры для<br/>
           <span class="glow">компании</span><br/>
           <span style="color:var(--text-muted);font-size:0.6em;font-weight:700;letter-spacing:-0.3px;">прямо в браузере</span>
         </h1>
 
-        <p class="hero__subtitle">
+        <p class="hero__subtitle home-hero-in">
           Мафия, Бункер, Алиас — создай лобби за несколько секунд
           и играй с друзьями онлайн. Никакой установки.
         </p>
 
-        <div class="hero__actions">
+        <div class="hero__actions home-hero-in">
           <a href="#games" class="btn btn--primary btn--lg">
             Начать играть &nbsp;→
           </a>
@@ -92,7 +93,7 @@
       </div>
 
       <!-- Featured Mafia -->
-      <a href="play-mafia.html" class="hero__featured">
+      <a href="play-mafia.html" class="hero__featured home-hero-in">
         <div class="hero__featured-left">
           <span class="hero__featured-label">Доступно сейчас</span>
           <div class="hero__featured-title">
@@ -134,14 +135,14 @@
 
     <!-- ===== ИГРЫ ===== -->
     <section class="games" id="games">
-      <div class="section-header">
+      <div class="section-header home-reveal">
         <span class="section-label">Каталог</span>
         <h2 class="section-title">Выбери игру</h2>
         <p class="section-subtitle">Для каждой компании найдётся что-то своё</p>
       </div>
       <div class="games__grid">
 
-        <div class="game-card" data-game="mafia">
+        <div class="game-card home-reveal" data-game="mafia">
           <div class="game-card__header">
             <span class="game-card__emoji game-icon game-icon--mafia">
               <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
@@ -162,7 +163,7 @@
           <a href="play-mafia.html" class="btn btn--primary game-card__btn">Играть сейчас</a>
         </div>
 
-        <div class="game-card game-card--soon" data-game="bunker">
+        <div class="game-card game-card--soon home-reveal" data-game="bunker">
           <div class="game-card__header">
             <span class="game-card__emoji game-icon game-icon--bunker">
               <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
@@ -184,7 +185,7 @@
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
 
-        <div class="game-card game-card--soon" data-game="alias">
+        <div class="game-card game-card--soon home-reveal" data-game="alias">
           <div class="game-card__header">
             <span class="game-card__emoji game-icon game-icon--alias">
               <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
@@ -208,7 +209,7 @@
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
 
-        <div class="game-card" data-game="whoami">
+        <div class="game-card home-reveal" data-game="whoami">
           <div class="game-card__header">
             <span class="game-card__emoji game-icon" style="font-size:1.75rem">❔</span>
             <div class="game-card__status game-card__status--available">Доступна</div>
@@ -227,14 +228,14 @@
 
     <!-- ===== КАК ИГРАТЬ ===== -->
     <section class="how-it-works" id="how-it-works">
-      <div class="section-header">
+      <div class="section-header home-reveal">
         <span class="section-label">Инструкция</span>
         <h2 class="section-title">Как начать играть</h2>
         <p class="section-subtitle">Три шага — и ты в игре</p>
       </div>
       <div class="how-cards">
 
-        <div class="how-card">
+        <div class="how-card home-reveal">
           <div class="how-card__bg-num">01</div>
           <div class="how-card__icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M8 12h2m1-1v2M16 11h2M17 12h0" stroke-width="2"/></svg>
@@ -244,7 +245,7 @@
           <p class="how-card__desc">Мафия, Бункер или Алиас — выбери что нравится компании и нажми «Играть»</p>
         </div>
 
-        <div class="how-card">
+        <div class="how-card home-reveal">
           <div class="how-card__bg-num">02</div>
           <div class="how-card__icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -254,7 +255,7 @@
           <p class="how-card__desc">Создай лобби и поделись кодом или ссылкой — друзья заходят в один клик</p>
         </div>
 
-        <div class="how-card">
+        <div class="how-card home-reveal">
           <div class="how-card__bg-num">03</div>
           <div class="how-card__icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>

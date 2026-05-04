@@ -1677,6 +1677,618 @@ body.pf-page {
     0 18px 50px rgba(0, 0, 0, 0.5);
 }
 
+@keyframes pfSilverShimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pfOceanFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 55%;
+  }
+}
+
+@keyframes pfNovaPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--lime) 38%, transparent),
+      0 0 38px color-mix(in srgb, var(--lime) 18%, transparent),
+      0 0 72px color-mix(in srgb, var(--lime-dim) 12%, transparent),
+      0 16px 44px rgba(0, 0, 0, 0.52);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--lime) 55%, transparent),
+      0 0 56px color-mix(in srgb, var(--lime) 28%, transparent),
+      0 0 96px color-mix(in srgb, var(--lime-dim) 18%, transparent),
+      0 18px 48px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@keyframes pfDualSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pfCelestialDrift {
+  0%,
+  100% {
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  50% {
+    filter: hue-rotate(18deg) saturate(1.15);
+  }
+}
+
+.pf-avatar-wrap--frame-silver_lane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    125deg,
+    #e4e6ec,
+    color-mix(in srgb, var(--lime) 35%, #c8ccd8),
+    #f8f9fc,
+    #d4d8e2,
+    color-mix(in srgb, var(--lime) 28%, #dfe3eb)
+  );
+  background-size: 240% 240%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+  animation: pfSilverShimmer 7s ease-in-out infinite;
+}
+
+.pf-avatar-wrap--frame-silver_lane {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    var(--shadow-prominent);
+}
+
+.pf-avatar-wrap--frame-rose_glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    145deg,
+    rgba(251, 207, 232, 0.95),
+    rgba(244, 114, 182, 0.45),
+    color-mix(in srgb, var(--lime) 22%, rgba(167, 139, 250, 0.35)),
+    rgba(251, 207, 232, 0.55)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-rose_glass {
+  padding: 6px;
+  box-shadow:
+    0 0 34px rgba(244, 114, 182, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+.pf-avatar-wrap--frame-ocean_pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    110deg,
+    #06b6d4,
+    color-mix(in srgb, var(--lime) 40%, #0891b2),
+    #22d3ee,
+    #0ea5e9,
+    #06b6d4
+  );
+  background-size: 220% 220%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+  animation: pfOceanFlow 5.5s linear infinite;
+}
+
+.pf-avatar-wrap--frame-ocean_pulse {
+  padding: 6px;
+  box-shadow:
+    0 0 40px rgba(6, 182, 212, 0.14),
+    0 12px 36px rgba(0, 0, 0, 0.42);
+}
+
+.pf-avatar-wrap--frame-void_prism::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(76, 29, 149, 0.75),
+    rgba(17, 24, 39, 0.9),
+    color-mix(in srgb, var(--lime) 32%, rgba(126, 34, 206, 0.55)),
+    rgba(30, 27, 75, 0.85),
+    rgba(76, 29, 149, 0.65)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-void_prism {
+  padding: 6px;
+  box-shadow:
+    0 0 48px rgba(139, 92, 246, 0.14),
+    0 0 0 1px rgba(167, 139, 250, 0.2) inset,
+    0 16px 44px rgba(0, 0, 0, 0.55);
+}
+
+.pf-avatar-wrap--frame-nova_ring {
+  padding: 6px;
+  animation: pfNovaPulse 3.2s ease-in-out infinite;
+}
+
+.pf-avatar-wrap--frame-celestial::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 3px;
+  background: linear-gradient(
+    140deg,
+    rgba(254, 249, 195, 0.45),
+    color-mix(in srgb, var(--lime) 45%, rgba(191, 219, 254, 0.35)),
+    rgba(224, 231, 255, 0.28),
+    color-mix(in srgb, var(--lime-dim) 35%, rgba(196, 181, 253, 0.4)),
+    rgba(254, 249, 195, 0.35)
+  );
+  background-size: 200% 200%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+  animation:
+    pfSilverShimmer 12s ease-in-out infinite,
+    pfCelestialDrift 10s ease-in-out infinite;
+}
+
+.pf-avatar-wrap--frame-celestial {
+  padding: 7px;
+  box-shadow:
+    0 0 52px color-mix(in srgb, var(--lime) 14%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.48);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-avatar-wrap--frame-silver_lane::before,
+  .pf-avatar-wrap--frame-ocean_pulse::before,
+  .pf-avatar-wrap--frame-celestial::before {
+    animation: none;
+  }
+
+  .pf-avatar-wrap--frame-nova_ring {
+    animation: none;
+  }
+
+  .pf-avatar-wrap--frame-dual_balance::before {
+    animation: none;
+  }
+}
+
+.pf-avatar-wrap--frame-welcome_trim {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lime) 28%, transparent),
+    0 0 32px color-mix(in srgb, var(--lime) 10%, transparent),
+    0 10px 28px rgba(0, 0, 0, 0.38);
+}
+
+.pf-avatar-wrap--frame-hearth_trim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    160deg,
+    rgba(251, 191, 36, 0.55),
+    rgba(245, 158, 11, 0.25),
+    rgba(254, 215, 170, 0.35),
+    rgba(234, 179, 8, 0.4)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-hearth_trim {
+  padding: 6px;
+  box-shadow:
+    0 0 36px rgba(245, 158, 11, 0.1),
+    inset 0 0 24px rgba(251, 191, 36, 0.05);
+}
+
+.pf-avatar-wrap--frame-mafia_sigil {
+  padding: 6px;
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.45),
+    0 0 0 3px rgba(127, 29, 29, 0.35) inset,
+    0 0 44px rgba(220, 38, 38, 0.12),
+    0 14px 40px rgba(0, 0, 0, 0.52);
+}
+
+.pf-avatar-wrap--frame-mirror_trim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    205deg,
+    rgba(125, 211, 252, 0.65),
+    rgba(139, 92, 246, 0.35),
+    color-mix(in srgb, var(--lime) 25%, rgba(59, 130, 246, 0.4)),
+    rgba(165, 243, 252, 0.35)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-mirror_trim {
+  padding: 6px;
+  box-shadow:
+    0 0 36px rgba(56, 189, 248, 0.12),
+    0 12px 34px rgba(0, 0, 0, 0.44);
+}
+
+.pf-avatar-wrap--frame-fivefold_seal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 40deg,
+    color-mix(in srgb, var(--lime) 60%, #34d399),
+    rgba(52, 211, 153, 0.35),
+    color-mix(in srgb, var(--lime) 45%, #6366f1),
+    rgba(99, 102, 241, 0.35),
+    color-mix(in srgb, var(--lime) 55%, #fbbf24),
+    color-mix(in srgb, var(--lime) 60%, #34d399)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-fivefold_seal {
+  padding: 6px;
+  box-shadow: var(--shadow-prominent-lg);
+}
+
+.pf-avatar-wrap--frame-stripe_command {
+  padding: 6px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    repeating-linear-gradient(
+        -35deg,
+        rgba(234, 179, 8, 0.55) 0 4px,
+        rgba(30, 41, 59, 0.65) 4px 8px,
+        color-mix(in srgb, var(--lime) 40%, rgba(234, 179, 8, 0.35)) 8px 11px
+      )
+      border-box;
+  box-shadow:
+    0 0 28px rgba(234, 179, 8, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.48);
+}
+
+.pf-avatar-wrap--frame-sunset_hour::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    125deg,
+    rgba(251, 146, 60, 0.65),
+    rgba(249, 115, 22, 0.45),
+    rgba(244, 63, 94, 0.35),
+    rgba(253, 224, 71, 0.35)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-sunset_hour {
+  padding: 6px;
+  box-shadow:
+    0 0 40px rgba(249, 115, 22, 0.1),
+    0 14px 38px rgba(0, 0, 0, 0.48);
+}
+
+.pf-avatar-wrap--frame-cobble_trim {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.35),
+    0 0 0 3px rgba(71, 85, 105, 0.25) inset,
+    0 10px 28px rgba(0, 0, 0, 0.42);
+}
+
+.pf-avatar-wrap--frame-marble_gate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 252, 245, 0.92),
+    rgba(226, 232, 240, 0.72),
+    rgba(254, 243, 199, 0.55),
+    rgba(252, 211, 77, 0.22),
+    rgba(241, 245, 249, 0.88),
+    rgba(180, 83, 9, 0.14),
+    rgba(255, 251, 235, 0.85)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-marble_gate {
+  padding: 7px;
+  box-shadow:
+    0 0 36px rgba(253, 224, 71, 0.08),
+    0 16px 42px rgba(0, 0, 0, 0.46);
+}
+
+.pf-avatar-wrap--frame-mid_lane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    #b45309,
+    #d97706,
+    color-mix(in srgb, var(--lime) 22%, #92400e),
+    #ea580c,
+    #b45309
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-mid_lane {
+  padding: 6px;
+  box-shadow:
+    0 0 32px rgba(217, 119, 6, 0.12),
+    0 12px 34px rgba(0, 0, 0, 0.45);
+}
+
+.pf-avatar-wrap--frame-night_sovereign {
+  padding: 7px;
+  box-shadow:
+    0 0 0 2px rgba(127, 29, 29, 0.55),
+    0 0 52px rgba(220, 38, 38, 0.14),
+    0 0 24px rgba(0, 0, 0, 0.65) inset,
+    0 18px 48px rgba(0, 0, 0, 0.58);
+}
+
+.pf-avatar-wrap--frame-riddle_crown::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    175deg,
+    rgba(167, 139, 250, 0.65),
+    rgba(88, 28, 135, 0.55),
+    color-mix(in srgb, var(--lime) 18%, rgba(192, 132, 252, 0.45)),
+    rgba(109, 40, 217, 0.5)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-riddle_crown {
+  padding: 6px;
+  box-shadow:
+    0 0 44px rgba(167, 139, 250, 0.14),
+    0 16px 42px rgba(0, 0, 0, 0.52);
+}
+
+.pf-avatar-wrap--frame-dual_balance::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from 210deg,
+    color-mix(in srgb, var(--lime) 55%, #22d3ee),
+    rgba(147, 51, 234, 0.75),
+    color-mix(in srgb, var(--lime) 50%, #fb7185),
+    rgba(52, 211, 153, 0.65),
+    color-mix(in srgb, var(--lime) 55%, #22d3ee)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+  animation: pfDualSpin 12s linear infinite;
+}
+
+.pf-avatar-wrap--frame-dual_balance {
+  padding: 7px;
+  box-shadow:
+    0 0 46px color-mix(in srgb, var(--lime) 12%, transparent),
+    0 14px 40px rgba(0, 0, 0, 0.48);
+}
+
+.pf-avatar-wrap--frame-steel_resolve::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    145deg,
+    #64748b,
+    #334155,
+    color-mix(in srgb, var(--lime) 25%, #475569),
+    #94a3b8,
+    #475569
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-steel_resolve {
+  padding: 6px;
+  box-shadow:
+    0 0 28px rgba(148, 163, 184, 0.14),
+    0 12px 34px rgba(0, 0, 0, 0.48);
+}
+
+.pf-avatar-wrap--frame-titan_forge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(251, 146, 60, 0.85),
+    rgba(234, 88, 12, 0.65),
+    rgba(38, 38, 38, 0.9),
+    rgba(249, 115, 22, 0.55),
+    color-mix(in srgb, var(--lime) 35%, rgba(251, 191, 36, 0.45))
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-titan_forge {
+  padding: 7px;
+  box-shadow:
+    0 0 56px rgba(249, 115, 22, 0.18),
+    0 0 0 1px rgba(251, 191, 36, 0.25) inset,
+    0 20px 52px rgba(0, 0, 0, 0.58);
+}
+
 @media (max-width: 760px) {
   .pf-hero,
   .pf-hero.pf-hero--panel {

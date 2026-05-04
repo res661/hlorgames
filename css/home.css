@@ -1,0 +1,133 @@
+/**
+ * Главная страница — дополнительные анимации (подключается только с index.html).
+ */
+
+@keyframes hlorHeroGlow {
+  0% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  100% {
+    opacity: 0.88;
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes hlorHomeRise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hlorSparkleTwinkle {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.28;
+  }
+  100% {
+    transform: scale(1.35) rotate(28deg);
+    opacity: 0.55;
+  }
+}
+
+html[data-hlor-page='home'] .hero::before {
+  animation: hlorHeroGlow 14s ease-in-out infinite alternate;
+}
+
+html[data-hlor-page='home'] .sparkle svg {
+  animation: hlorSparkleTwinkle 3.5s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-hero-in {
+    opacity: 0;
+    animation: hlorHomeRise 0.88s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .hero__content > .home-hero-in:nth-child(1) {
+    animation-delay: 0.06s;
+  }
+
+  .hero__content > .home-hero-in:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+
+  .hero__content > .home-hero-in:nth-child(3) {
+    animation-delay: 0.26s;
+  }
+
+  .hero > .hero__featured.home-hero-in {
+    animation-delay: 0.42s;
+    animation-duration: 1s;
+  }
+
+  .home-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--home-reveal-delay, 0s);
+  }
+
+  .home-reveal--in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .games__grid .home-reveal:nth-child(1) {
+    --home-reveal-delay: 0.04s;
+  }
+
+  .games__grid .home-reveal:nth-child(2) {
+    --home-reveal-delay: 0.1s;
+  }
+
+  .games__grid .home-reveal:nth-child(3) {
+    --home-reveal-delay: 0.16s;
+  }
+
+  .games__grid .home-reveal:nth-child(4) {
+    --home-reveal-delay: 0.22s;
+  }
+
+  .how-cards .home-reveal:nth-child(1) {
+    --home-reveal-delay: 0.06s;
+  }
+
+  .how-cards .home-reveal:nth-child(2) {
+    --home-reveal-delay: 0.14s;
+  }
+
+  .how-cards .home-reveal:nth-child(3) {
+    --home-reveal-delay: 0.22s;
+  }
+
+  .games .section-header.home-reveal,
+  .how-it-works .section-header.home-reveal {
+    --home-reveal-delay: 0.02s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-hlor-page='home'] .hero::before {
+    animation: none;
+  }
+
+  html[data-hlor-page='home'] .sparkle svg {
+    animation: sparkleAnim 3s ease-in-out infinite alternate;
+  }
+
+  .home-hero-in,
+  .home-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}

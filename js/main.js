@@ -47,7 +47,11 @@ function initNavbar() {
 // ─── HERO КНОПКИ ─────────────────────────────────────────────────────────────
 
 function initHeroButtons() {
-  document.getElementById('heroCreateLobby').addEventListener('click', () => {
+  const createBtn = document.getElementById('heroCreateLobby');
+  const joinBtn = document.getElementById('heroJoinLobby');
+  if (!createBtn || !joinBtn) return;
+
+  createBtn.addEventListener('click', () => {
     if (!currentUser) {
       openAuthModal('register');
       showToast('Сначала войди или зарегистрируйся', 'error');
@@ -56,9 +60,31 @@ function initHeroButtons() {
     openLobbyModal('create');
   });
 
-  document.getElementById('heroJoinLobby').addEventListener('click', () => {
+  joinBtn.addEventListener('click', () => {
     openLobbyModal('join');
   });
+}
+
+/** Главная: плавное появление блоков при скролле */
+function initHomeReveal() {
+  if (document.documentElement.dataset.hlorPage !== 'home') return;
+  const nodes = document.querySelectorAll('.home-reveal');
+  if (!nodes.length) return;
+  if (!('IntersectionObserver' in window)) {
+    nodes.forEach((el) => el.classList.add('home-reveal--in'));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('home-reveal--in');
+        io.unobserve(en.target);
+      });
+    },
+    { rootMargin: '0px 0px -6% 0px', threshold: 0.06 },
+  );
+  nodes.forEach((el) => io.observe(el));
 }
 
 // ─── ЛОББИ ───────────────────────────────────────────────────────────────────
@@ -347,6 +373,7 @@ async function loadStats() {
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
+  initHomeReveal();
   // Ждём пока supabase инициализируется, затем грузим
   function tryLoadStats(attempts) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -357,8 +384,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setTimeout(() => tryLoadStats(8), 300);
 
-  document.getElementById('lobbyModalClose').addEventListener('click', closeLobbyModal);
-  document.getElementById('lobbyModal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeLobbyModal();
-  });
+  const lobbyClose = document.getElementById('lobbyModalClose');
+  const lobbyModal = document.getElementById('lobbyModal');
+  if (lobbyClose && lobbyModal) {
+    lobbyClose.addEventListener('click', closeLobbyModal);
+    lobbyModal.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeLobbyModal();
+    });
+  }
 });
