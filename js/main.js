@@ -104,6 +104,96 @@ function initHomeHeroGameRotate() {
   }, 10000);
 }
 
+/** Главная: карточка справа в герое — смена доступных игр каждые 5–10 с */
+function initHomeHeroFeaturedRotate() {
+  if (document.documentElement.dataset.hlorPage !== 'home') return;
+  const featuredCard = document.getElementById('heroFeaturedCard');
+  const left = document.getElementById('heroFeaturedLeft');
+  const emojiWrap = document.getElementById('heroFeaturedEmojiWrap');
+  const titleEl = document.getElementById('heroFeaturedTitle');
+  const descEl = document.getElementById('heroFeaturedDesc');
+  const metaEl = document.getElementById('heroFeaturedMeta');
+  if (!featuredCard || !left || !emojiWrap || !titleEl || !descEl || !metaEl) return;
+
+  const cards = document.querySelectorAll('#games .game-card:not(.game-card--soon)');
+  const slides = [];
+  cards.forEach((card) => {
+    const title = card.querySelector('.game-card__title')?.textContent?.trim();
+    const desc = card.querySelector('.game-card__desc')?.textContent?.trim();
+    const meta = card.querySelector('.game-card__info');
+    const link = card.querySelector('a.game-card__btn[href]');
+    const emoji = card.querySelector('.game-card__emoji');
+    if (!title || !desc || !meta || !link || !emoji) return;
+    const href = link.getAttribute('href');
+    if (!href) return;
+    let emojiClass = emoji.className || '';
+    emojiClass = emojiClass.replace(/\bgame-card__emoji\b/g, '').replace(/\s+/g, ' ').trim();
+    slides.push({
+      title,
+      desc,
+      metaHtml: meta.innerHTML,
+      href,
+      emojiClass,
+      emojiHtml: emoji.innerHTML,
+    });
+  });
+
+  if (!slides.length) return;
+
+  const reducedMotion =
+    typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let idx = 0;
+  let timerId = null;
+
+  function apply(i) {
+    const s = slides[i];
+    featuredCard.setAttribute('href', s.href);
+    featuredCard.setAttribute('aria-label', `${s.title} — играть сейчас`);
+    titleEl.textContent = s.title;
+    descEl.textContent = s.desc;
+    metaEl.innerHTML = s.metaHtml;
+    emojiWrap.className = ['hero__featured-emoji', s.emojiClass].filter(Boolean).join(' ');
+    emojiWrap.innerHTML = s.emojiHtml;
+  }
+
+  function fadeApply(i) {
+    if (reducedMotion) {
+      apply(i);
+      return;
+    }
+    left.style.opacity = '0.5';
+    window.setTimeout(() => {
+      apply(i);
+      left.style.opacity = '1';
+    }, 170);
+  }
+
+  apply(0);
+
+  if (slides.length < 2) return;
+
+  function schedule() {
+    const ms = reducedMotion
+      ? 10000
+      : 5000 + Math.floor(Math.random() * 5001);
+    timerId = window.setTimeout(() => {
+      idx = (idx + 1) % slides.length;
+      fadeApply(idx);
+      schedule();
+    }, ms);
+  }
+  schedule();
+
+  window.addEventListener(
+    'pagehide',
+    () => {
+      if (timerId != null) window.clearTimeout(timerId);
+    },
+    { once: false },
+  );
+}
+
 /** Главная: плавное появление блоков при скролле */
 function initHomeReveal() {
   if (document.documentElement.dataset.hlorPage !== 'home') return;
@@ -414,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroButtons();
   initHomeReveal();
   initHomeHeroGameRotate();
+  initHomeHeroFeaturedRotate();
   // Ждём пока supabase инициализируется, затем грузим
   function tryLoadStats(attempts) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {

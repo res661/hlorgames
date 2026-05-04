@@ -60,7 +60,9 @@ html[data-hlor-page='home'] .hero__featured {
 html[data-hlor-page='home'] .hero__featured-left {
   flex: 1;
   min-width: 0;
+  transition: opacity 0.24s ease;
 }
+
 
 html[data-hlor-page='home'] .hero__featured-desc {
   max-width: none;
