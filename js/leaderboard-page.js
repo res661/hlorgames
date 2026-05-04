@@ -193,6 +193,19 @@
     setMeta();
   }
 
+  function leaderboardRestUnreachable(err) {
+    if (!err) return false;
+    const raw = `${err.code || ''} ${err.message || ''} ${err.details || ''}`.toLowerCase();
+    const status = Number(err.status || err.statusCode || 0);
+    if (status === 404 || status === 406) return true;
+    return (
+      /schema\s*cache/.test(raw) ||
+      /could not find/.test(raw) ||
+      /\b404\b/.test(raw) ||
+      /pgrst205|pgrst204|42p01/i.test(raw)
+    );
+  }
+
   async function fetchBoard() {
     const errEl = document.getElementById('lb-error');
     const loading = document.getElementById('lb-loading');
@@ -210,13 +223,26 @@
     }
 
     try {
-      const { data, error } = await supabaseClient
+      const first = await supabaseClient
         .from('leaderboard_public')
         .select(
           'user_id,nickname,games_mafia,games_whoami,games_other,completed_total,visits_total,play_seconds_estimate,refreshed_at',
         )
         .order('completed_total', { ascending: false })
         .limit(500);
+
+      let data = first.data;
+      let error = first.error;
+
+      if (error && leaderboardRestUnreachable(error)) {
+        const fb = await supabaseClient.rpc('hlor_leaderboard_list', {
+          p_limit: 500,
+        });
+        if (!fb.error) {
+          error = null;
+          data = fb.data;
+        }
+      }
 
       if (error) throw error;
 
@@ -244,12 +270,28 @@
     } catch (e) {
       console.warn('[leaderboard]', e);
       if (errEl) {
-        const msg = String(e.message || e);
+        const msg = String((e && e.message) || e);
+        const unreachable = leaderboardRestUnreachable(e);
+
+        let hint =
+          'Если таблицы ещё нет — выполни скрипт <code style="color:inherit">supabase/leaderboard_schema.sql</code>, затем ' +
+          '<code style="color:inherit">select public.leaderboard_refresh_stats();</code>';
+
+        if (
+          /routine .*does not exist|function .*does not exist|hlor_leaderboard_list/i.test(msg) ||
+          /could not find the function/i.test(msg)
+        ) {
+          hint =
+            'Не создана функция <code style="color:inherit">hlor_leaderboard_list</code>. Выполни <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code> (или заново полный <code style="color:inherit">leaderboard_schema.sql</code>), затем NOTIFY.';
+        } else if (unreachable || /schema\s*cache|could not find (the )?(relation|table)/i.test(msg)) {
+          hint =
+            '1) <strong>Table Editor</strong> → <code style="color:inherit">leaderboard_public</code> → включи доступ к <strong>Data API</strong>, если там выключен / бейдж «Not exposed». ' +
+            '2) Запусти <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code> и <code style="color:inherit">NOTIFY pgrst, \'reload schema\';</code>. ' +
+            '3) Обнови страницу топа — клиент уже пробует и таблицу, и функцию-костыль <code style="color:inherit">hlor_leaderboard_list</code>.';
+        }
+
         errEl.innerHTML =
-          esc(msg) +
-          '<br/><br/><span style="color:var(--text-muted)">' +
-          'Если таблицы ещё нет — вставь SQL из <code style="color:inherit">supabase/leaderboard_schema.sql</code> и выполни ' +
-          '<code style="color:inherit">select public.leaderboard_refresh_stats();</code></span>';
+          esc(msg) + '<br/><br/><span style="color:var(--text-muted)">' + hint + '</span>';
         errEl.classList.remove('hidden');
       }
       document.getElementById('lb-board')?.classList.add('hidden');

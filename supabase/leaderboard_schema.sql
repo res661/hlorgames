@@ -1,7 +1,12 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- HLOR — публичный топ игроков (агрегация из user_lobby_history)
 -- Выполни целиком в Supabase → SQL Editor (одним скриптом).
--- После первого создания выполни хотя бы раз: SELECT public.leaderboard_refresh_stats();
+-- После запуска: SELECT public.leaderboard_refresh_stats();
+--
+-- Если в браузере 404 или «schema cache»:
+-- 1) Table Editor → таблица leaderboard_public → включи доступ к Data API (бейдж
+--    «Not exposed» / настройки таблицы — «Expose to Data API»), если есть.
+-- 2) Выполни NOTIFY внизу файла или supabase/pgrst_reload_schema.sql
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- Опционально: участие в топе (профиль уже есть у проекта; колонку добавляем мягко)
@@ -37,7 +42,26 @@ CREATE POLICY leaderboard_public_select_all
   ON public.leaderboard_public FOR SELECT TO anon, authenticated
   USING (true);
 
-GRANT SELECT ON public.leaderboard_public TO anon, authenticated;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT SELECT ON public.leaderboard_public TO anon, authenticated, service_role;
+
+-- Если прямой GET /leaderboard_public даёт 404, клиент читает топ через этот RPC
+CREATE OR REPLACE FUNCTION public.hlor_leaderboard_list(p_limit int DEFAULT 500)
+RETURNS SETOF public.leaderboard_public
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT *
+  FROM public.leaderboard_public
+  ORDER BY completed_total DESC
+  LIMIT LEAST(GREATEST(p_limit, 1), 500);
+$$;
+
+REVOKE ALL ON FUNCTION public.hlor_leaderboard_list(integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.hlor_leaderboard_list(integer) TO anon, authenticated, service_role;
 
 -- Пересборка: читает всю историю под правами владельца функции (SECURITY DEFINER).
 -- Отображаемое имя: любая из колонок профиля (nickname → username → display_name → full_name),
@@ -135,3 +159,6 @@ GRANT EXECUTE ON FUNCTION public.leaderboard_refresh_stats() TO service_role;
 
 -- Расписание (если включён pg_cron): раз в 30 минут — раскомментируй после create extension pg_cron
 -- SELECT cron.schedule('hlor_leaderboard_refresh', '*/30 * * * *', 'SELECT public.leaderboard_refresh_stats()');
+
+-- Обновить кэш схемы PostgREST (иначе API не видит новую таблицу несколько секунд/минут)
+NOTIFY pgrst, 'reload schema';

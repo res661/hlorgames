@@ -1,6 +1,7 @@
 -- Удалить из БД только то, что относится к топу (leaderboard v2 — leaderboard_public).
 -- Выполни в Supabase → SQL Editor. Остальные таблицы (lobbies, profiles, user_lobby_history) не трогаются.
 
+DROP FUNCTION IF EXISTS public.hlor_leaderboard_list(integer);
 DROP FUNCTION IF EXISTS public.leaderboard_refresh_stats();
 
 DROP TABLE IF EXISTS public.leaderboard_public CASCADE;
