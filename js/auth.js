@@ -138,7 +138,7 @@ async function handleRegister(e) {
       // Игнорируем — профиль уже создан триггером
     }
 
-    currentUser = { ...data.user, nickname, role: 'user' };
+    currentUser = { ...data.user, nickname, role: 'user', show_on_leaderboard: true };
     onUserSignedIn(currentUser);
     closeAuthModal();
     showToast(`Аккаунт создан! Добро пожаловать, ${nickname}!`, 'success');
@@ -283,6 +283,7 @@ function startAuthListener() {
         nickname: profile?.nickname || session.user.email.split('@')[0],
         role:     profile?.role     || 'user',
         avatar:   profile?.avatar   || null,
+        show_on_leaderboard: profile?.show_on_leaderboard !== false,
       };
       onUserSignedIn(currentUser);
     }
@@ -305,6 +306,7 @@ function startAuthListener() {
         nickname: profile?.nickname || session.user.email.split('@')[0],
         role:     profile?.role     || 'user',
         avatar:   profile?.avatar   || null,
+        show_on_leaderboard: profile?.show_on_leaderboard !== false,
       };
       onUserSignedIn(currentUser);
     } else if (event === 'SIGNED_OUT') {

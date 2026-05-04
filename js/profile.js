@@ -78,6 +78,8 @@ function openProfileModal() {
     document.getElementById('profileNickname').value = currentUser.nickname || '';
     document.getElementById('profileEmail').value = currentUser.email || '';
     selectedAvatar = currentUser.avatar || null;
+    const lbEl = document.getElementById('profileLeaderboardVisible');
+    if (lbEl) lbEl.checked = currentUser.show_on_leaderboard !== false;
     updateAvatarPreview();
   }
 
@@ -183,15 +185,17 @@ async function saveProfile() {
       if (existing) throw new Error('Этот ник уже занят');
     }
 
-    const { error } = await supabaseClient
-      .from('profiles')
-      .update({ nickname, avatar: avatarPayload })
-      .eq('id', currentUser.id);
+    const patch = { nickname, avatar: avatarPayload };
+    const lbEl = document.getElementById('profileLeaderboardVisible');
+    if (lbEl) patch.show_on_leaderboard = lbEl.checked;
+
+    const { error } = await supabaseClient.from('profiles').update(patch).eq('id', currentUser.id);
 
     if (error) throw error;
 
     currentUser.nickname = nickname;
     currentUser.avatar   = avatarPayload;
+    if (lbEl) currentUser.show_on_leaderboard = lbEl.checked;
     onUserSignedIn(currentUser);
 
     successEl.classList.remove('hidden');

@@ -27,6 +27,7 @@
         <a href="index.html" class="nav-link active">Главная</a>
         <a href="#games" class="nav-link">Игры</a>
         <a href="index.html#how-it-works" class="nav-link">Как играть</a>
+        <a href="leaderboard.html" class="nav-link">Топ</a>
         <a href="profile.html" class="nav-link">Профиль</a>
       </nav>
       <div class="navbar__auth" id="navAuth">
@@ -355,6 +356,13 @@
       <div class="form-group">
         <label class="form-label">Никнейм</label>
         <input type="text" class="form-input" id="profileNickname" placeholder="Твой ник" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label--row">
+          <input type="checkbox" id="profileLeaderboardVisible" class="pf-check" checked />
+          <span>Показывать меня в топе игроков</span>
+        </label>
+        <span class="form-hint">Только общедоступные цифры; пересборка топа на сервере по расписанию.</span>
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>

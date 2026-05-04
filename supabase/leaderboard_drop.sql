@@ -1,18 +1,17 @@
--- Удалить из БД только то, что относилось к топу (leaderboard).
--- Выполни в Supabase → SQL Editor в том же проекте. Остальные таблицы (lobbies, profiles и т.д.) не трогаются.
+-- Удалить из БД только то, что относится к топу (leaderboard v2 — leaderboard_public).
+-- Выполни в Supabase → SQL Editor. Остальные таблицы (lobbies, profiles, user_lobby_history) не трогаются.
 
--- 1) Триггер на лобби
-drop trigger if exists leaderboard_on_lobby_touch on public.lobbies;
+DROP FUNCTION IF EXISTS public.leaderboard_refresh_stats();
 
--- 2) Функции (сигнатуры как при создании)
-drop function if exists public.leaderboard_on_lobby_touch();
-drop function if exists public.capture_leaderboard_snapshot(date);
-drop function if exists public.leaderboard_get_stats();
-drop function if exists public.leaderboard_get_snapshot_rank(date, text);
+DROP TABLE IF EXISTS public.leaderboard_public CASCADE;
 
--- 3) Таблицы (RLS и политики удалятся вместе с таблицей)
-drop table if exists public.leaderboard_snapshot cascade;
-drop table if exists public.leaderboard_stats cascade;
+-- Старый топ (если оставался после прошлых экспериментов)
+DROP TRIGGER IF EXISTS leaderboard_on_lobby_touch ON public.lobbies;
+DROP FUNCTION IF EXISTS public.leaderboard_on_lobby_touch();
+DROP FUNCTION IF EXISTS public.capture_leaderboard_snapshot(date);
+DROP FUNCTION IF EXISTS public.leaderboard_get_stats();
+DROP FUNCTION IF EXISTS public.leaderboard_get_snapshot_rank(date, text);
+DROP TABLE IF EXISTS public.leaderboard_snapshot CASCADE;
+DROP TABLE IF EXISTS public.leaderboard_stats CASCADE;
 
--- 4) Обновить кэш PostgREST
-notify pgrst, 'reload schema';
+NOTIFY pgrst, 'reload schema';
