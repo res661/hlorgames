@@ -9,6 +9,8 @@
   /** PostgREST может отдавать «schema cache» секунды после NOTIFY/DDL — повторяем запрос. */
   const SCHEMA_FETCH_MAX_ATTEMPTS = 8;
   const SCHEMA_FETCH_RETRY_MS = 1600;
+  /** Если сеть обрывается или fetch подвисает — иначе «Загружаем…» висит вечно без finally. */
+  const FETCH_ATTEMPT_DEADLINE_MS = 22000;
 
   const tabKeys = ['total', 'mafia', 'whoami', 'time'];
   let rows = [];
@@ -224,6 +226,29 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  function withTimeout(promise, ms) {
+    let timer;
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        const e = new Error('Таймаут запроса к серверу');
+        e.code = 'TIMEOUT';
+        reject(e);
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+  }
+
+  function isFetchLikelyNetwork(err) {
+    if (!err) return false;
+    const raw = `${err.code || ''} ${err.message || ''} ${err.details || ''}`.toLowerCase();
+    if (String(err.code || '').toUpperCase() === 'TIMEOUT') return true;
+    return (
+      /failed to fetch|networkerror|network request failed|load failed|internet disconnected|err_network/i.test(
+        raw,
+      ) || /таймаут/i.test(raw)
+    );
+  }
+
   /**
    * Один проход: сначала таблица (часто проще для REST), затем RPC-костыль при тех же типах ошибок.
    */
@@ -282,7 +307,12 @@
       let combinedError = null;
 
       for (let attempt = 0; attempt < SCHEMA_FETCH_MAX_ATTEMPTS; attempt++) {
-        const once = await fetchBoardOnce();
+        let once;
+        try {
+          once = await withTimeout(fetchBoardOnce(), FETCH_ATTEMPT_DEADLINE_MS);
+        } catch (e) {
+          once = { data: null, error: e };
+        }
         if (!once.error) {
           data = once.data;
           combinedError = null;
@@ -291,7 +321,7 @@
         combinedError = once.error;
         const retry =
           attempt < SCHEMA_FETCH_MAX_ATTEMPTS - 1 &&
-          leaderboardRestUnreachable(combinedError);
+          (leaderboardRestUnreachable(combinedError) || isFetchLikelyNetwork(combinedError));
         if (!retry) break;
         await delay(SCHEMA_FETCH_RETRY_MS);
       }
@@ -342,6 +372,9 @@
             '2) <strong>Project Settings → Data API</strong> — среди схем есть <code style="color:inherit">public</code>. ' +
             '3) SQL Editor: целиком <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code>, затем ещё раз отдельно <code style="color:inherit">NOTIFY pgrst, \'reload schema\';</code> (кэш шлюза может подтягиваться с задержкой). ' +
             '4) Если не помогло — <strong>Pause project</strong> → <strong>Resume</strong>.';
+        } else if (isFetchLikelyNetwork(e)) {
+          hint =
+            'Похоже на проблему сети (Wi‑Fi, VPN, блокировщик). В консоли часто <code style="color:inherit">ERR_INTERNET_DISCONNECTED</code> — это реальный обрыв. Проверь интернет и обнови страницу. Если сеть стабильна, но есть <strong>404</strong> на запросах к Supabase — сверь URL и anon-ключ в <code style="color:inherit">js/supabase-client.js</code> с тем же проектом в Dashboard, где есть таблица топа.';
         }
 
         errEl.innerHTML =
