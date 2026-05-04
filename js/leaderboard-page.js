@@ -4,7 +4,6 @@
 (function () {
   'use strict';
 
-  const REFRESH_MS = 2 * 60 * 1000;
   const LIMIT = 200;
   /** PostgREST может отдавать «schema cache» секунды после NOTIFY/DDL — повторяем запрос. */
   const SCHEMA_FETCH_MAX_ATTEMPTS = 8;
@@ -15,7 +14,6 @@
   const tabKeys = ['total', 'mafia', 'whoami', 'time'];
   let rows = [];
   let activeTab = 'total';
-  let pollTimer = null;
 
   function esc(s) {
     const d = document.createElement('div');
@@ -50,41 +48,13 @@
     return c ? c.toUpperCase() : '?';
   }
 
-  /** Одна строка сводки под заголовком (без технических таймштампов для игроков). */
-  function setSummary(sortedSlice) {
-    const el = document.getElementById('lb-summary');
-    if (!el) return;
-    if (!sortedSlice || !sortedSlice.length) {
-      el.textContent = '';
-      el.classList.add('hidden');
-      return;
-    }
-    el.classList.remove('hidden');
-    let sumDone = 0;
-    let sumMafia = 0;
-    let sumWho = 0;
-    for (const r of sortedSlice) {
-      sumDone += Number(r.completed_total) || 0;
-      sumMafia += Number(r.games_mafia) || 0;
-      sumWho += Number(r.games_whoami) || 0;
-    }
-    el.textContent =
-      sortedSlice.length +
-      ' в списке · закрыто лобби (всего): ' +
-      sumDone +
-      ' · мафия (заходы): ' +
-      sumMafia +
-      ' · «Кто я?» (заходы): ' +
-      sumWho;
-  }
-
   function renderPodium(sorted) {
     const wrap = document.getElementById('lb-podium');
     if (!wrap) return;
     wrap.innerHTML = '';
     const top = [sorted[1], sorted[0], sorted[2]];
     const tiers = ['silver', 'gold', 'bronze'];
-    const medals = ['2', '🏆', '3'];
+    const medals = ['2', '1', '3'];
     for (let i = 0; i < 3; i++) {
       const row = top[i];
       const card = document.createElement('div');
@@ -190,7 +160,9 @@
 
     document.querySelectorAll('.lb-tab').forEach((btn) => {
       const k = btn.getAttribute('data-tab');
-      btn.classList.toggle('lb-tab--active', k === activeTab);
+      const on = k === activeTab;
+      btn.classList.toggle('lb-tab--active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
     });
 
     const myId = typeof currentUser !== 'undefined' && currentUser?.id ? currentUser.id : null;
@@ -199,13 +171,11 @@
       document.getElementById('lb-podium').innerHTML = '';
       const body = document.getElementById('lb-rows');
       if (body) body.innerHTML = '';
-      setSummary([]);
       return;
     }
 
     renderPodium(sorted);
     renderTable(sorted, myId);
-    setSummary(sorted);
   }
 
   function leaderboardRestUnreachable(err) {
@@ -410,14 +380,7 @@
     };
 
     bindTabs();
-    window.hlorRefreshLeaderboard = function () {
-      void fetchBoard();
-    };
-    document.getElementById('lb-refresh-btn')?.addEventListener('click', () => {
-      void fetchBoard();
-    });
     void fetchBoard();
-    pollTimer = setInterval(() => void fetchBoard(), REFRESH_MS);
   });
 
   document.addEventListener('visibilitychange', () => {

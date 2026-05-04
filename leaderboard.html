@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Топ игроков HLOR GAMES — счётчики профиля (мафия, «Кто я?», закрытые лобби, время)." />
+  <meta name="description" content="Топ игроков HLOR GAMES — закрытые лобби, мафия, «Кто я?» и время за столами." />
   <link rel="icon" href="img/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title>Топ игроков — HLOR GAMES</title>
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/leaderboard-page.css?v=3" />
+  <link rel="stylesheet" href="css/leaderboard-page.css?v=4" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="lb-page">
@@ -43,17 +43,11 @@
       <div class="lb-hero__kicker"><span></span> Соревнуйся с компанией</div>
       <h1 class="lb-hero__title"><span class="gradient-text">Топ игроков</span></h1>
       <p class="lb-hero__sub">
-        Рейтинг: по одному аккаунту из профилей (всем у кого включено «в топе»). Цифры — счётчики профиля с клиента; после пересборки на сервере (<code style="font-size:0.88em">leaderboard_refresh_stats</code>) видны все зарегистрированные с этим флагом. На странице показывается до 200 мест по выбранной вкладке.
+        Кто закрыл больше лобби, чаще заходил в мафию и «Кто я?», и провёл больше времени за столом — по выбранной вкладке. Обнови страницу, если кажется, что цифры устарели.
       </p>
-      <div class="lb-hero-actions">
-        <button type="button" class="btn btn--ghost lb-refresh-btn" id="lb-refresh-btn">
-          Обновить список
-        </button>
-      </div>
-      <p id="lb-summary" class="lb-summary hidden" aria-live="polite"></p>
     </div>
 
-    <div class="lb-tabs" role="tablist" aria-label="Режим топа">
+    <div class="lb-tabstrip lb-tabs" role="tablist" aria-label="Режим топа">
       <button type="button" class="lb-tab lb-tab--active" data-tab="total" role="tab" aria-selected="true">Всего игр</button>
       <button type="button" class="lb-tab" data-tab="mafia" role="tab" aria-selected="false">Мафия</button>
       <button type="button" class="lb-tab" data-tab="whoami" role="tab" aria-selected="false">Кто я?</button>
@@ -63,7 +57,7 @@
     <div id="lb-loading" class="lb-loading hidden">Загружаем таблицу…</div>
     <div id="lb-error" class="lb-error hidden"></div>
     <div id="lb-empty" class="lb-empty hidden">
-      Пока пусто — после пересборки (<code style="font-size:inherit">SELECT public.leaderboard_refresh_stats()</code>) здесь появятся все аккаунты с включённым «в топе» (даже с нулевой статистикой). Если ты один в базе — будет одна строка.
+      Пока список пуст. В профиле включи «Показывать меня в топе игроков», поиграй пару партий и позже загляни снова — после обновления рейтинга на сервере имена появятся здесь.
     </div>
 
     <div id="lb-board" class="hidden">
@@ -82,8 +76,7 @@
     </div>
 
     <p class="lb-footnote">
-      Чтобы выпасть из топа, сними галочку «Показывать меня в топе игроков» в настройках профиля (после следующей пересборки топа на сервере строка исчезнет).
-      Подробности см. файл <code style="font-size:0.88em;color:var(--text-muted)">supabase/leaderboard_schema.sql</code>.
+      Чтобы скрыться из топа, сними галочку «Показывать меня в топе игроков» в настройках профиля — после очередного обновления таблицы твоё имя пропадёт из списка.
     </p>
   </main>
 
@@ -182,6 +175,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/leaderboard-page.js?v=9"></script>
+  <script src="js/leaderboard-page.js?v=10"></script>
 </body>
 </html>
