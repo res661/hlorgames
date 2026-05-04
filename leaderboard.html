@@ -43,8 +43,7 @@
       <div class="lb-hero__kicker"><span></span> Соревнуйся с компанией</div>
       <h1 class="lb-hero__title"><span class="gradient-text">Топ игроков</span></h1>
       <p class="lb-hero__sub">
-        Рейтинг строится из статистики профиля на сервере (те же числа, что после входа на странице профиля). Список на сайте подгружается каждые ~2 минуты или по кнопке «Обновить».
-        Общая таблица топа обновляется только после пересборки (<code style="font-size:0.88em">leaderboard_refresh_stats</code>) — запускай её в SQL или по расписанию.
+        Рейтинг: по одному аккаунту из профилей (всем у кого включено «в топе»). Цифры — счётчики профиля с клиента; после пересборки на сервере (<code style="font-size:0.88em">leaderboard_refresh_stats</code>) видны все зарегистрированные с этим флагом. На странице показывается до 200 мест по выбранной вкладке.
       </p>
       <div class="lb-hero-actions">
         <button type="button" class="btn btn--ghost lb-refresh-btn" id="lb-refresh-btn">
@@ -64,7 +63,7 @@
     <div id="lb-loading" class="lb-loading hidden">Загружаем таблицу…</div>
     <div id="lb-error" class="lb-error hidden"></div>
     <div id="lb-empty" class="lb-empty hidden">
-      Пока никого в топе — нет игроков с непустой статистикой в профиле после последней пересборки. Выполни <code style="font-size:inherit">SELECT public.leaderboard_refresh_stats()</code>, войди в игру под аккаунтом и поиграй — счётчики профиля попадут в топ.
+      Пока пусто — после пересборки (<code style="font-size:inherit">SELECT public.leaderboard_refresh_stats()</code>) здесь появятся все аккаунты с включённым «в топе» (даже с нулевой статистикой). Если ты один в базе — будет одна строка.
     </div>
 
     <div id="lb-board" class="hidden">

@@ -146,19 +146,13 @@ BEGIN
     FROM public.profiles p
     LEFT JOIN auth.users u ON u.id = p.id
     WHERE COALESCE(p.show_on_leaderboard, true) = true
-      AND (
-        p.stat_sessions_completed > 0
-        OR p.stat_mafia_opens > 0
-        OR p.stat_whoami_opens > 0
-        OR p.stat_play_seconds > 0
-      )
     $dyn$,
     nick_sql
   );
 END;
 $$;
 
-COMMENT ON FUNCTION public.leaderboard_refresh_stats() IS 'Перестроить leaderboard_public из profiles.stat_* (статистика профиля)';
+COMMENT ON FUNCTION public.leaderboard_refresh_stats() IS 'Перестроить leaderboard_public: один аккаунт — одна строка (profiles), счётчики stat_*';
 
 REVOKE ALL ON FUNCTION public.leaderboard_refresh_stats() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.leaderboard_refresh_stats() TO service_role;
