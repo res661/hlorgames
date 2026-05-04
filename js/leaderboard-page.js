@@ -4,8 +4,8 @@
 (function () {
   'use strict';
 
-  const REFRESH_MS = 30 * 60 * 1000;
-  const LIMIT = 100;
+  const REFRESH_MS = 2 * 60 * 1000;
+  const LIMIT = 200;
   /** PostgREST может отдавать «schema cache» секунды после NOTIFY/DDL — повторяем запрос. */
   const SCHEMA_FETCH_MAX_ATTEMPTS = 8;
   const SCHEMA_FETCH_RETRY_MS = 1600;
@@ -67,11 +67,8 @@
       sumWho += Number(r.games_whoami) || 0;
     }
     el.textContent =
-      'Показано до ' +
-      LIMIT +
-      ' мест: ' +
       sortedSlice.length +
-      ' игроков · завершённых лобби (сумма по списку): ' +
+      ' в списке · сумма завершённых лобби: ' +
       sumDone +
       ' · мафия: ' +
       sumMafia +
@@ -411,6 +408,12 @@
     };
 
     bindTabs();
+    window.hlorRefreshLeaderboard = function () {
+      void fetchBoard();
+    };
+    document.getElementById('lb-refresh-btn')?.addEventListener('click', () => {
+      void fetchBoard();
+    });
     void fetchBoard();
     pollTimer = setInterval(() => void fetchBoard(), REFRESH_MS);
   });

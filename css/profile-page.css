@@ -197,6 +197,22 @@ body.pf-page {
   max-width: 68ch;
 }
 
+.pf-stats-source-banner {
+  font-size: 0.78rem;
+  color: var(--lime-dim, var(--text-muted));
+  line-height: 1.45;
+  margin: -8px 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(200, 255, 78, 0.06);
+  border: 1px solid rgba(200, 255, 78, 0.15);
+  max-width: 72ch;
+}
+
+.pf-stats-source-banner.hidden {
+  display: none;
+}
+
 .pf-section-title {
   font-size: 1.05rem;
   font-weight: 800;

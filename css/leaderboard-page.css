@@ -60,9 +60,19 @@ body.lb-page {
 .lb-hero__sub {
   color: var(--text-muted);
   font-size: 0.96rem;
-  max-width: 520px;
-  margin: 0 auto 22px;
+  max-width: 560px;
+  margin: 0 auto 14px;
   line-height: 1.55;
+}
+
+.lb-hero-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.lb-refresh-btn {
+  font-size: 0.85rem !important;
 }
 
 .lb-summary {

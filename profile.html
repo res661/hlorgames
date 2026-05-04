@@ -60,50 +60,50 @@
       </div>
     </section>
 
-    <p class="pf-note">
-      Счётчики «за стол» идут отдельно для мафии и для «Кто я?». Пока открыта вкладка игры, копится время за столами. Когда хост завершит лобби,
-      в счётчик добавляется одна «участие до закрытия». Победы и поражения не считаем — нет единого правила окончания на сервере.
+    <p id="pf-stats-explainer" class="pf-note">
+      После входа цифры ниже совпадают с топом: только завершённые лобби (хост закрыл комнату) из истории на сервере. Гость видит примерную статистику только в этом браузере.
     </p>
 
     <section aria-labelledby="pf-stats-heading">
       <h2 id="pf-stats-heading" class="pf-section-title" style="margin-bottom:14px;">
         Статистика
       </h2>
+      <p id="pf-stats-source-banner" class="pf-stats-source-banner hidden" role="status"></p>
       <div class="pf-stats-grid">
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            Мафия — заход за стол
+            <span id="pf-label-mafia">Мафия — завершённые лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-mafia-opens">0</div>
         </div>
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            Кто я? — заход в комнату
+            <span id="pf-label-whoami">Кто я? — завершённые лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-whoami-opens">0</div>
         </div>
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
-            Закрыто лобби
+            <span id="pf-label-sessions">Всего закрытых лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
         </div>
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Время за столами
+            <span id="pf-label-time">Время в комнатах (оценка)</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
         </div>
         <div class="pf-stat-card pf-stat-card--wide">
           <div class="pf-stat-card__label pf-stat-card__label--plain">
-            Среднее время на одну закрытую партию
+            <span id="pf-label-avg">Среднее время на одно закрытое лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-avg-session">—</div>
-          <span class="pf-stat-card__hint">«Время за столами» ÷ «Закрыто лобби» — ориентировочно</span>
+          <span id="pf-hint-avg" class="pf-stat-card__hint">Время ÷ число закрытых лобби</span>
         </div>
       </div>
     </section>
@@ -111,7 +111,7 @@
     <section aria-labelledby="pf-achievements-heading">
       <h2 id="pf-achievements-heading" class="pf-section-title">
         Достижения
-        <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Разблокируй всё через игру</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Локально в браузере — могут расходиться с сервером</span>
       </h2>
       <div class="pf-achievements-track" aria-hidden="true">
         <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
@@ -224,6 +224,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=3"></script>
+  <script src="js/profile-page.js?v=4"></script>
 </body>
 </html>
