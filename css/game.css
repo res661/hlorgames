@@ -563,7 +563,7 @@
 }
 .custom-select.open .custom-select__btn {
   border-color: var(--lime, #c8ff4e);
-  box-shadow: 0 0 0 1px rgba(200,255,78,0.12);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb),0.12);
 }
 .custom-select.open .custom-select__btn svg {
   transform: rotate(180deg);
@@ -610,11 +610,11 @@
   display: block;
 }
 .custom-select__item:hover {
-  background: rgba(200,255,78,0.08);
+  background: rgba(var(--accent-rgb),0.08);
   color: var(--text, #f0f2ed);
 }
 .custom-select__item.active {
-  background: rgba(200,255,78,0.14);
+  background: rgba(var(--accent-rgb),0.14);
   color: var(--lime, #c8ff4e);
   font-weight: 600;
 }

@@ -4,8 +4,8 @@ body.pf-page {
   min-height: 100vh;
   background-color: var(--bg);
   background-image:
-    radial-gradient(ellipse 100% 60% at 50% -15%, rgba(200, 255, 78, 0.1), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(200, 255, 78, 0.04), transparent),
+    radial-gradient(ellipse 100% 60% at 50% -15%, rgba(var(--accent-rgb), 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(var(--accent-rgb), 0.04), transparent),
     radial-gradient(ellipse 45% 35% at 0% 80%, rgba(120, 200, 100, 0.05), transparent);
 }
 
@@ -123,7 +123,7 @@ body.pf-page {
   width: min(520px, 90vw);
   height: min(520px, 90vw);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(200, 255, 78, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.12) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -132,12 +132,12 @@ body.pf-page {
   gap: clamp(20px, 4vw, 32px);
   padding: clamp(22px, 4vw, 34px) clamp(22px, 4vw, 38px);
   background: linear-gradient(145deg, rgba(16, 20, 16, 0.97) 0%, rgba(8, 10, 8, 0.99) 45%, rgba(16, 20, 14, 0.95) 100%);
-  border: 1px solid rgba(200, 255, 78, 0.2);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
   border-radius: clamp(22px, 4vw, 30px);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35) inset,
     0 22px 56px rgba(0, 0, 0, 0.5),
-    0 0 100px rgba(200, 255, 78, 0.06);
+    0 0 100px rgba(var(--accent-rgb), 0.06);
   margin-bottom: 0;
   backdrop-filter: blur(10px);
 }
@@ -153,16 +153,16 @@ body.pf-page {
   border-radius: 22px;
   box-shadow:
     0 10px 32px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(200, 255, 78, 0.2) inset,
-    0 0 40px rgba(200, 255, 78, 0.1);
+    0 0 0 1px rgba(var(--accent-rgb), 0.2) inset,
+    0 0 40px rgba(var(--accent-rgb), 0.1);
 }
 
 .pf-hero__avatar {
   width: 112px;
   height: 112px;
   border-radius: var(--radius-lg);
-  background: rgba(200, 255, 78, 0.1);
-  border: 2px solid rgba(200, 255, 78, 0.35);
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 2px solid rgba(var(--accent-rgb), 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -509,8 +509,8 @@ body.pf-page {
 .pf-guest-note {
   margin-top: 14px;
   padding: 10px 14px;
-  background: rgba(200, 255, 78, 0.06);
-  border: 1px solid rgba(200, 255, 78, 0.12);
+  background: rgba(var(--accent-rgb), 0.06);
+  border: 1px solid rgba(var(--accent-rgb), 0.12);
   border-radius: var(--radius);
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -542,7 +542,7 @@ body.pf-page {
 }
 
 .pf-block-head--ach {
-  border-bottom-color: rgba(200, 255, 78, 0.1);
+  border-bottom-color: rgba(var(--accent-rgb), 0.1);
 }
 
 .pf-block-head__title-row {
@@ -582,8 +582,8 @@ body.pf-page {
   font-weight: 800;
   letter-spacing: 0.03em;
   color: rgba(210, 255, 130, 0.95);
-  background: rgba(200, 255, 78, 0.1);
-  border: 1px solid rgba(200, 255, 78, 0.28);
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
 }
 
 .pf-summary-pill:empty {
@@ -635,23 +635,23 @@ body.pf-page {
 }
 
 .pf-stat-card--whoami::before {
-  background: linear-gradient(90deg, rgba(80, 130, 200, 0.45), rgba(200, 255, 78, 0.55));
+  background: linear-gradient(90deg, rgba(80, 130, 200, 0.45), rgba(var(--accent-rgb), 0.55));
 }
 
 .pf-stat-card--sessions::before {
-  background: linear-gradient(90deg, #f59e0baa, rgba(200, 255, 78, 0.6));
+  background: linear-gradient(90deg, #f59e0baa, rgba(var(--accent-rgb), 0.6));
 }
 
 .pf-stat-card--time::before {
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.5), rgba(200, 255, 78, 0.5));
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.5), rgba(var(--accent-rgb), 0.5));
 }
 
 .pf-stat-card--avg::before {
-  background: linear-gradient(90deg, rgba(200, 255, 78, 0.25), rgba(200, 255, 78, 0.75));
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.75));
 }
 
 .pf-stat-card:hover {
-  border-color: rgba(200, 255, 78, 0.22);
+  border-color: rgba(var(--accent-rgb), 0.22);
   transform: translateY(-3px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
@@ -710,8 +710,8 @@ body.pf-page {
   margin: -8px 0 16px;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(200, 255, 78, 0.06);
-  border: 1px solid rgba(200, 255, 78, 0.15);
+  background: rgba(var(--accent-rgb), 0.06);
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
   max-width: 72ch;
 }
 
@@ -755,7 +755,7 @@ body.pf-page {
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(200, 255, 78, 0.35) rgba(0, 0, 0, 0.2);
+  scrollbar-color: rgba(var(--accent-rgb), 0.35) rgba(0, 0, 0, 0.2);
 }
 
 .pf-achievements-sort::-webkit-scrollbar {
@@ -763,7 +763,7 @@ body.pf-page {
 }
 
 .pf-achievements-sort::-webkit-scrollbar-thumb {
-  background: rgba(200, 255, 78, 0.35);
+  background: rgba(var(--accent-rgb), 0.35);
   border-radius: 999px;
 }
 
@@ -793,20 +793,20 @@ body.pf-page {
 }
 
 .pf-sort-btn:focus-visible {
-  outline: 2px solid rgba(200, 255, 78, 0.55);
+  outline: 2px solid rgba(var(--accent-rgb), 0.55);
   outline-offset: 2px;
 }
 
 .pf-sort-btn:hover {
   color: var(--text);
-  border-color: rgba(200, 255, 78, 0.25);
-  background: rgba(200, 255, 78, 0.04);
+  border-color: rgba(var(--accent-rgb), 0.25);
+  background: rgba(var(--accent-rgb), 0.04);
 }
 
 .pf-sort-btn.is-active {
   color: #0a1408;
   background: var(--lime);
-  border-color: rgba(200, 255, 78, 0.5);
+  border-color: rgba(var(--accent-rgb), 0.5);
 }
 
 .pf-sort-btn.is-active:hover {
@@ -826,7 +826,7 @@ body.pf-page {
   border-radius: var(--radius-full);
   background: linear-gradient(90deg, var(--lime-dim), var(--lime));
   transition: width 0.45s ease;
-  box-shadow: 0 0 16px rgba(200, 255, 78, 0.35);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.35);
 }
 
 .pf-achievements-grid {
@@ -867,7 +867,7 @@ body.pf-page {
     rgba(18, 24, 14, 0.98) 45%,
     rgba(10, 14, 10, 1) 100%
   );
-  --ach-border: rgba(200, 255, 78, 0.16);
+  --ach-border: rgba(var(--accent-rgb), 0.16);
 }
 
 .pf-achievement--tier-rare {
@@ -917,8 +917,8 @@ body.pf-page {
 }
 
 .pf-achievement--got .pf-achievement__icon-box {
-  border-color: rgba(200, 255, 78, 0.35);
-  box-shadow: 0 0 20px rgba(200, 255, 78, 0.12);
+  border-color: rgba(var(--accent-rgb), 0.35);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.12);
   color: var(--lime);
 }
 
@@ -965,7 +965,7 @@ body.pf-page {
 }
 
 .pf-achievement--tier-uncommon .pf-achievement__tier {
-  color: rgba(200, 255, 120, 0.75);
+  color: rgba(var(--accent-rgb), 0.75);
 }
 
 .pf-achievement--tier-rare .pf-achievement__tier {
@@ -1035,7 +1035,7 @@ body.pf-page {
   border-radius: var(--radius-full);
   background: linear-gradient(90deg, var(--lime-dim), var(--lime));
   transition: width 0.35s ease;
-  box-shadow: 0 0 12px rgba(200, 255, 78, 0.25);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.25);
 }
 
 .pf-achievement--tier-rare .pf-achievement__progress-bar {
@@ -1075,7 +1075,7 @@ body.pf-page {
 .pf-achievement__status--done {
   color: #0a1408;
   background: linear-gradient(135deg, var(--lime) 0%, #b8e850 100%);
-  border-color: rgba(200, 255, 78, 0.4);
+  border-color: rgba(var(--accent-rgb), 0.4);
 }
 
 .pf-achievement__status--todo {
@@ -1085,15 +1085,15 @@ body.pf-page {
 }
 
 .pf-achievement--got {
-  --ach-glow: 0 0 36px rgba(200, 255, 78, 0.08);
+  --ach-glow: 0 0 36px rgba(var(--accent-rgb), 0.08);
 }
 
 .pf-achievement--got.pf-achievement--tier-common {
-  border-color: rgba(200, 255, 78, 0.28);
+  border-color: rgba(var(--accent-rgb), 0.28);
 }
 
 .pf-achievement--got.pf-achievement--tier-uncommon {
-  border-color: rgba(200, 255, 78, 0.35);
+  border-color: rgba(var(--accent-rgb), 0.35);
 }
 
 .pf-achievement--got.pf-achievement--tier-rare {
