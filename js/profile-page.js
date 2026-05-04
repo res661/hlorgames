@@ -41,6 +41,89 @@ const PF_FRAMES = [
   { id: 'chrono_corona', name: 'Хроно-корона', unlock: { type: 'achievement', id: 'time_ultra' } },
 ];
 
+const PF_BADGE_KEY = 'pf_equipped_badges_v1';
+const PF_BADGE_MAX = 4;
+
+/** Бейджи у ника: редкость + условие (уровень / достижение / время за столом) */
+const PF_BADGES = [
+  { id: 'hlor_core', label: 'HLOR', tier: 'common', unlock: { type: 'always' } },
+  { id: 'hour_stint', label: '1ч+', tier: 'common', unlock: { type: 'time', seconds: 3600 } },
+  { id: 'regular_table', label: 'Знатный гость', tier: 'uncommon', unlock: { type: 'achievement', id: 'table_regular' } },
+  { id: 'finisher_b', label: 'Финиш', tier: 'uncommon', unlock: { type: 'achievement', id: 'finisher' } },
+  { id: 'committed_b', label: 'В деле×5', tier: 'uncommon', unlock: { type: 'achievement', id: 'committed' } },
+  { id: 'lvl_8', label: '8 ур.', tier: 'uncommon', unlock: { type: 'level', min: 8 } },
+  { id: 'mafia_stage', label: 'Мафия+', tier: 'rare', unlock: { type: 'achievement', id: 'mafia_double' } },
+  { id: 'whoami_stage', label: 'Кто я?+', tier: 'rare', unlock: { type: 'achievement', id: 'whoami_double' } },
+  { id: 'duo_path', label: 'Две игры', tier: 'rare', unlock: { type: 'achievement', id: 'both_games' } },
+  { id: 'night_shift_b', label: 'Ночник', tier: 'rare', unlock: { type: 'achievement', id: 'night_shift' } },
+  { id: 'marathon_b', label: 'Марафон', tier: 'epic', unlock: { type: 'achievement', id: 'marathon' } },
+  { id: 'veteran_b', label: 'Ветеран', tier: 'epic', unlock: { type: 'achievement', id: 'veteran' } },
+  { id: 'champion_b', label: 'Чемпион', tier: 'epic', unlock: { type: 'achievement', id: 'champion' } },
+  { id: 'lvl_16', label: '16 ур.', tier: 'rare', unlock: { type: 'level', min: 16 } },
+  { id: 'lvl_25', label: '25 ур.', tier: 'epic', unlock: { type: 'level', min: 25 } },
+  { id: 'legend_b', label: 'Легенда', tier: 'legendary', unlock: { type: 'achievement', id: 'legend_sessions' } },
+  { id: 'immortal_b', label: 'Бессмерт.', tier: 'legendary', unlock: { type: 'achievement', id: 'sessions_immortal' } },
+  { id: 'chrono_b', label: 'Ультра-часы', tier: 'legendary', unlock: { type: 'achievement', id: 'time_ultra' } },
+];
+
+/** Уникальные stroke-иконки бейджей (viewBox 24×24); текст только в подсказках */
+const PF_BADGE_ICONS = {
+  _default: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/>',
+  hlor_core:
+    '<path d="M12 2l2.4 7.4L22 12l-7.6 2.6L12 22l-2.4-7.4L2 12l7.6-2.6L12 2z"/>',
+  hour_stint: '<circle cx="12" cy="12" r="10"/><path d="M12 7v5l4 2"/>',
+  regular_table:
+    '<circle cx="9" cy="8.5" r="2.8"/><circle cx="17" cy="8.5" r="2.8"/><path d="M3 21a9 9 0 018-5 9 9 0 018 5"/>',
+  finisher_b: '<path d="M20 7L10 17l-5-5"/>',
+  committed_b:
+    '<path d="M12 3l9.5 6L12 12 2.5 9 12 3z"/><path d="M2.5 14l9.5 4 9.5-4"/>',
+  lvl_8: '<polygon points="12,3 17,8 21,13 17,18 12,21 7,18 3,13 7,8"/>',
+  mafia_stage:
+    '<ellipse cx="12" cy="12.5" rx="8.2" ry="5.8"/><circle cx="9.2" cy="12.8" r="1.35" fill="currentColor" stroke="none"/><circle cx="14.8" cy="12.8" r="1.35" fill="currentColor" stroke="none"/><path d="M9 16h6"/>',
+  whoami_stage:
+    '<circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/><path d="M10.5 10a3.5 3.5 0 116.2 2.2"/>',
+  duo_path:
+    '<circle cx="8" cy="12" r="3.75"/><circle cx="16" cy="12" r="3.75"/><path d="M11.5 12h1"/>',
+  night_shift_b: '<path d="M21 12.8a9 9 0 11-10-10 7 7 0 0010 10z"/>',
+  marathon_b:
+    '<path d="M13 2L3 14h9l-1 8 11-13h-9l9-11z"/>',
+  veteran_b:
+    '<path d="M12 22s8-4 8-10V8l-8-5-8 5v4c0 6 8 10 8 10z"/><path d="M12 8v13"/>',
+  champion_b:
+    '<path d="M6 21h12"/><path d="M9 17V9h6v8"/><path d="M9 9V7a3 3 0 016 0v2"/><path d="M7 13h10"/>',
+  lvl_16: '<circle cx="12" cy="10" r="5.5"/><path d="M8 21h8"/><path d="M12 15.5v5.5"/>',
+  lvl_25:
+    '<path d="M4 20h16"/><path d="M5 20l3-12 4 8 4-8 3 12"/><path d="M6 16h12"/>',
+  legend_b:
+    '<polygon points="12 2 15 10.5 23 12.5 17 17 18.5 23 12 19.5 5.5 23 7 17 1 12.5 9 10.5"/>',
+  immortal_b:
+    '<path d="M8 21h8"/><path d="M12 21v3"/><ellipse cx="12" cy="10" rx="7" ry="8"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/><circle cx="15" cy="9" r="1.4" fill="currentColor"/><path d="M9 14s1.8 4 6 4"/>',
+  chrono_b:
+    '<path d="M6 5h12"/><path d="M6 19h12"/><path d="M8 12h8"/><path d="M14 13l4 4"/><path d="M8 13l-2 6"/><path d="M18 13l2 6"/>',
+};
+
+function pfBadgeIconInner(badgeId) {
+  const raw = PF_BADGE_ICONS[badgeId];
+  const inner = raw || PF_BADGE_ICONS._default;
+  return inner;
+}
+
+function pfBadgeIconSvgWrap(badgeId, sizeClass = '') {
+  const inner = pfBadgeIconInner(badgeId);
+  const cls = sizeClass ? ` class="${sizeClass}"` : '';
+  return (
+    '<svg' +
+    cls +
+    ' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    inner +
+    '</svg>'
+  );
+}
+
+function pfBadgeIconBox(badgeId, boxClass = 'pf-badge-ico-wrap') {
+  return `<span class="${boxClass}">${pfBadgeIconSvgWrap(badgeId, 'pf-badge-ico-svg')}</span>`;
+}
+
 const PF_LOCK_HTML =
   '<span class="pf-lock" aria-hidden="true">' +
   '<svg class="pf-lock__svg" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -249,6 +332,179 @@ function renderLevelAndFrames(hs) {
   }
 }
 
+function pfGetEquippedBadges() {
+  try {
+    const raw = localStorage.getItem(PF_BADGE_KEY);
+    const a = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(a)) return [];
+    return [...new Set(a.map((x) => String(x).trim()).filter(Boolean))].slice(0, PF_BADGE_MAX);
+  } catch (_) {
+    return [];
+  }
+}
+
+function pfSetEquippedBadges(ids) {
+  try {
+    const clean = [...new Set((ids || []).map((x) => String(x).trim()).filter(Boolean))].slice(0, PF_BADGE_MAX);
+    localStorage.setItem(PF_BADGE_KEY, JSON.stringify(clean));
+  } catch (_) {}
+}
+
+function pfBadgeUnlocked(b, level, achieved, stats) {
+  const u = b.unlock;
+  if (u.type === 'always') return true;
+  if (u.type === 'level') return level >= (Number(u.min) || 0);
+  if (u.type === 'achievement') return !!achieved[u.id];
+  if (u.type === 'time') return (Number(stats.playTimeSeconds) || 0) >= (Number(u.seconds) || 0);
+  return false;
+}
+
+function pfBadgeHintText(b, titleById, level, achieved, stats, hs) {
+  const u = b.unlock;
+  if (u.type === 'always') return 'Всегда в коллекции';
+  if (u.type === 'level') {
+    const m = Number(u.min) || 1;
+    return level >= m ? `Уровень ${m}+ · открыто` : `Нужен уровень ${m}+ · сейчас ${level}`;
+  }
+  if (u.type === 'achievement') {
+    const nm = titleById[u.id] || u.id;
+    return achieved[u.id] ? `Достижение «${nm}»` : `Открой: «${nm}»`;
+  }
+  if (u.type === 'time') {
+    const need = Number(u.seconds) || 0;
+    const have = Number(stats.playTimeSeconds) || 0;
+    if (have >= need) return `${hs.formatDuration(need)} за столом · открыто`;
+    return `Ещё ~${hs.formatDuration(Math.max(0, need - have))} с активной вкладкой`;
+  }
+  return '';
+}
+
+function pfHeroBadgeChipHtml(b) {
+  const tier = b.tier && PF_TIER_LABEL[b.tier] ? b.tier : 'common';
+  const tip = `${b.label} · ${PF_TIER_LABEL[tier] || ''}`;
+  return (
+    `<span class="pf-chip-badge pf-chip-badge--icon pf-chip-badge--tier-${tier}" title="${escapeHtml(
+      tip,
+    )}" aria-label="${escapeHtml(tip)}">` +
+    pfBadgeIconBox(b.id, 'pf-badge-ico-wrap pf-chip-badge__ico') +
+    '</span>'
+  );
+}
+
+function pfBadgeCardHtml(b, unlocked, equipped, hint) {
+  const tier = b.tier && PF_TIER_LABEL[b.tier] ? b.tier : 'common';
+  const tierRu = PF_TIER_LABEL[tier] || 'Обычное';
+  const on = equipped.includes(b.id);
+  const lock =
+    unlocked || b.unlock?.type === 'always'
+      ? ''
+      : '<span class="pf-badge-card__lock" aria-hidden="true">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M8 11V8a4 4 0 118 0v3"/><rect x="5" y="11" width="14" height="11" rx="2"/></svg></span>';
+  const tag = on ? '<span class="pf-badge-card__tag">На профиле</span>' : '';
+
+  return (
+    `<button type="button" role="listitem" class="pf-badge-card pf-badge-card--tier-${tier}` +
+    (unlocked ? '' : ' pf-badge-card--locked') +
+    (on ? ' pf-badge-card--equipped' : '') +
+    `" data-pf-badge="${escapeHtml(b.id)}" aria-label="${escapeHtml(`${b.label}. ${tierRu}`)}">` +
+    `<span class="pf-badge-card__top">` +
+    `<span class="pf-chip-badge pf-chip-badge--icon pf-chip-badge--tier-${tier} pf-badge-card__chip">` +
+    pfBadgeIconBox(b.id, 'pf-badge-ico-wrap pf-badge-card__ico') +
+    `</span>` +
+    `<span class="pf-badge-card__rarity">${escapeHtml(tierRu)}</span></span>${lock}${tag}` +
+    `<span class="pf-badge-card__hint">${escapeHtml(hint)}</span></button>`
+  );
+}
+
+function bindPfBadgesOnce() {
+  const grid = document.getElementById('pf-badges-grid');
+  if (!grid || grid.dataset.pfBound === '1') return;
+  grid.dataset.pfBound = '1';
+  grid.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pf-badge]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-pf-badge');
+    const hs = window.hlorStats;
+    if (!id || !hs || typeof hs.computeProfileGamification !== 'function') return;
+    const s = hs.load();
+    const G = hs.computeProfileGamification(s);
+    const achieved = pfAchievementOkSet(G.defs);
+    const unlocked = {};
+    PF_BADGES.forEach((b) => {
+      unlocked[b.id] = pfBadgeUnlocked(b, G.level, achieved, s);
+    });
+    if (!unlocked[id]) {
+      if (typeof showToast === 'function') showToast('Бейдж ещё закрыт', 'error');
+      return;
+    }
+    let equipped = [...pfGetEquippedBadges()];
+    if (equipped.includes(id)) equipped = equipped.filter((x) => x !== id);
+    else {
+      if (equipped.length >= PF_BADGE_MAX) {
+        if (typeof showToast === 'function') {
+          showToast(`Максимум ${PF_BADGE_MAX} бейджа — сними один (клик по «На профиле»)`, 'error');
+        }
+        return;
+      }
+      equipped.push(id);
+    }
+    pfSetEquippedBadges(equipped.filter((bid) => unlocked[bid]));
+    void renderProfileDashboard();
+  });
+}
+
+function renderBadgesSection(hs) {
+  bindPfBadgesOnce();
+  const heroStrip = document.getElementById('pf-hero-badges');
+  const capEl = document.getElementById('pf-badges-cap');
+  const grid = document.getElementById('pf-badges-grid');
+  if (!hs || typeof hs.computeProfileGamification !== 'function') {
+    if (heroStrip) heroStrip.innerHTML = '';
+    return;
+  }
+
+  const s = hs.load();
+  const G = hs.computeProfileGamification(s);
+  const titleById = {};
+  G.defs.forEach((d) => {
+    titleById[d.id] = d.title;
+  });
+  const achieved = pfAchievementOkSet(G.defs);
+  const unlocked = {};
+  const byId = {};
+  PF_BADGES.forEach((b) => {
+    unlocked[b.id] = pfBadgeUnlocked(b, G.level, achieved, s);
+    byId[b.id] = b;
+  });
+
+  let equipped = pfGetEquippedBadges();
+  const cleaned = equipped.filter((id) => unlocked[id] && byId[id]).slice(0, PF_BADGE_MAX);
+  if (cleaned.join('|') !== equipped.join('|')) pfSetEquippedBadges(cleaned);
+  equipped = cleaned;
+
+  if (heroStrip) {
+    heroStrip.innerHTML = equipped.length
+      ? equipped
+          .map((id) => {
+            const b = byId[id];
+            return b ? pfHeroBadgeChipHtml(b) : '';
+          })
+          .join('')
+      : '';
+  }
+
+  if (capEl) {
+    capEl.textContent = `На ник закреплено ${equipped.length} из ${PF_BADGE_MAX}. Клик по карточке — добавить или снять.`;
+  }
+
+  if (grid) {
+    grid.innerHTML = PF_BADGES.map((b) =>
+      pfBadgeCardHtml(b, unlocked[b.id], equipped, pfBadgeHintText(b, titleById, G.level, achieved, s, hs)),
+    ).join('');
+  }
+}
+
 function getAchievementSortMode() {
   try {
     const v = localStorage.getItem(PF_SORT_KEY);
@@ -417,6 +673,7 @@ async function renderProfileDashboard() {
 
   renderLocalStatNumbers(hs);
   renderLevelAndFrames(hs);
+  renderBadgesSection(hs);
   renderAchievementsFromLocal(hs);
 }
 

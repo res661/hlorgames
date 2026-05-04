@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=7" />
+  <link rel="stylesheet" href="css/profile-page.css?v=10" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -54,7 +54,10 @@
           <span class="pf-hero__badge-dot"></span>
           Профиль
         </div>
-        <h1 id="pf-display-name" class="pf-hero__name">Игрок</h1>
+        <div class="pf-hero__name-row">
+          <h1 id="pf-display-name" class="pf-hero__name">Игрок</h1>
+          <div id="pf-hero-badges" class="pf-hero-badges" aria-label="Бейджи у ника"></div>
+        </div>
         <p id="pf-email" class="pf-hero__email"></p>
         <p id="pf-guest-note" class="pf-guest-note hidden">
           Статистика хранится локально в этом браузере (время за столами мафии и «Кто я?», закрытые лобби). Войди, чтобы сохранить ник, цвет или эмодзи‑аватар.
@@ -134,6 +137,17 @@
           <span id="pf-hint-avg" class="pf-stat-card__hint">Время ÷ число закрытых лобби</span>
         </div>
       </div>
+    </section>
+
+    <section class="pf-badges-section" aria-labelledby="pf-badges-heading">
+      <header class="pf-block-head">
+        <h2 id="pf-badges-heading" class="pf-block-head__title">Бейджи</h2>
+        <p class="pf-block-head__sub">
+          Редкость как у достижений: обычный, необычный, редкий, эпический, легендарный. Открываются за стол, время, уровень и трофеи. До четырёх бейджей можно закрепить рядом с ником.
+        </p>
+      </header>
+      <p class="pf-badges-cap" id="pf-badges-cap" aria-live="polite"></p>
+      <div class="pf-badges-grid" id="pf-badges-grid" role="list" aria-label="Коллекция бейджей"></div>
     </section>
 
     <section class="pf-achievements-section" aria-labelledby="pf-achievements-heading">
@@ -267,6 +281,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=11"></script>
+  <script src="js/profile-page.js?v=13"></script>
 </body>
 </html>
