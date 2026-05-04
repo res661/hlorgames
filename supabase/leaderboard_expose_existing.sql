@@ -1,5 +1,8 @@
--- Таблица leaderboard_public уже есть, но сайт даёт 404 / schema cache.
--- Выполни в этом же проекте (SQL Editor), затем NOTIFY и обнови страницу.
+-- Таблица leaderboard_public уже есть, но сайт даёт 404 / «Could not find ... schema cache».
+-- Перед SQL:
+--   • Table Editor → leaderboard_public → включи доступ к Data API (убери «Not exposed»).
+--   • Settings → Data API → схема public в списке.
+-- Выполни ниже в SQL Editor этого проекта; строка NOTIFY перезагружает кэш PostgREST.
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 
@@ -20,5 +23,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.hlor_leaderboard_list(integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.hlor_leaderboard_list(integer) TO anon, authenticated, service_role;
+
+COMMENT ON FUNCTION public.hlor_leaderboard_list(integer) IS 'HLOR leaderboard: read cache for REST RPC';
 
 NOTIFY pgrst, 'reload schema';

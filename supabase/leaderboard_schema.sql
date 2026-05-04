@@ -63,6 +63,8 @@ $$;
 REVOKE ALL ON FUNCTION public.hlor_leaderboard_list(integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.hlor_leaderboard_list(integer) TO anon, authenticated, service_role;
 
+COMMENT ON FUNCTION public.hlor_leaderboard_list(integer) IS 'HLOR leaderboard: read cache for REST RPC';
+
 -- Пересборка: читает всю историю под правами владельца функции (SECURITY DEFINER).
 -- Отображаемое имя: любая из колонок профиля (nickname → username → display_name → full_name),
 -- иначе часть до @ из auth.users.email (для баз без столбца nickname ошибки не будет).

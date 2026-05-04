@@ -6,6 +6,9 @@
 
   const REFRESH_MS = 30 * 60 * 1000;
   const LIMIT = 100;
+  /** PostgREST может отдавать «schema cache» секунды после NOTIFY/DDL — повторяем запрос. */
+  const SCHEMA_FETCH_MAX_ATTEMPTS = 8;
+  const SCHEMA_FETCH_RETRY_MS = 1600;
 
   const tabKeys = ['total', 'mafia', 'whoami', 'time'];
   let rows = [];
@@ -206,6 +209,58 @@
     );
   }
 
+  function isRoutineMissing(err) {
+    if (!err) return false;
+    const raw = `${err.message || ''} ${err.details || ''}`.toLowerCase();
+    return (
+      /routine .*does not exist/.test(raw) ||
+      /function .*does not exist/.test(raw) ||
+      /could not find the function/.test(raw) ||
+      /\b42704\b/.test(String(err.code || ''))
+    );
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Один проход: сначала таблица (часто проще для REST), затем RPC-костыль при тех же типах ошибок.
+   */
+  async function fetchBoardOnce() {
+    let combinedError = null;
+
+    const tblRes = await supabaseClient
+      .from('leaderboard_public')
+      .select(
+        'user_id,nickname,games_mafia,games_whoami,games_other,completed_total,visits_total,play_seconds_estimate,refreshed_at',
+      )
+      .order('completed_total', { ascending: false })
+      .limit(500);
+
+    if (!tblRes.error) {
+      return { data: tblRes.data, error: null };
+    }
+    combinedError = tblRes.error;
+
+    const tryRpc =
+      leaderboardRestUnreachable(tblRes.error) || isRoutineMissing(tblRes.error);
+
+    if (tryRpc) {
+      const rpcRes = await supabaseClient.rpc('hlor_leaderboard_list', {
+        p_limit: 500,
+      });
+      if (!rpcRes.error && Array.isArray(rpcRes.data)) {
+        return { data: rpcRes.data, error: null };
+      }
+      if (!combinedError || leaderboardRestUnreachable(combinedError)) {
+        combinedError = rpcRes.error || combinedError;
+      }
+    }
+
+    return { data: null, error: combinedError };
+  }
+
   async function fetchBoard() {
     const errEl = document.getElementById('lb-error');
     const loading = document.getElementById('lb-loading');
@@ -223,28 +278,25 @@
     }
 
     try {
-      const first = await supabaseClient
-        .from('leaderboard_public')
-        .select(
-          'user_id,nickname,games_mafia,games_whoami,games_other,completed_total,visits_total,play_seconds_estimate,refreshed_at',
-        )
-        .order('completed_total', { ascending: false })
-        .limit(500);
+      let data = null;
+      let combinedError = null;
 
-      let data = first.data;
-      let error = first.error;
-
-      if (error && leaderboardRestUnreachable(error)) {
-        const fb = await supabaseClient.rpc('hlor_leaderboard_list', {
-          p_limit: 500,
-        });
-        if (!fb.error) {
-          error = null;
-          data = fb.data;
+      for (let attempt = 0; attempt < SCHEMA_FETCH_MAX_ATTEMPTS; attempt++) {
+        const once = await fetchBoardOnce();
+        if (!once.error) {
+          data = once.data;
+          combinedError = null;
+          break;
         }
+        combinedError = once.error;
+        const retry =
+          attempt < SCHEMA_FETCH_MAX_ATTEMPTS - 1 &&
+          leaderboardRestUnreachable(combinedError);
+        if (!retry) break;
+        await delay(SCHEMA_FETCH_RETRY_MS);
       }
 
-      if (error) throw error;
+      if (combinedError) throw combinedError;
 
       rows = Array.isArray(data) ? data : [];
       refreshedAt =
@@ -285,9 +337,11 @@
             'Не создана функция <code style="color:inherit">hlor_leaderboard_list</code>. Выполни <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code> (или заново полный <code style="color:inherit">leaderboard_schema.sql</code>), затем NOTIFY.';
         } else if (unreachable || /schema\s*cache|could not find (the )?(relation|table)/i.test(msg)) {
           hint =
-            '1) <strong>Table Editor</strong> → <code style="color:inherit">leaderboard_public</code> → включи доступ к <strong>Data API</strong>, если там выключен / бейдж «Not exposed». ' +
-            '2) Запусти <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code> и <code style="color:inherit">NOTIFY pgrst, \'reload schema\';</code>. ' +
-            '3) Обнови страницу топа — клиент уже пробует и таблицу, и функцию-костыль <code style="color:inherit">hlor_leaderboard_list</code>.';
+            'Страница уже несколько раз подряд пробует и <code style="color:inherit">leaderboard_public</code>, и <code style="color:inherit">hlor_leaderboard_list</code> — если ошибка всё равно: ' +
+            '1) <strong>Table Editor</strong> → <code style="color:inherit">leaderboard_public</code> → включи доступ к Data API (нет бейджа «Not exposed»). ' +
+            '2) <strong>Project Settings → Data API</strong> — среди схем есть <code style="color:inherit">public</code>. ' +
+            '3) SQL Editor: целиком <code style="color:inherit">supabase/leaderboard_expose_existing.sql</code>, затем ещё раз отдельно <code style="color:inherit">NOTIFY pgrst, \'reload schema\';</code> (кэш шлюза может подтягиваться с задержкой). ' +
+            '4) Если не помогло — <strong>Pause project</strong> → <strong>Resume</strong>.';
         }
 
         errEl.innerHTML =

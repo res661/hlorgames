@@ -1,6 +1,10 @@
 /**
  * SUPABASE CLIENT
  * supabaseClient — наш клиент подключения к БД
+ *
+ * URL и anon key возьми в Supabase → Project Settings → Data API (бывш. API).
+ * Они должны быть от того же проекта, где выполнен leaderboard_schema.sql —
+ * иначе топ даёт 404 / «schema cache», хотя в другом проекте данные есть.
  */
 
 const SUPABASE_URL = 'https://mkkwzqbvzvuvuvbskcmt.supabase.co';
