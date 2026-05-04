@@ -314,8 +314,9 @@ async function joinLobby() {
 // ─── СТАТИСТИКА ───────────────────────────────────────────────────────────────
 
 async function loadStats() {
-  const playersEl  = document.getElementById('statPlayers');
+  const playersEl = document.getElementById('statPlayers');
   const sessionsEl = document.getElementById('statSessions');
+  if (!playersEl && !sessionsEl) return;
 
   if (!supabaseClient) {
     if (playersEl)  playersEl.textContent  = '—';
