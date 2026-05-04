@@ -221,7 +221,7 @@ body.admin-body {
 
 .a-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-card-admin);
 }
 
 .a-stat-card--green  { border-color: rgba(16,185,129,0.2); }
@@ -490,7 +490,7 @@ body.admin-body {
   }
   .admin-sidebar.open {
     transform: translateX(0);
-    box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-sidebar);
   }
   .admin-main {
     margin-left: 0;

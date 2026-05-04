@@ -17,7 +17,7 @@
 /* Панель «Кто я?» слегка отделяем по стилю; удобно рядом с кнопкой «Настройки» в топбаре */
 .mafia-workspace .mf-sidebar--whoami-host {
   border-left-color: rgba(56, 189, 248, 0.18);
-  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-drawer-sm);
 }
 
 .mafia-workspace .mf-sidebar--whoami-host:not(.hidden) {
@@ -106,7 +106,7 @@
   align-items: stretch;
   background: linear-gradient(180deg, #141a12 0%, #0e100c 72%);
   border-left: 1px solid rgba(var(--accent-rgb), 0.12);
-  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-drawer-lg);
   transform: translateX(102%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   visibility: visible;
@@ -236,7 +236,7 @@
   border-radius: 12px;
   border: 1px solid rgba(var(--accent-rgb), 0.12);
   background: linear-gradient(180deg, var(--whoami-paper) 0%, #efe9dd 94%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 3px 4px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-neumorphic-sm);
 }
 
 .whoami-nb-sheet__label {

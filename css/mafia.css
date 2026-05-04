@@ -224,7 +224,7 @@ body.mafia-body {
   align-items: center; justify-content: center;
   background: var(--rr-icon-bg);
   border: 2px solid var(--rr-icon-ring);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-bar);
 }
 .mf-role-reveal__icon {
   font-size: 2.15rem;
@@ -428,7 +428,7 @@ body.mafia-body {
   cursor: pointer;
   transition: border-color .2s, transform .2s, box-shadow .2s;
 }
-.mf-slot:hover { border-color: rgba(var(--accent-rgb),.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.mf-slot:hover { border-color: rgba(var(--accent-rgb),.4); transform: translateY(-2px); box-shadow: var(--shadow-slot-hover); }
 .mf-slot--alive  { border-color: rgba(16,185,129,.3); box-shadow: inset 0 0 0 1px rgba(16,185,129,.12); }
 .mf-slot--dead   { filter: grayscale(.7) brightness(.4); border-color: rgba(239,68,68,.35); }
 .mf-slot--dead::after {
@@ -520,7 +520,7 @@ body.mafia-body {
   flex-direction: column;
   background: linear-gradient(180deg, rgba(20, 24, 20, 0.98) 0%, var(--mf-card) 48%);
   border-left: 1px solid rgba(var(--accent-rgb), 0.1);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-drawer-md);
   overflow: hidden;
 }
 .mf-sidebar.hidden { display: none; }
@@ -796,7 +796,7 @@ body.mafia-body {
   background: #2c2f2b;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 9px;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-prominent-lg);
   max-height: min(52vh, 320px);
   overflow-y: auto;
 }
@@ -927,6 +927,17 @@ body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3
     max-height: calc(100dvh - 52px);
     z-index: 100;
     width: 280px;
-    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-drawer-panel);
   }
+}
+
+/* Aurora: иконки/типографика мафии без жёсткого чёрного в тени */
+html[data-theme="minimal"] .mf-role-reveal__icon {
+  filter: drop-shadow(0 6px 16px rgba(5, 12, 26, 0.52));
+}
+html[data-theme="minimal"] .mf-role-reveal__eyebrow {
+  text-shadow: 0 2px 18px rgba(5, 12, 26, 0.45);
+}
+html[data-theme="minimal"] .mf-slot__name {
+  text-shadow: 0 1px 4px rgba(3, 6, 14, 0.82);
 }
