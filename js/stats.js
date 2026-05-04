@@ -42,6 +42,9 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     } catch (_) {}
+    if (typeof window.hlorPushStatsToProfile === 'function') {
+      window.hlorPushStatsToProfile();
+    }
   }
 
   /**

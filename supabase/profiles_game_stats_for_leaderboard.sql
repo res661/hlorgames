@@ -1,0 +1,3 @@
+-- Колонки profiles.stat_* и функция leaderboard_refresh_stats включены в supabase/leaderboard_schema.sql
+-- (и в leaderboard_full_setup_same_project_as_site.sql). Этот файл оставлен как якорь для поиска по имени;
+-- для новой базы выполняй leaderboard_schema.sql целиком.

@@ -39,8 +39,10 @@
   }
 
   function metricLabel(tab) {
-    if (tab === 'time') return 'Время (оценка)';
-    return 'Завершённых лобби';
+    if (tab === 'time') return 'Время за столами';
+    if (tab === 'mafia') return 'Заходов за стол мафии';
+    if (tab === 'whoami') return 'Заходов «Кто я?»';
+    return 'Закрытых лобби';
   }
 
   function initialLetter(nick) {
@@ -68,11 +70,11 @@
     }
     el.textContent =
       sortedSlice.length +
-      ' в списке · сумма завершённых лобби: ' +
+      ' в списке · закрыто лобби (всего): ' +
       sumDone +
-      ' · мафия: ' +
+      ' · мафия (заходы): ' +
       sumMafia +
-      ' · «Кто я?»: ' +
+      ' · «Кто я?» (заходы): ' +
       sumWho;
   }
 

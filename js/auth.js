@@ -70,6 +70,7 @@ async function handleLogin(e) {
     if (error) throw error;
 
     const profile = await fetchProfile(data.user.id);
+    await hlorAfterProfileLoaded(profile);
     currentUser = {
       ...data.user,
       nickname: profile?.nickname || email.split('@')[0],
@@ -138,7 +139,14 @@ async function handleRegister(e) {
       // Игнорируем — профиль уже создан триггером
     }
 
-    currentUser = { ...data.user, nickname, role: 'user', show_on_leaderboard: true };
+    const profile = await fetchProfile(data.user.id);
+    await hlorAfterProfileLoaded(profile);
+    currentUser = {
+      ...data.user,
+      nickname,
+      role: profile?.role || 'user',
+      show_on_leaderboard: profile?.show_on_leaderboard !== false,
+    };
     onUserSignedIn(currentUser);
     closeAuthModal();
     showToast(`Аккаунт создан! Добро пожаловать, ${nickname}!`, 'success');
@@ -171,6 +179,16 @@ async function fetchProfile(userId) {
     return data;
   } catch {
     return null;
+  }
+}
+
+/** Слить счётчики с сервера в localStorage и отправить обратно максимум (для топа из профиля). */
+async function hlorAfterProfileLoaded(profile) {
+  if (typeof window.hlorMergeProfileStatsIntoLocal === 'function') {
+    window.hlorMergeProfileStatsIntoLocal(profile);
+  }
+  if (typeof window.hlorPushStatsToProfileImmediate === 'function') {
+    await window.hlorPushStatsToProfileImmediate();
   }
 }
 
@@ -278,6 +296,7 @@ function startAuthListener() {
   supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
     if (session?.user) {
       const profile = await fetchProfile(session.user.id);
+      await hlorAfterProfileLoaded(profile);
       currentUser = {
         ...session.user,
         nickname: profile?.nickname || session.user.email.split('@')[0],
@@ -301,6 +320,7 @@ function startAuthListener() {
 
     if (session?.user) {
       const profile = await fetchProfile(session.user.id);
+      await hlorAfterProfileLoaded(profile);
       currentUser = {
         ...session.user,
         nickname: profile?.nickname || session.user.email.split('@')[0],

@@ -1,34 +1,25 @@
 /**
- * profile.html — навигация, дашборд: для залогиненных те же цифры, что в топе (leaderboard_public).
+ * profile.html — навигация, дашборд: те же счётчики, что в hlorStats (профиль), синхронизируются в аккаунт для топа.
  */
 
-const PF_LABELS_SERVER = {
-  mafia: 'Мафия — завершённые лобби',
-  whoami: 'Кто я? — завершённые лобби',
-  sessions: 'Всего закрытых лобби',
-  time: 'Время в комнатах (оценка)',
+const PF_LABELS = {
+  mafia: 'Мафия — заход за стол',
+  whoami: 'Кто я? — заход в комнату',
+  sessions: 'Закрыто лобби (хост закончил)',
+  time: 'Время за столами',
   avg: 'Среднее время на одно закрытое лобби',
 };
 
-const PF_LABELS_LOCAL = {
-  mafia: 'Мафия — заход за стол',
-  whoami: 'Кто я? — заход в комнату',
-  sessions: 'Закрыто лобби (в браузере)',
-  time: 'Время за столами (браузер)',
-  avg: 'Среднее время на закрытую партию (браузер)',
-};
-
-function applyPfLabels(which) {
-  const L = which === 'server' ? PF_LABELS_SERVER : PF_LABELS_LOCAL;
+function applyPfLabels() {
   const set = (id, text) => {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   };
-  set('pf-label-mafia', L.mafia);
-  set('pf-label-whoami', L.whoami);
-  set('pf-label-sessions', L.sessions);
-  set('pf-label-time', L.time);
-  set('pf-label-avg', L.avg);
+  set('pf-label-mafia', PF_LABELS.mafia);
+  set('pf-label-whoami', PF_LABELS.whoami);
+  set('pf-label-sessions', PF_LABELS.sessions);
+  set('pf-label-time', PF_LABELS.time);
+  set('pf-label-avg', PF_LABELS.avg);
 }
 
 function renderProfileHero() {
@@ -63,21 +54,6 @@ function escapeHtml(t) {
   const d = document.createElement('div');
   d.textContent = t ?? '';
   return d.innerHTML;
-}
-
-async function fetchMyLeaderboardPublicRow(userId) {
-  if (!window.supabaseClient || !userId) return null;
-  try {
-    const { data, error } = await supabaseClient
-      .from('leaderboard_public')
-      .select('games_mafia,games_whoami,games_other,completed_total,visits_total,play_seconds_estimate')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) return null;
-    return data || null;
-  } catch (_) {
-    return null;
-  }
 }
 
 function renderAchievementsFromLocal(hs) {
@@ -132,70 +108,28 @@ async function renderProfileDashboard() {
 
   const u = typeof currentUser !== 'undefined' && currentUser ? currentUser : null;
 
+  applyPfLabels();
+
   if (explainer) {
     explainer.textContent = u
-      ? 'Цифры ниже для аккаунта совпадают со страницей топа: только завершённые лобби (хост закрыл комнату). Общий топ на сервере пересчитывается командой пересборки или по расписанию.'
-      : 'Без входа считаем только этот браузер: заходы за стол и время по вкладке игры. После входа показываем те же завершённые лобби, что и в топе.';
+      ? 'Счётчики совпадают с топом: они же записываются в профиль на сервере. Общая таблица топа обновляется при пересборке на сервере (leaderboard_refresh_stats).'
+      : 'Без входа считаем только этот браузер. После входа те же числа отправляются в аккаунт и попадают в топ после пересборки.';
   }
 
-  if (!u || !window.supabaseClient) {
-    applyPfLabels('local');
-    const hintAvgGuest = document.getElementById('pf-hint-avg');
-    if (hintAvgGuest)
-      hintAvgGuest.textContent = '«Время за столами» ÷ «Закрыто лобби» — только этот браузер';
-    banner?.classList.add('hidden');
-    renderLocalStatNumbers(hs);
-    renderAchievementsFromLocal(hs);
-    return;
+  const hintAvg = document.getElementById('pf-hint-avg');
+  if (hintAvg) {
+    hintAvg.textContent =
+      '«Время за столами» ÷ «Закрыто лобби» — по текущим счётчикам ниже';
   }
 
-  let row = await fetchMyLeaderboardPublicRow(u.id);
-  if (!row && document.readyState === 'complete') {
-    await new Promise((r) => setTimeout(r, 350));
-    row = await fetchMyLeaderboardPublicRow(u.id);
+  if (banner) {
+    banner.textContent = u
+      ? 'Вошёл в аккаунт — счётчики синхронизируются с сервером для топа; если на странице топа ещё старые цифры, нужна пересборка leaderboard_refresh_stats.'
+      : 'Без входа счёт только локально; после входа игры добавляют статистику в профиль и в топ (после пересборки на сервере).';
+    banner.classList.remove('hidden');
   }
 
-  if (row) {
-    applyPfLabels('server');
-    const setTxt = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val != null ? String(val) : '—';
-    };
-
-    const gm = Number(row.games_mafia) || 0;
-    const gw = Number(row.games_whoami) || 0;
-    const ct = Number(row.completed_total) || 0;
-    const pt = Number(row.play_seconds_estimate) || 0;
-
-    setTxt('pf-stat-mafia-opens', gm);
-    setTxt('pf-stat-whoami-opens', gw);
-    setTxt('pf-stat-sessions', ct);
-    setTxt('pf-stat-time', hs ? hs.formatDuration(pt) : String(pt));
-
-    const avgSec = ct > 0 ? Math.round(pt / ct) : null;
-    setTxt('pf-stat-avg-session', avgSec == null ? '—' : hs.formatDuration(avgSec));
-
-    const hintAvg = document.getElementById('pf-hint-avg');
-    if (hintAvg) hintAvg.textContent = 'Время ÷ число закрытых лобби (как на странице топа)';
-
-    if (banner) {
-      banner.textContent =
-        'Источник: сервер (таблица топа). Если закрыл лобби, а нули — подожди пересборку топа на сервере.';
-      banner.classList.remove('hidden');
-    }
-  } else {
-    applyPfLabels('local');
-    renderLocalStatNumbers(hs);
-    const hintAvg = document.getElementById('pf-hint-avg');
-    if (hintAvg) hintAvg.textContent = '«Время за столами» ÷ «Закрыто лобби» — только этот браузер';
-
-    if (banner) {
-      banner.textContent =
-        'Строки топа на сервере для тебя пока нет — после игр до закрытия лобби хостом и пересборки топа цифры совпадут с топом. Ниже пока счёт из браузера.';
-      banner.classList.remove('hidden');
-    }
-  }
-
+  renderLocalStatNumbers(hs);
   renderAchievementsFromLocal(hs);
 }
 

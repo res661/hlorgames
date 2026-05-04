@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Топ игроков HLOR GAMES — завершённые лобби мафии и «Кто я?», время в комнатах." />
+  <meta name="description" content="Топ игроков HLOR GAMES — счётчики профиля (мафия, «Кто я?», закрытые лобби, время)." />
   <link rel="icon" href="img/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title>Топ игроков — HLOR GAMES</title>
@@ -43,8 +43,8 @@
       <div class="lb-hero__kicker"><span></span> Соревнуйся с компанией</div>
       <h1 class="lb-hero__title"><span class="gradient-text">Топ игроков</span></h1>
       <p class="lb-hero__sub">
-        Завершённые лобби и время считаются так же, как в профиле после входа. Список подгружается с сервера каждые ~2 минуты или по кнопке «Обновить».
-        Общая таблица топа на сервере обновляется при пересборке (<code style="font-size:0.88em">leaderboard_refresh_stats</code>) — без этого новые игры в топе не появятся.
+        Рейтинг строится из статистики профиля на сервере (те же числа, что после входа на странице профиля). Список на сайте подгружается каждые ~2 минуты или по кнопке «Обновить».
+        Общая таблица топа обновляется только после пересборки (<code style="font-size:0.88em">leaderboard_refresh_stats</code>) — запускай её в SQL или по расписанию.
       </p>
       <div class="lb-hero-actions">
         <button type="button" class="btn btn--ghost lb-refresh-btn" id="lb-refresh-btn">
@@ -64,8 +64,7 @@
     <div id="lb-loading" class="lb-loading hidden">Загружаем таблицу…</div>
     <div id="lb-error" class="lb-error hidden"></div>
     <div id="lb-empty" class="lb-empty hidden">
-      Пока никого в топе — нет строк в истории после пересборки. Выполни в базе одну пересборку (см. SQL ниже или файл
-      <code style="font-size:inherit">supabase/leaderboard_schema.sql</code>), зайди в игру и закрой лобби как хост — тогда ты появишься.
+      Пока никого в топе — нет игроков с непустой статистикой в профиле после последней пересборки. Выполни <code style="font-size:inherit">SELECT public.leaderboard_refresh_stats()</code>, войди в игру под аккаунтом и поиграй — счётчики профиля попадут в топ.
     </div>
 
     <div id="lb-board" class="hidden">
@@ -178,11 +177,12 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/profile-stats-sync.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/leaderboard-page.js?v=8"></script>
+  <script src="js/leaderboard-page.js?v=9"></script>
 </body>
 </html>

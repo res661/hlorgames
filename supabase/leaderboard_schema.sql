@@ -1,10 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- HLOR — публичный топ игроков (агрегация из user_lobby_history)
+-- HLOR — публичный топ из счётчиков профиля (profiles.stat_*), те же что в интерфейсе профиля.
 -- Выполни целиком в Supabase → SQL Editor (одним скриптом).
 -- После запуска: SELECT public.leaderboard_refresh_stats();
--- История лобби: имей триггер user_lobby_history_sync_on_lobby_ended.sql — иначе «завершено»
--- может не попасть участникам офлайн; таблица leaderboard_public не обновляется сама —
--- нужен cron или ручной leaderboard_refresh_stats() (раз в N минут).
+-- Таблица leaderboard_public не обновляется сама — cron или ручной leaderboard_refresh_stats().
 --
 -- Если в браузере 404 или «schema cache»:
 -- 1) Table Editor → таблица leaderboard_public → включи доступ к Data API (бейдж
@@ -23,6 +21,12 @@ BEGIN
   END IF;
 END $$;
 
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS stat_mafia_opens int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_whoami_opens int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_sessions_completed int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_play_seconds bigint NOT NULL DEFAULT 0;
+
 CREATE TABLE IF NOT EXISTS public.leaderboard_public (
   user_id uuid PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
   nickname text NOT NULL,
@@ -31,12 +35,20 @@ CREATE TABLE IF NOT EXISTS public.leaderboard_public (
   games_other int NOT NULL DEFAULT 0,
   completed_total int NOT NULL DEFAULT 0,
   visits_total int NOT NULL DEFAULT 0,
-  -- Оценка по разнице first_seen ↔ finished/last_seen, не более 8 ч на один визит
+  -- Совпадает со stat_play_seconds в профиле (сумма времени за столами из браузера)
   play_seconds_estimate bigint NOT NULL DEFAULT 0,
   refreshed_at timestamptz NOT NULL DEFAULT now()
 );
 
-COMMENT ON TABLE public.leaderboard_public IS 'Кэш топа для чтения всеми; пересборка leaderboard_refresh_stats()';
+COMMENT ON TABLE public.leaderboard_public IS 'Кэш топа; leaderboard_refresh_stats() копирует profiles.stat_*';
+
+DROP POLICY IF EXISTS profiles_stats_counters_update_own ON public.profiles;
+CREATE POLICY profiles_stats_counters_update_own
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 ALTER TABLE public.leaderboard_public ENABLE ROW LEVEL SECURITY;
 
@@ -68,9 +80,7 @@ GRANT EXECUTE ON FUNCTION public.hlor_leaderboard_list(integer) TO anon, authent
 
 COMMENT ON FUNCTION public.hlor_leaderboard_list(integer) IS 'HLOR leaderboard: read cache for REST RPC';
 
--- Пересборка: читает всю историю под правами владельца функции (SECURITY DEFINER).
--- Отображаемое имя: любая из колонок профиля (nickname → username → display_name → full_name),
--- иначе часть до @ из auth.users.email (для баз без столбца nickname ошибки не будет).
+-- Пересборка из profiles.stat_* (те же числа, что синхронизирует клиент с профилем).
 CREATE OR REPLACE FUNCTION public.leaderboard_refresh_stats()
 RETURNS void
 LANGUAGE plpgsql
@@ -102,12 +112,12 @@ BEGIN
 
   IF nick_col IS NOT NULL THEN
     nick_sql := format(
-      'COALESCE(NULLIF(trim(p.%I::text), ''''), NULLIF(trim(split_part(coalesce(u.email::text, ''''), ''@'', 1)), ''''), ''Игрок #'' || left(replace(h.user_id::text, ''-'', ''''), 6))',
+      'COALESCE(NULLIF(trim(p.%I::text), ''''), NULLIF(trim(split_part(coalesce(u.email::text, ''''), ''@'', 1)), ''''), ''Игрок #'' || left(replace(p.id::text, ''-'', ''''), 6))',
       nick_col
     );
   ELSE
     nick_sql :=
-      'COALESCE(NULLIF(trim(split_part(coalesce(u.email::text, ''''), ''@'', 1)), ''''), ''Игрок #'' || left(replace(h.user_id::text, ''-'', ''''), 6))';
+      'COALESCE(NULLIF(trim(split_part(coalesce(u.email::text, ''''), ''@'', 1)), ''''), ''Игрок #'' || left(replace(p.id::text, ''-'', ''''), 6))';
   END IF;
 
   EXECUTE format(
@@ -124,40 +134,31 @@ BEGIN
       refreshed_at
     )
     SELECT
-      h.user_id,
+      p.id,
       (%s) AS nickname,
-      COUNT(*) FILTER (WHERE trim(lower(coalesce(h.game, ''))) = 'mafia' AND h.finished_at IS NOT NULL)::int,
-      COUNT(*) FILTER (WHERE trim(lower(coalesce(h.game, ''))) = 'whoami' AND h.finished_at IS NOT NULL)::int,
-      COUNT(*) FILTER (
-        WHERE trim(lower(coalesce(h.game, ''))) NOT IN ('mafia', 'whoami') AND h.finished_at IS NOT NULL
-      )::int,
-      COUNT(*) FILTER (WHERE h.finished_at IS NOT NULL)::int,
-      COUNT(*)::int,
-      COALESCE(SUM(
-        LEAST(
-          28800::bigint,
-          GREATEST(
-            0::bigint,
-            (EXTRACT(EPOCH FROM (
-              COALESCE(h.finished_at, h.last_seen_at) - h.first_seen_at
-            )))::bigint
-          )
-        )
-      ), 0)::bigint,
+      p.stat_mafia_opens::int,
+      p.stat_whoami_opens::int,
+      0::int,
+      p.stat_sessions_completed::int,
+      (p.stat_mafia_opens + p.stat_whoami_opens)::int,
+      p.stat_play_seconds::bigint,
       now()
-    FROM public.user_lobby_history h
-    LEFT JOIN public.profiles p ON p.id = h.user_id
-    LEFT JOIN auth.users u ON u.id = h.user_id
+    FROM public.profiles p
+    LEFT JOIN auth.users u ON u.id = p.id
     WHERE COALESCE(p.show_on_leaderboard, true) = true
-    GROUP BY h.user_id, (%s)
+      AND (
+        p.stat_sessions_completed > 0
+        OR p.stat_mafia_opens > 0
+        OR p.stat_whoami_opens > 0
+        OR p.stat_play_seconds > 0
+      )
     $dyn$,
-    nick_sql,
     nick_sql
   );
 END;
 $$;
 
-COMMENT ON FUNCTION public.leaderboard_refresh_stats() IS 'Перестроить таблицу leaderboard_public из user_lobby_history';
+COMMENT ON FUNCTION public.leaderboard_refresh_stats() IS 'Перестроить leaderboard_public из profiles.stat_* (статистика профиля)';
 
 REVOKE ALL ON FUNCTION public.leaderboard_refresh_stats() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.leaderboard_refresh_stats() TO service_role;
