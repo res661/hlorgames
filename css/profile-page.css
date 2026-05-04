@@ -257,6 +257,54 @@ body.pf-page {
   opacity: 0.9;
 }
 
+.pf-achievements-toolbar {
+  margin-bottom: 16px;
+}
+
+.pf-achievements-toolbar__label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.pf-achievements-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pf-sort-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.pf-sort-btn:hover {
+  color: var(--text);
+  border-color: rgba(200, 255, 78, 0.25);
+  background: rgba(200, 255, 78, 0.04);
+}
+
+.pf-sort-btn.is-active {
+  color: #0a1408;
+  background: var(--lime);
+  border-color: rgba(200, 255, 78, 0.5);
+}
+
+.pf-sort-btn.is-active:hover {
+  color: #060806;
+}
+
 .pf-achievements-track {
   height: 6px;
   background: rgba(255, 255, 255, 0.06);
@@ -342,23 +390,6 @@ body.pf-page {
     rgba(18, 12, 8, 1) 100%
   );
   --ach-border: rgba(245, 158, 11, 0.4);
-}
-
-.pf-achievement__watermark {
-  position: absolute;
-  left: -4%;
-  top: 50%;
-  transform: translateY(-50%) rotate(-12deg);
-  font-size: clamp(4.5rem, 18vw, 7.5rem);
-  line-height: 1;
-  opacity: 0.06;
-  pointer-events: none;
-  user-select: none;
-}
-
-.pf-achievement--tier-epic .pf-achievement__watermark,
-.pf-achievement--tier-legendary .pf-achievement__watermark {
-  opacity: 0.09;
 }
 
 .pf-achievement__icon-box {
@@ -449,11 +480,14 @@ body.pf-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pf-achievement__chev svg {
+  display: block;
+  margin-top: 1px;
 }
 
 .pf-achievement__desc {
@@ -484,9 +518,14 @@ body.pf-page {
   gap: 10px;
 }
 
-.pf-achievement__progress-track {
+.pf-achievement__progress-visual {
   flex: 1;
+  min-width: 0;
+}
+
+.pf-achievement__progress-track {
   height: 7px;
+  width: 100%;
   border-radius: var(--radius-full);
   background: rgba(0, 0, 0, 0.35);
   overflow: hidden;

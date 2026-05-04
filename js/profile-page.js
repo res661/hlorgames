@@ -10,6 +10,18 @@ const PF_LABELS = {
   avg: 'Среднее время на одно закрытое лобби',
 };
 
+const PF_TIER_LABEL = {
+  common: 'Обычное',
+  uncommon: 'Необычное',
+  rare: 'Редкое',
+  epic: 'Эпическое',
+  legendary: 'Легендарное',
+};
+
+const PF_TIER_ORDER = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 };
+const PF_SORT_KEY = 'pf_achievement_sort_v1';
+const PF_SORT_MODES = ['default', 'done_first', 'locked_first', 'tier_high', 'tier_low', 'progress_desc'];
+
 function applyPfLabels() {
   const set = (id, text) => {
     const el = document.getElementById(id);
@@ -56,31 +68,74 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
-const PF_TIER_LABEL = {
-  common: 'Обычное',
-  uncommon: 'Необычное',
-  rare: 'Редкое',
-  epic: 'Эпическое',
-  legendary: 'Легендарное',
-};
+function getAchievementSortMode() {
+  try {
+    const v = localStorage.getItem(PF_SORT_KEY);
+    if (PF_SORT_MODES.includes(v)) return v;
+  } catch (_) {}
+  return 'default';
+}
 
-function renderAchievementsFromLocal(hs) {
-  if (!hs) return;
-  const s = hs.load();
-  const grid = document.getElementById('pf-achievements');
-  const summaryEl = document.getElementById('pf-achievements-summary');
-  if (grid) {
-    const defs = hs.achievementDefs(s);
-    grid.innerHTML = defs
-      .map((a) => {
-        const tier = a.tier && PF_TIER_LABEL[a.tier] ? a.tier : 'common';
-        const tierLabel = PF_TIER_LABEL[tier] || PF_TIER_LABEL.common;
-        const pct = a.ok ? 100 : Math.max(0, Math.min(100, Number(a.progress) || 0));
-        const statusLabel = a.ok ? 'Получено' : 'В процессе';
-        const stateClass = a.ok ? 'pf-achievement--got' : 'pf-achievement--locked';
-        return `
-      <div class="pf-achievement pf-achievement--tier-${tier} ${stateClass}" role="article" data-achievement-id="${escapeHtml(a.id)}">
-        <span class="pf-achievement__watermark" aria-hidden="true">${a.icon}</span>
+function setAchievementSortMode(m) {
+  if (!PF_SORT_MODES.includes(m)) return;
+  try {
+    localStorage.setItem(PF_SORT_KEY, m);
+  } catch (_) {}
+}
+
+function tierRankSafe(a) {
+  return PF_TIER_ORDER[a?.tier] || 1;
+}
+
+function sortAchievementDefs(rawDefs, mode) {
+  const boxed = rawDefs.map((def, idx) => ({ def, idx }));
+  boxed.sort((A, B) => {
+    const a = A.def;
+    const b = B.def;
+    if (mode === 'default') return A.idx - B.idx;
+
+    if (mode === 'done_first') {
+      if (a.ok !== b.ok) return a.ok ? -1 : 1;
+      return A.idx - B.idx;
+    }
+    if (mode === 'locked_first') {
+      if (a.ok !== b.ok) return a.ok ? 1 : -1;
+      return A.idx - B.idx;
+    }
+
+    if (mode === 'tier_high') {
+      const dr = tierRankSafe(b) - tierRankSafe(a);
+      if (dr !== 0) return dr;
+      return A.idx - B.idx;
+    }
+
+    if (mode === 'tier_low') {
+      const dr = tierRankSafe(a) - tierRankSafe(b);
+      if (dr !== 0) return dr;
+      return A.idx - B.idx;
+    }
+
+    if (mode === 'progress_desc') {
+      if (a.ok !== b.ok) return a.ok ? 1 : -1;
+      const pa = Number(a.progress) || 0;
+      const pb = Number(b.progress) || 0;
+      if (pa !== pb) return pb - pa;
+      return A.idx - B.idx;
+    }
+
+    return A.idx - B.idx;
+  });
+  return boxed.map((x) => x.def);
+}
+
+function achievementCardHtml(a) {
+  const tier = a.tier && PF_TIER_LABEL[a.tier] ? a.tier : 'common';
+  const tierLabel = PF_TIER_LABEL[tier] || PF_TIER_LABEL.common;
+  const pct = a.ok ? 100 : Math.max(0, Math.min(100, Number(a.progress) || 0));
+  const statusLabel = a.ok ? 'Получено' : 'В процессе';
+  const stateClass = a.ok ? 'pf-achievement--got' : 'pf-achievement--locked';
+  return `
+      <div class="pf-achievement pf-achievement--tier-${tier} ${stateClass}" role="article">
         <div class="pf-achievement__icon-box" aria-hidden="true">
           <span class="pf-achievement__icon">${a.icon}</span>
         </div>
@@ -90,13 +145,17 @@ function renderAchievementsFromLocal(hs) {
               <span class="pf-achievement__tier">${escapeHtml(tierLabel)}</span>
               <h3 class="pf-achievement__title">${a.ok ? '' : '<span class="pf-lock" aria-hidden="true">🔒</span> '}${escapeHtml(a.title)}</h3>
             </div>
-            <span class="pf-achievement__chev" aria-hidden="true">»</span>
+            <span class="pf-achievement__chev" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
           </div>
           <p class="pf-achievement__desc">${escapeHtml(a.desc)}</p>
           <div class="pf-achievement__foot">
             <div class="pf-achievement__progress-wrap">
-              <div class="pf-achievement__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Прогресс достижения">
-                <div class="pf-achievement__progress-bar" style="width:${pct}%"></div>
+              <div class="pf-achievement__progress-visual" aria-hidden="true">
+                <div class="pf-achievement__progress-track">
+                  <div class="pf-achievement__progress-bar" style="width:${pct}%"></div>
+                </div>
               </div>
               <span class="pf-achievement__pct">${pct}%</span>
             </div>
@@ -104,17 +163,50 @@ function renderAchievementsFromLocal(hs) {
           </div>
         </div>
       </div>`;
-      })
-      .join('');
+}
 
-    const done = defs.filter((d) => d.ok).length;
-    const total = defs.length;
-    if (summaryEl) {
-      summaryEl.textContent = total ? `${done} из ${total} открыто` : '';
-    }
-    const bar = document.getElementById('pf-achievements-bar');
-    if (bar) bar.style.width = total ? Math.min(100, Math.round((done / total) * 100)) + '%' : '0%';
-  }
+function syncAchievementSortToolbar() {
+  const mode = getAchievementSortMode();
+  const toolbar = document.getElementById('pf-achievements-sort');
+  if (!toolbar) return;
+  toolbar.querySelectorAll('[data-pf-sort]').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.getAttribute('data-pf-sort') === mode);
+  });
+}
+
+function bindAchievementSortOnce() {
+  const toolbar = document.getElementById('pf-achievements-sort');
+  if (!toolbar || toolbar.dataset.pfBound === '1') return;
+  toolbar.dataset.pfBound = '1';
+  toolbar.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pf-sort]');
+    if (!btn) return;
+    const m = btn.getAttribute('data-pf-sort');
+    setAchievementSortMode(m);
+    syncAchievementSortToolbar();
+    renderAchievementsFromLocal(window.hlorStats);
+  });
+}
+
+function renderAchievementsFromLocal(hs) {
+  if (!hs) return;
+  const s = hs.load();
+  const grid = document.getElementById('pf-achievements');
+  const summaryEl = document.getElementById('pf-achievements-summary');
+  bindAchievementSortOnce();
+  if (!grid) return;
+
+  const rawDefs = hs.achievementDefs(s);
+  const defs = sortAchievementDefs(rawDefs, getAchievementSortMode());
+  grid.innerHTML = defs.map((a) => achievementCardHtml(a)).join('');
+  syncAchievementSortToolbar();
+
+  const done = rawDefs.filter((d) => d.ok).length;
+  const total = rawDefs.length;
+  if (summaryEl) summaryEl.textContent = total ? `${done} из ${total} открыто` : '';
+
+  const bar = document.getElementById('pf-achievements-bar');
+  if (bar) bar.style.width = total ? Math.min(100, Math.round((done / total) * 100)) + '%' : '0%';
 }
 
 function renderLocalStatNumbers(hs) {
@@ -138,30 +230,13 @@ async function renderProfileDashboard() {
   renderProfileHero();
 
   const hs = window.hlorStats;
-  const banner = document.getElementById('pf-stats-source-banner');
-  const explainer = document.getElementById('pf-stats-explainer');
-
-  const u = typeof currentUser !== 'undefined' && currentUser ? currentUser : null;
 
   applyPfLabels();
-
-  if (explainer) {
-    explainer.textContent = u
-      ? 'Счётчики совпадают с топом: они же записываются в профиль на сервере. Общая таблица топа обновляется при пересборке на сервере (leaderboard_refresh_stats).'
-      : 'Без входа считаем только этот браузер. После входа те же числа отправляются в аккаунт и попадают в топ после пересборки.';
-  }
 
   const hintAvg = document.getElementById('pf-hint-avg');
   if (hintAvg) {
     hintAvg.textContent =
       '«Время за столами» ÷ «Закрыто лобби» — по текущим счётчикам ниже';
-  }
-
-  if (banner) {
-    banner.textContent = u
-      ? 'Вошёл в аккаунт — счётчики синхронизируются с сервером для топа; если на странице топа ещё старые цифры, нужна пересборка leaderboard_refresh_stats.'
-      : 'Без входа счёт только локально; после входа игры добавляют статистику в профиль и в топ (после пересборки на сервере).';
-    banner.classList.remove('hidden');
   }
 
   renderLocalStatNumbers(hs);

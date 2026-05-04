@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=2" />
+  <link rel="stylesheet" href="css/profile-page.css?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -60,15 +60,10 @@
       </div>
     </section>
 
-    <p id="pf-stats-explainer" class="pf-note">
-      После входа цифры ниже совпадают с топом: только завершённые лобби (хост закрыл комнату) из истории на сервере. Гость видит примерную статистику только в этом браузере.
-    </p>
-
     <section aria-labelledby="pf-stats-heading">
       <h2 id="pf-stats-heading" class="pf-section-title" style="margin-bottom:14px;">
         Статистика
       </h2>
-      <p id="pf-stats-source-banner" class="pf-stats-source-banner hidden" role="status"></p>
       <div class="pf-stats-grid">
         <div class="pf-stat-card">
           <div class="pf-stat-card__label">
@@ -120,6 +115,17 @@
       </div>
       <div class="pf-achievements-track" aria-hidden="true">
         <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
+      </div>
+      <div class="pf-achievements-toolbar" role="group" aria-label="Сортировка достижений">
+        <span class="pf-achievements-toolbar__label">Порядок</span>
+        <div class="pf-achievements-sort" id="pf-achievements-sort">
+          <button type="button" class="pf-sort-btn is-active" data-pf-sort="default">Как в списке</button>
+          <button type="button" class="pf-sort-btn" data-pf-sort="done_first">Сначала открытые</button>
+          <button type="button" class="pf-sort-btn" data-pf-sort="locked_first">Сначала в процессе</button>
+          <button type="button" class="pf-sort-btn" data-pf-sort="tier_high">Редкость выше</button>
+          <button type="button" class="pf-sort-btn" data-pf-sort="tier_low">Редкость ниже</button>
+          <button type="button" class="pf-sort-btn" data-pf-sort="progress_desc">Почти готово</button>
+        </div>
       </div>
       <div class="pf-achievements-grid" id="pf-achievements"></div>
     </section>
@@ -223,13 +229,13 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/stats.js?v=5"></script>
+  <script src="js/stats.js?v=6"></script>
   <script src="js/profile-stats-sync.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=6"></script>
+  <script src="js/profile-page.js?v=7"></script>
 </body>
 </html>
