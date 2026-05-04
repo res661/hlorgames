@@ -46,7 +46,7 @@ body.admin-body {
 
 .a-badge {
   background: var(--accent);
-  color: #fff;
+  color: var(--btn-primary-fg);
   font-size: 0.58rem;
   padding: 0.12rem 0.38rem;
   border-radius: 4px;

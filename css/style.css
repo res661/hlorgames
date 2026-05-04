@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  /* Акцент: классическая лаймовая тема (меняется вместе с --accent-rgb в «minimal») */
+  /* Акцент лайм */
   --accent-rgb: 200, 255, 78;
   --lime: rgb(var(--accent-rgb));
   --lime-dim: #a8dd2e;
@@ -39,7 +39,7 @@
   --shadow-lg: 0 12px 48px rgba(0,0,0,0.7);
   --shadow-lime: 0 0 40px rgba(var(--accent-rgb), 0.15);
 
-  /* Семантические тени (для Aurora переопределяются ниже) */
+  /* Семантические тени (в упрощённой теме переопределяются ниже) */
   --shadow-md: 0 10px 32px rgba(0, 0, 0, 0.22);
   --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.45);
   --shadow-float-strong: 0 12px 40px rgba(0, 0, 0, 0.5);
@@ -76,69 +76,6 @@
 
   --transition: 0.2s ease;
   --font: 'Inter', system-ui, sans-serif;
-}
-
-/* Aurora — спокойный SaaS‑минимализм (холодные серые + синий акцент) */
-html[data-theme="minimal"] {
-  --accent-rgb: 96, 165, 250;
-  --lime-dim: #60a5fa;
-  --lime-glow: rgba(96, 165, 250, 0.14);
-  --border-hi: rgba(147, 197, 253, 0.22);
-  --shadow-lime: 0 0 56px rgba(59, 130, 246, 0.12);
-
-  --btn-primary-fg: #061018;
-  --lime-cta-hover: #93c5fd;
-  --lime-gradient-end: #38bdf8;
-  --hero-spot-rgb: 56, 189, 248;
-
-  --bg: #07090e;
-  --bg-card: #0f1219;
-  --bg-card-2: #151b26;
-  --border: rgba(255, 255, 255, 0.06);
-  --text: #f0f3f9;
-  --text-muted: #8b95a8;
-  --text-dim: #3d4659;
-
-  --radius: 10px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
-
-  --shadow: 0 6px 32px rgba(6, 12, 26, 0.48), 0 0 1px rgba(147, 197, 253, 0.06);
-  --shadow-lg: 0 22px 56px rgba(6, 14, 30, 0.58), 0 0 1px rgba(255, 255, 255, 0.04);
-
-  --shadow-md: 0 12px 38px rgba(6, 12, 26, 0.46), 0 0 1px rgba(147, 197, 253, 0.05);
-  --shadow-float: 0 14px 44px rgba(6, 14, 28, 0.52), 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-float-strong: 0 14px 48px rgba(6, 14, 28, 0.55);
-  --shadow-lift: 0 20px 54px rgba(6, 14, 28, 0.58), 0 0 52px rgba(96, 165, 250, 0.09);
-  --shadow-lift-soft: 0 18px 48px rgba(6, 14, 28, 0.52);
-  --shadow-deep: 0 24px 58px rgba(6, 14, 28, 0.56), 0 0 1px rgba(147, 197, 253, 0.04);
-  --shadow-deep-strong: 0 26px 58px rgba(6, 14, 30, 0.6), 0 0 70px rgba(59, 130, 246, 0.06);
-  --shadow-modal: 0 28px 76px rgba(5, 12, 26, 0.68), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-  --shadow-drawer-sm: -12px 0 38px rgba(6, 12, 26, 0.52);
-  --shadow-drawer-md: -12px 0 40px rgba(6, 12, 26, 0.48);
-  --shadow-drawer-lg: -16px 0 54px rgba(6, 14, 28, 0.56);
-  --shadow-drawer-panel: -16px 0 48px rgba(6, 14, 28, 0.58);
-  --shadow-sidebar: 8px 0 36px rgba(6, 12, 26, 0.46);
-  --shadow-card-admin: 0 8px 28px rgba(6, 12, 26, 0.4);
-  --shadow-bar: 0 12px 38px rgba(6, 14, 28, 0.52);
-  --shadow-slot-hover: 0 12px 32px rgba(6, 14, 28, 0.54);
-  --shadow-chip: 0 12px 34px rgba(6, 14, 28, 0.48);
-  --shadow-fab: 0 12px 34px rgba(6, 14, 28, 0.46);
-  --shadow-indicator: 0 20px 54px rgba(6, 14, 28, 0.58), 0 0 48px rgba(96, 165, 250, 0.11);
-  --shadow-inner-dark: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --shadow-focus-ring: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
-  --shadow-accent-drop: 0 12px 40px rgba(var(--accent-rgb), 0.22);
-  --shadow-accent-ambient: 0 0 36px rgba(var(--accent-rgb), 0.1);
-  --shadow-accent-mid: 0 8px 28px rgba(var(--accent-rgb), 0.22);
-  --shadow-xs: 0 4px 18px rgba(6, 12, 26, 0.42);
-  --shadow-layer: 0 6px 26px rgba(6, 12, 26, 0.48), 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-inset-card: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-  --shadow-prominent: 0 16px 46px rgba(6, 14, 28, 0.54), 0 0 1px rgba(147, 197, 253, 0.05);
-  --shadow-prominent-lg: 0 18px 52px rgba(6, 14, 28, 0.58);
-  --shadow-popover-mid: 0 12px 38px rgba(6, 14, 28, 0.52), 0 0 32px rgba(var(--accent-rgb), 0.1);
-  --shadow-popover-lg: 0 14px 44px rgba(6, 14, 28, 0.56), 0 0 40px rgba(var(--accent-rgb), 0.14);
-  --shadow-modal-lobby: 0 26px 58px rgba(6, 14, 28, 0.62), 0 0 52px rgba(var(--accent-rgb), 0.08);
-  --shadow-neumorphic-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), 4px 6px 0 rgba(5, 12, 24, 0.38);
 }
 
 /* ─── RESET ─── */
@@ -219,56 +156,6 @@ input, select { font-family: inherit; }
 .btn--arrow::after {
   content: '→';
   font-size: 1rem;
-}
-
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  margin: 0;
-  flex-shrink: 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition:
-    color 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.22s ease;
-}
-.theme-toggle:hover {
-  color: var(--lime);
-  border-color: rgba(var(--accent-rgb), 0.28);
-  background: rgba(var(--accent-rgb), 0.06);
-  box-shadow: var(--shadow-accent-ambient);
-}
-.theme-toggle:focus-visible {
-  outline: 2px solid rgba(var(--accent-rgb), 0.45);
-  outline-offset: 2px;
-}
-.theme-toggle__icon {
-  display: block;
-}
-
-/* Мафия / админ — компактная кнопка темы в топбаре */
-.mafia-topbar .theme-toggle,
-.admin-topbar .theme-toggle,
-.lobby-topbar .theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius);
-}
-
-@media (max-width: 640px) {
-  .navbar__container .theme-toggle {
-    margin-left: auto;
-    margin-right: 6px;
-  }
 }
 
 .navbar {
@@ -1229,21 +1116,4 @@ section { padding: 80px 24px; }
   .games__grid { grid-template-columns: 1fr; }
   .how-cards { grid-template-columns: 1fr; }
   .hero__title { letter-spacing: -1.5px; }
-}
-
-/* ── Aurora: скроллбар, подвал, оверлеи — без «грязного» чистого чёрного ── */
-html[data-theme="minimal"] ::-webkit-scrollbar-thumb {
-  background: rgba(96, 165, 250, 0.22);
-}
-html[data-theme="minimal"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(147, 197, 253, 0.38);
-}
-html[data-theme="minimal"] .footer {
-  background: rgba(4, 8, 16, 0.55);
-}
-html[data-theme="minimal"] .hlor-room-pass-overlay__backdrop {
-  background: rgba(5, 10, 22, 0.88);
-}
-html[data-theme="minimal"] .hero__title .glow {
-  text-shadow: 0 0 48px rgba(var(--accent-rgb), 0.38), 0 0 100px rgba(var(--accent-rgb), 0.12);
 }

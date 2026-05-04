@@ -930,14 +930,3 @@ body.mafia-body.ph-vote  .mafia-topbar { border-bottom-color: rgba(245,158,11,.3
     box-shadow: var(--shadow-drawer-panel);
   }
 }
-
-/* Aurora: иконки/типографика мафии без жёсткого чёрного в тени */
-html[data-theme="minimal"] .mf-role-reveal__icon {
-  filter: drop-shadow(0 6px 16px rgba(5, 12, 26, 0.52));
-}
-html[data-theme="minimal"] .mf-role-reveal__eyebrow {
-  text-shadow: 0 2px 18px rgba(5, 12, 26, 0.45);
-}
-html[data-theme="minimal"] .mf-slot__name {
-  text-shadow: 0 1px 4px rgba(3, 6, 14, 0.82);
-}

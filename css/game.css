@@ -146,7 +146,7 @@
   font-weight: 700;
   padding: 0.65rem 1.1rem;
   background: var(--accent);
-  color: white;
+  color: var(--btn-primary-fg);
   border: none;
   border-radius: 0;
   cursor: pointer;
@@ -203,7 +203,7 @@
 
 .g-tab.active {
   background: var(--accent);
-  color: white;
+  color: var(--btn-primary-fg);
 }
 
 .g-tab-panel { padding: 1.25rem; }
