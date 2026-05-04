@@ -23,6 +23,25 @@ const PF_SORT_KEY = 'pf_achievement_sort_v1';
 const PF_SORT_MODES = ['default', 'done_first', 'locked_first', 'tier_high', 'tier_low', 'progress_desc'];
 
 const PF_FRAME_KEY = 'pf_profile_frame_v1';
+const PF_PLAQUE_KEY = 'pf_profile_plaque_v1';
+
+/**
+ * Плашка — фон карточки героя профиля. Редкость для коллекции (как у бейджей).
+ * unlock: always | level | achievement (id из achievementDefs)
+ */
+const PF_PLAQUES = [
+  { id: 'studio_default', name: 'Студийная', tier: 'common', unlock: { type: 'always' } },
+  { id: 'lime_mist', name: 'Лаймовая дымка', tier: 'common', unlock: { type: 'level', min: 3 } },
+  { id: 'slate_signal', name: 'Сигнал сланца', tier: 'uncommon', unlock: { type: 'level', min: 8 } },
+  { id: 'ember_hall', name: 'Зал углей', tier: 'uncommon', unlock: { type: 'level', min: 14 } },
+  { id: 'duo_neon', name: 'Две игры — неон', tier: 'uncommon', unlock: { type: 'achievement', id: 'both_games' } },
+  { id: 'mafia_den', name: 'Логово мафии', tier: 'rare', unlock: { type: 'achievement', id: 'mafia_fan' } },
+  { id: 'riddle_mist', name: 'Туман загадок', tier: 'rare', unlock: { type: 'achievement', id: 'whoami_fan' } },
+  { id: 'summit_gold', name: 'Золотая вершина', tier: 'epic', unlock: { type: 'achievement', id: 'champion' } },
+  { id: 'elite_floor', name: 'Элитный зал', tier: 'epic', unlock: { type: 'achievement', id: 'sessions_elite' } },
+  { id: 'immortal_hall', name: 'Зал бессмертия', tier: 'epic', unlock: { type: 'achievement', id: 'sessions_immortal' } },
+  { id: 'chrono_abyss', name: 'Бездна хроноса', tier: 'legendary', unlock: { type: 'achievement', id: 'time_ultra' } },
+];
 
 /** Рамки: по уровню (опыт) или по достижению */
 const PF_FRAMES = [
@@ -212,6 +231,20 @@ function pfSetFrameSelection(id) {
   } catch (_) {}
 }
 
+function pfGetPlaqueSelection() {
+  try {
+    return localStorage.getItem(PF_PLAQUE_KEY) || 'studio_default';
+  } catch (_) {
+    return 'studio_default';
+  }
+}
+
+function pfSetPlaqueSelection(id) {
+  try {
+    localStorage.setItem(PF_PLAQUE_KEY, id);
+  } catch (_) {}
+}
+
 function pfAchievementOkSet(defs) {
   const o = {};
   (defs || []).forEach((d) => {
@@ -220,24 +253,97 @@ function pfAchievementOkSet(defs) {
   return o;
 }
 
-/** Суперадмин видит и может надеть любые рамки и бейджи (локальный превью-коллектор). */
+/** Суперадмин видит и может надеть любые рамки, плашки и бейджи (локальный превью-коллектор). */
 function pfIsCosmeticsUnlockAll() {
   return typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'superadmin';
 }
 
-function pfFrameUnlocked(fr, level, achieved) {
+function pfUnlockMatches(unlock, level, achieved) {
   if (pfIsCosmeticsUnlockAll()) return true;
-  const u = fr.unlock;
+  const u = unlock;
+  if (!u) return false;
   if (u.type === 'always') return true;
-  if (u.type === 'level') return level >= Number(u.min) || 0;
+  if (u.type === 'level') return level >= (Number(u.min) || 0);
   if (u.type === 'achievement') return !!achieved[u.id];
   return false;
+}
+
+function pfFrameUnlocked(fr, level, achieved) {
+  return pfUnlockMatches(fr.unlock, level, achieved);
+}
+
+function pfPlaqueUnlocked(pl, level, achieved) {
+  return pfUnlockMatches(pl.unlock, level, achieved);
 }
 
 function pfNormalizeFrameSelection(sel, unlockedMap) {
   const s = String(sel || '').trim();
   if (s && unlockedMap[s]) return s;
   return unlockedMap.classic ? 'classic' : PF_FRAMES[0].id;
+}
+
+function pfNormalizePlaqueSelection(sel, unlockedMap) {
+  const s = String(sel || '').trim();
+  if (s && unlockedMap[s]) return s;
+  return unlockedMap.studio_default ? 'studio_default' : PF_PLAQUES[0].id;
+}
+
+function pfPlaqueHintText(pl, titleById, level, achieved) {
+  if (pfIsCosmeticsUnlockAll() && pl.unlock?.type !== 'always') {
+    return 'Все плашки открыты (суперадмин)';
+  }
+  const u = pl.unlock;
+  if (u.type === 'always') return 'Всегда доступна';
+  if (u.type === 'level') {
+    const m = Number(u.min) || 1;
+    if (level >= m) return `Уровень ${m}+ · открыто`;
+    return `Нужен ${m}+ уровень · сейчас ${level}`;
+  }
+  if (u.type === 'achievement') {
+    const nm = titleById[u.id] || u.id;
+    return achieved[u.id] ? `Достижение «${nm}»` : `Открой: «${nm}»`;
+  }
+  return '';
+}
+
+function pfApplyPlaqueClass(plaqueId) {
+  const hero = document.getElementById('pf-profile-hero');
+  if (!hero) return;
+  PF_PLAQUES.forEach((p) => hero.classList.remove(`pf-hero--plaque-${p.id}`));
+  const id = PF_PLAQUES.some((p) => p.id === plaqueId) ? plaqueId : 'studio_default';
+  if (id !== 'studio_default') {
+    hero.classList.add(`pf-hero--plaque-${id}`);
+  }
+}
+
+function pfPlaqueCardHtml(pl, unlocked, selected, hint) {
+  const tier = pl.tier && PF_TIER_LABEL[pl.tier] ? pl.tier : 'common';
+  const tierRu = PF_TIER_LABEL[tier] || 'Обычное';
+  const lockSvg =
+    unlocked || pl.unlock?.type === 'always'
+      ? ''
+      : '<span class="pf-plaque-card__lock" aria-hidden="true">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M8 11V8a4 4 0 118 0v3"/><rect x="5" y="11" width="14" height="11" rx="2"/></svg></span>';
+
+  const previewClass =
+    pl.id === 'studio_default'
+      ? 'pf-plaque-preview pf-plaque-preview--default'
+      : `pf-plaque-preview pf-hero--plaque-${pl.id}`;
+
+  return (
+    `<button type="button" role="listitem" class="pf-plaque-card pf-plaque-card--tier-${tier}` +
+    (unlocked ? '' : ' pf-plaque-card--locked') +
+    (selected ? ' pf-plaque-card--selected' : '') +
+    `" data-pf-plaque="${escapeHtml(pl.id)}">` +
+    `<span class="pf-plaque-card__mock" aria-hidden="true">` +
+    `<span class="${previewClass}"></span>${lockSvg}</span>` +
+    `<span class="pf-plaque-card__body">` +
+    `<span class="pf-plaque-card__name">${escapeHtml(pl.name)}</span>` +
+    `<span class="pf-plaque-card__tier">${escapeHtml(tierRu)}</span>` +
+    `<span class="pf-plaque-card__hint">${escapeHtml(hint)}</span>` +
+    `</span></button>`
+  );
 }
 
 function pfFrameHintText(fr, titleById, level, achieved) {
@@ -316,9 +422,41 @@ function bindPfFramesOnce() {
   });
 }
 
+function bindPfPlaquesOnce() {
+  const grid = document.getElementById('pf-plaques-grid');
+  if (!grid || grid.dataset.pfPlaqueBound === '1') return;
+  grid.dataset.pfPlaqueBound = '1';
+  grid.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pf-plaque]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-pf-plaque');
+    const hs = window.hlorStats;
+    if (!id || !hs || typeof hs.computeProfileGamification !== 'function') return;
+    const s = hs.load();
+    const G = hs.computeProfileGamification(s);
+    const achieved = pfAchievementOkSet(G.defs);
+    const unlocked = {};
+    PF_PLAQUES.forEach((pl) => {
+      unlocked[pl.id] = pfPlaqueUnlocked(pl, G.level, achieved);
+    });
+    if (!unlocked[id]) {
+      if (typeof showToast === 'function') showToast('Эта плашка ещё закрыта', 'error');
+      return;
+    }
+    pfSetPlaqueSelection(id);
+    pfApplyPlaqueClass(id);
+    void renderProfileDashboard();
+  });
+}
+
 function renderLevelAndFrames(hs) {
   bindPfFramesOnce();
-  if (!hs || typeof hs.computeProfileGamification !== 'function') return;
+  bindPfPlaquesOnce();
+  if (!hs || typeof hs.computeProfileGamification !== 'function') {
+    pfApplyPlaqueClass(pfGetPlaqueSelection());
+    pfApplyAvatarFrameClass(pfGetFrameSelection());
+    return;
+  }
   const s = hs.load();
   const G = hs.computeProfileGamification(s);
   const titleById = {};
@@ -326,13 +464,23 @@ function renderLevelAndFrames(hs) {
     titleById[d.id] = d.title;
   });
   const achieved = pfAchievementOkSet(G.defs);
-  const unlocked = {};
+  const unlockedFrames = {};
   PF_FRAMES.forEach((fr) => {
-    unlocked[fr.id] = pfFrameUnlocked(fr, G.level, achieved);
+    unlockedFrames[fr.id] = pfFrameUnlocked(fr, G.level, achieved);
   });
 
+  const unlockedPlaques = {};
+  PF_PLAQUES.forEach((pl) => {
+    unlockedPlaques[pl.id] = pfPlaqueUnlocked(pl, G.level, achieved);
+  });
+
+  const prevPlaque = pfGetPlaqueSelection();
+  const selPlaque = pfNormalizePlaqueSelection(prevPlaque, unlockedPlaques);
+  if (selPlaque !== prevPlaque) pfSetPlaqueSelection(selPlaque);
+  pfApplyPlaqueClass(selPlaque);
+
   const prevSel = pfGetFrameSelection();
-  const sel = pfNormalizeFrameSelection(prevSel, unlocked);
+  const sel = pfNormalizeFrameSelection(prevSel, unlockedFrames);
   if (sel !== prevSel) pfSetFrameSelection(sel);
   pfApplyAvatarFrameClass(sel);
 
@@ -354,10 +502,27 @@ function renderLevelAndFrames(hs) {
     }: ещё ${left.toLocaleString('ru-RU')} XP`;
   }
 
+  const plaquesGrid = document.getElementById('pf-plaques-grid');
+  if (plaquesGrid) {
+    plaquesGrid.innerHTML = PF_PLAQUES.map((pl) =>
+      pfPlaqueCardHtml(
+        pl,
+        unlockedPlaques[pl.id],
+        selPlaque === pl.id,
+        pfPlaqueHintText(pl, titleById, G.level, achieved),
+      ),
+    ).join('');
+  }
+
   const grid = document.getElementById('pf-frames-grid');
   if (grid) {
     grid.innerHTML = PF_FRAMES.map((fr) =>
-      pfFrameCardHtml(fr, unlocked[fr.id], sel === fr.id, pfFrameHintText(fr, titleById, G.level, achieved)),
+      pfFrameCardHtml(
+        fr,
+        unlockedFrames[fr.id],
+        sel === fr.id,
+        pfFrameHintText(fr, titleById, G.level, achieved),
+      ),
     ).join('');
   }
 }

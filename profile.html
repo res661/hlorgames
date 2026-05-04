@@ -11,7 +11,7 @@
   <script src="js/seo-meta.js"></script>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=13" />
+  <link rel="stylesheet" href="css/profile-page.css?v=14" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -40,7 +40,7 @@
   </header>
 
   <main class="pf-main">
-    <section class="pf-hero pf-hero--panel" aria-labelledby="pf-display-name">
+    <section id="pf-profile-hero" class="pf-hero pf-hero--panel" aria-labelledby="pf-display-name">
       <div class="pf-hero__avatar-col">
         <div id="pf-avatar-wrap" class="pf-avatar-wrap pf-avatar-wrap--frame-classic">
           <div id="pf-hero-avatar" class="pf-hero__avatar" aria-hidden="true">👋</div>
@@ -84,7 +84,7 @@
           Бейджи
         </button>
         <button type="button" class="pf-tab" role="tab" id="pf-tab-frames" aria-controls="pf-panel-frames" aria-selected="false" data-pf-tab="frames" tabindex="-1">
-          Уровень и рамки
+          Стиль профиля
         </button>
       </nav>
     </div>
@@ -179,9 +179,9 @@
       <div class="pf-panel" id="pf-panel-frames" role="tabpanel" aria-labelledby="pf-tab-frames" data-pf-panel="frames" aria-hidden="true" hidden>
         <section class="pf-frames-section" aria-labelledby="pf-frames-heading">
           <header class="pf-block-head">
-            <h2 id="pf-frames-heading" class="pf-block-head__title">Уровень и рамки</h2>
+            <h2 id="pf-frames-heading" class="pf-block-head__title">Уровень, рамки и плашка</h2>
             <p class="pf-block-head__sub">
-              Опыт растёт за закрытые лобби, заходы за стол и открытые достижения. Рамки — награды: часть открывается с уровнем, часть — за конкретные достижения.
+              Опыт растёт за закрытые лобби, заходы за стол и открытые достижения. Рамки и плашка профиля — награды: часть открывается с уровнем, часть — за достижения. Редкость плашки как у бейджей: от базовой до легендарной.
             </p>
           </header>
           <div class="pf-xp-card">
@@ -197,6 +197,17 @@
             <div class="pf-xp-bar" aria-label="Прогресс уровня">
               <div class="pf-xp-bar__fill" id="pf-xp-bar-fill" style="width: 0%"></div>
             </div>
+          </div>
+
+          <div class="pf-plaque-intro">
+            <h3 class="pf-plaque-intro__title">Плашка профиля</h3>
+            <p class="pf-plaque-intro__sub">Фон большой карточки с аватаром и ником. Выбери тему — заметнее всего на странице профиля.</p>
+          </div>
+          <div class="pf-plaques-grid" id="pf-plaques-grid" role="list" aria-label="Выбор плашки профиля"></div>
+
+          <div class="pf-frames-intro">
+            <h3 class="pf-plaque-intro__title">Рамка аватара</h3>
+            <p class="pf-plaque-intro__sub">Обводка вокруг квадрата с лицом или буквой.</p>
           </div>
           <div class="pf-frames-grid" id="pf-frames-grid" role="list" aria-label="Выбор рамки аватара"></div>
         </section>
@@ -309,6 +320,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=15"></script>
+  <script src="js/profile-page.js?v=16"></script>
 </body>
 </html>

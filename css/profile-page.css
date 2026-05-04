@@ -147,6 +147,453 @@ body.pf-page {
   opacity: 0.92;
 }
 
+/* ── Плашка профиля (фон карточки героя): темы по редкости ── */
+.pf-plaque-intro {
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+.pf-frames-intro {
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+.pf-plaque-intro__title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.pf-plaque-intro__sub {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.pf-plaque-preview {
+  display: block;
+  width: 100%;
+  height: 56px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pf-plaque-preview--default {
+  background: linear-gradient(145deg, rgba(16, 20, 16, 0.97) 0%, rgba(8, 10, 8, 0.99) 45%, rgba(16, 20, 14, 0.95) 100%);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+}
+
+.pf-plaque-preview--default::before {
+  content: '';
+  position: absolute;
+  inset: auto -28% -42% auto;
+  width: 140%;
+  height: 160%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.14) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.pf-plaques-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  gap: 12px;
+}
+
+.pf-plaque-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px;
+  margin: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.18s ease;
+}
+
+.pf-plaque-card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--lime) 22%, var(--border));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.pf-plaque-card--locked {
+  opacity: 0.76;
+}
+
+.pf-plaque-card--locked:hover {
+  opacity: 0.88;
+}
+
+.pf-plaque-card--selected {
+  border-color: color-mix(in srgb, var(--lime) 55%, transparent);
+  background: color-mix(in srgb, var(--lime) 7%, var(--bg-card));
+  box-shadow: 0 0 36px color-mix(in srgb, var(--lime) 12%, transparent);
+}
+
+.pf-plaque-card__mock {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.pf-plaque-card__lock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--text-muted);
+  opacity: 0.9;
+  z-index: 2;
+}
+
+.pf-plaque-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.pf-plaque-card__name {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.pf-plaque-card__tier {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.pf-plaque-card--tier-uncommon .pf-plaque-card__tier {
+  color: #a7f3d0;
+}
+
+.pf-plaque-card--tier-rare .pf-plaque-card__tier {
+  color: #bae6fd;
+}
+
+.pf-plaque-card--tier-epic .pf-plaque-card__tier {
+  color: #e9d5ff;
+}
+
+.pf-plaque-card--tier-legendary .pf-plaque-card__tier {
+  color: #fef08a;
+}
+
+.pf-plaque-card__hint {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+@keyframes pf-plaque-chrono-flow {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(-4%, 2%, 0) scale(1.03);
+  }
+}
+
+/* Lime mist — common */
+.pf-hero.pf-hero--panel.pf-hero--plaque-lime_mist,
+.pf-plaque-preview.pf-hero--plaque-lime_mist {
+  background: linear-gradient(155deg, rgba(14, 22, 16, 0.98) 0%, rgba(8, 14, 10, 0.99) 50%, rgba(12, 22, 14, 0.96) 100%);
+  border-color: color-mix(in srgb, var(--lime) 32%, rgba(var(--accent-rgb), 0.18));
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.38) inset,
+    0 22px 56px rgba(0, 0, 0, 0.48),
+    0 0 72px color-mix(in srgb, var(--lime) 9%, transparent);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-lime_mist::before,
+.pf-plaque-preview.pf-hero--plaque-lime_mist::before {
+  content: '';
+  position: absolute;
+  inset: auto -24% -46% auto;
+  width: min(520px, 92vw);
+  height: min(520px, 92vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--lime) 26%, transparent) 0%, transparent 68%);
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+/* Slate signal — uncommon */
+.pf-hero.pf-hero--panel.pf-hero--plaque-slate_signal,
+.pf-plaque-preview.pf-hero--plaque-slate_signal {
+  background: linear-gradient(145deg, rgba(15, 18, 26, 0.98), rgba(10, 12, 18, 0.99), rgba(18, 22, 30, 0.96));
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 22px 56px rgba(0, 0, 0, 0.52),
+    0 0 60px rgba(56, 189, 248, 0.06);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-slate_signal::before,
+.pf-plaque-preview.pf-hero--plaque-slate_signal::before {
+  content: '';
+  position: absolute;
+  inset: auto -30% -48% 10%;
+  width: 70%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Ember hall — uncommon */
+.pf-hero.pf-hero--panel.pf-hero--plaque-ember_hall,
+.pf-plaque-preview.pf-hero--plaque-ember_hall {
+  background: linear-gradient(145deg, rgba(28, 14, 8, 0.96), rgba(12, 8, 6, 0.99), rgba(22, 12, 6, 0.95));
+  border-color: rgba(245, 158, 11, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.42) inset,
+    0 22px 56px rgba(0, 0, 0, 0.5),
+    0 0 48px rgba(234, 88, 12, 0.08);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-ember_hall::before,
+.pf-plaque-preview.pf-hero--plaque-ember_hall::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: 55%;
+  height: 90%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.18) 0%, transparent 62%);
+  pointer-events: none;
+}
+
+/* Duo neon — uncommon */
+.pf-hero.pf-hero--panel.pf-hero--plaque-duo_neon,
+.pf-plaque-preview.pf-hero--plaque-duo_neon {
+  background: linear-gradient(
+    125deg,
+    rgba(12, 18, 28, 0.97) 0%,
+    rgba(8, 12, 22, 0.99) 45%,
+    rgba(16, 10, 26, 0.96) 100%
+  );
+  border-color: color-mix(in srgb, var(--lime) 22%, rgba(34, 211, 238, 0.35));
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 0 40px rgba(34, 211, 238, 0.07),
+    0 0 56px rgba(147, 51, 234, 0.06),
+    0 22px 56px rgba(0, 0, 0, 0.52);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-duo_neon::before,
+.pf-plaque-preview.pf-hero--plaque-duo_neon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -18deg,
+    transparent,
+    transparent 11px,
+    rgba(34, 211, 238, 0.04) 11px,
+    rgba(34, 211, 238, 0.04) 12px
+  );
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Mafia den — rare */
+.pf-hero.pf-hero--panel.pf-hero--plaque-mafia_den,
+.pf-plaque-preview.pf-hero--plaque-mafia_den {
+  background: linear-gradient(145deg, rgba(42, 10, 12, 0.97), rgba(12, 6, 8, 0.99), rgba(28, 8, 10, 0.96));
+  border-color: rgba(248, 113, 113, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(127, 29, 29, 0.35) inset,
+    0 22px 56px rgba(0, 0, 0, 0.58),
+    0 0 64px rgba(220, 38, 38, 0.12);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-mafia_den::before,
+.pf-plaque-preview.pf-hero--plaque-mafia_den::before {
+  content: '';
+  position: absolute;
+  inset: auto -22% -55% auto;
+  width: min(480px, 88vw);
+  height: min(480px, 88vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(248, 113, 113, 0.16) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+/* Riddle mist — rare */
+.pf-hero.pf-hero--panel.pf-hero--plaque-riddle_mist,
+.pf-plaque-preview.pf-hero--plaque-riddle_mist {
+  background: linear-gradient(160deg, rgba(22, 12, 36, 0.97), rgba(10, 8, 20, 0.99), rgba(18, 14, 42, 0.96));
+  border-color: rgba(167, 139, 250, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(88, 28, 135, 0.28) inset,
+    0 22px 56px rgba(0, 0, 0, 0.54),
+    0 0 56px rgba(139, 92, 246, 0.1);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-riddle_mist::before,
+.pf-plaque-preview.pf-hero--plaque-riddle_mist::before {
+  content: '';
+  position: absolute;
+  inset: auto auto -45% -25%;
+  width: 85%;
+  height: 110%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+/* Summit gold — epic */
+.pf-hero.pf-hero--panel.pf-hero--plaque-summit_gold,
+.pf-plaque-preview.pf-hero--plaque-summit_gold {
+  background: linear-gradient(
+    135deg,
+    rgba(38, 28, 8, 0.96) 0%,
+    rgba(14, 12, 6, 0.99) 40%,
+    rgba(28, 22, 10, 0.97) 100%
+  );
+  border-color: rgba(250, 204, 21, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(180, 83, 9, 0.22) inset,
+    0 22px 60px rgba(0, 0, 0, 0.55),
+    0 0 72px color-mix(in srgb, var(--lime) 14%, rgba(250, 204, 21, 0.1));
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-summit_gold::before,
+.pf-plaque-preview.pf-hero--plaque-summit_gold::before {
+  content: '';
+  position: absolute;
+  inset: auto -15% -35% auto;
+  width: min(460px, 85vw);
+  height: min(460px, 85vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(253, 224, 71, 0.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Elite floor — epic (двойной фон = обводка градиентом) */
+.pf-hero.pf-hero--panel.pf-hero--plaque-elite_floor,
+.pf-plaque-preview.pf-hero--plaque-elite_floor {
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(rgba(12, 14, 18, 0.94), rgba(10, 12, 16, 0.97)),
+    linear-gradient(135deg, color-mix(in srgb, var(--lime) 45%, transparent), rgba(147, 51, 234, 0.45));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.38) inset,
+    0 22px 60px rgba(0, 0, 0, 0.52),
+    0 0 80px color-mix(in srgb, var(--lime) 11%, transparent);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-elite_floor::before,
+.pf-plaque-preview.pf-hero--plaque-elite_floor::before {
+  content: '';
+  position: absolute;
+  inset: auto -20% -40% auto;
+  width: min(500px, 90vw);
+  height: min(500px, 90vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.12) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+/* Immortal hall — epic */
+.pf-hero.pf-hero--panel.pf-hero--plaque-immortal_hall,
+.pf-plaque-preview.pf-hero--plaque-immortal_hall {
+  background: linear-gradient(145deg, rgba(10, 18, 14, 0.98), rgba(6, 10, 8, 0.99), rgba(12, 22, 16, 0.96));
+  border-color: color-mix(in srgb, var(--lime) 42%, rgba(52, 211, 153, 0.22));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--lime) 18%, transparent) inset,
+    0 22px 60px rgba(0, 0, 0, 0.56),
+    0 0 88px color-mix(in srgb, var(--lime) 16%, transparent);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-immortal_hall::before,
+.pf-plaque-preview.pf-hero--plaque-immortal_hall::before {
+  content: '';
+  position: absolute;
+  inset: auto 15% -50% auto;
+  width: 65%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--lime) 28%, transparent) 0%, transparent 66%);
+  pointer-events: none;
+}
+
+/* Chrono abyss — legendary */
+.pf-hero.pf-hero--panel.pf-hero--plaque-chrono_abyss,
+.pf-plaque-preview.pf-hero--plaque-chrono_abyss {
+  background: linear-gradient(150deg, rgba(6, 12, 28, 0.98), rgba(4, 8, 18, 0.99), rgba(8, 14, 32, 0.96));
+  border-color: rgba(56, 189, 248, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.15) inset,
+    0 22px 64px rgba(0, 0, 0, 0.6),
+    0 0 72px rgba(14, 165, 233, 0.12),
+    0 0 120px rgba(59, 130, 246, 0.06);
+}
+
+.pf-hero.pf-hero--panel.pf-hero--plaque-chrono_abyss::before,
+.pf-plaque-preview.pf-hero--plaque-chrono_abyss::before {
+  content: '';
+  position: absolute;
+  inset: auto -25% -48% auto;
+  width: min(540px, 95vw);
+  height: min(540px, 95vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(59, 130, 246, 0.08) 35%, transparent 68%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pf-hero.pf-hero--panel.pf-hero--plaque-chrono_abyss::before,
+  .pf-plaque-preview.pf-hero--plaque-chrono_abyss::before {
+    animation: pf-plaque-chrono-flow 9s ease-in-out infinite;
+  }
+}
+
+html[data-theme='minimal'] .pf-hero.pf-hero--panel.pf-hero--plaque-elite_floor {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.28) inset,
+    0 22px 60px rgba(0, 0, 0, 0.42),
+    0 0 60px rgba(59, 130, 246, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-hero.pf-hero--panel.pf-hero--plaque-chrono_abyss::before,
+  .pf-plaque-preview.pf-hero--plaque-chrono_abyss::before {
+    animation: none;
+  }
+}
+
+.pf-hero.pf-hero--panel .pf-hero__avatar-col,
+.pf-hero.pf-hero--panel .pf-hero__text {
+  position: relative;
+  z-index: 1;
+}
+
 .pf-hero.pf-hero--panel .pf-avatar-wrap .pf-hero__avatar {
   width: 120px;
   height: 120px;
