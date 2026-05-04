@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=6" />
+  <link rel="stylesheet" href="css/profile-page.css?v=7" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -40,7 +40,15 @@
 
   <main class="pf-main">
     <section class="pf-hero pf-hero--panel" aria-labelledby="pf-display-name">
-      <div id="pf-hero-avatar" class="pf-hero__avatar" aria-hidden="true">👋</div>
+      <div class="pf-hero__avatar-col">
+        <div id="pf-avatar-wrap" class="pf-avatar-wrap pf-avatar-wrap--frame-classic">
+          <div id="pf-hero-avatar" class="pf-hero__avatar" aria-hidden="true">👋</div>
+        </div>
+        <div class="pf-level-chip" title="Уровень считается по опыту: партии, время, достижения">
+          <span id="pf-level-num" class="pf-level-chip__n">1</span>
+          <span class="pf-level-chip__lbl">ур.</span>
+        </div>
+      </div>
       <div class="pf-hero__text">
         <div class="pf-hero__badge">
           <span class="pf-hero__badge-dot"></span>
@@ -58,6 +66,30 @@
           <a href="index.html#games" class="btn btn--ghost btn--lg">В каталог игр</a>
         </div>
       </div>
+    </section>
+
+    <section class="pf-frames-section" aria-labelledby="pf-frames-heading">
+      <header class="pf-block-head">
+        <h2 id="pf-frames-heading" class="pf-block-head__title">Уровень и рамки</h2>
+        <p class="pf-block-head__sub">
+          Опыт растёт за закрытые лобби, заходы за стол и открытые достижения. Рамки — награды: часть открывается с уровнем, часть — за конкретные достижения.
+        </p>
+      </header>
+      <div class="pf-xp-card">
+        <div class="pf-xp-card__row">
+          <div>
+            <span class="pf-xp-card__title">Опыт профиля</span>
+            <p class="pf-xp-card__meta" id="pf-xp-summary">—</p>
+          </div>
+          <div class="pf-xp-card__lvl" aria-hidden="true">
+            <span id="pf-xp-level-dup">1</span>
+          </div>
+        </div>
+        <div class="pf-xp-bar" aria-label="Прогресс уровня">
+          <div class="pf-xp-bar__fill" id="pf-xp-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="pf-frames-grid" id="pf-frames-grid" role="list" aria-label="Выбор рамки аватара"></div>
     </section>
 
     <section class="pf-stats-section" aria-labelledby="pf-stats-heading">
@@ -228,13 +260,13 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/stats.js?v=7"></script>
+  <script src="js/stats.js?v=8"></script>
   <script src="js/profile-stats-sync.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=9"></script>
+  <script src="js/profile-page.js?v=11"></script>
 </body>
 </html>

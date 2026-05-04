@@ -22,6 +22,25 @@ const PF_TIER_ORDER = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 }
 const PF_SORT_KEY = 'pf_achievement_sort_v1';
 const PF_SORT_MODES = ['default', 'done_first', 'locked_first', 'tier_high', 'tier_low', 'progress_desc'];
 
+const PF_FRAME_KEY = 'pf_profile_frame_v1';
+
+/** Рамки: по уровню (опыт) или по достижению */
+const PF_FRAMES = [
+  { id: 'classic', name: 'Классика', unlock: { type: 'always' } },
+  { id: 'mist', name: 'Лёгкая дымка', unlock: { type: 'level', min: 2 } },
+  { id: 'jade', name: 'Нефрит', unlock: { type: 'level', min: 5 } },
+  { id: 'volt', name: 'Разряд', unlock: { type: 'level', min: 10 } },
+  { id: 'aurora', name: 'Сияние', unlock: { type: 'level', min: 15 } },
+  { id: 'ember', name: 'Тлеющий уголь', unlock: { type: 'level', min: 22 } },
+  { id: 'finisher_trim', name: 'До финиша', unlock: { type: 'achievement', id: 'finisher' } },
+  { id: 'duo_orbit', name: 'Две орбиты', unlock: { type: 'achievement', id: 'both_games' } },
+  { id: 'veteran_trim', name: 'Боевой склад', unlock: { type: 'achievement', id: 'veteran' } },
+  { id: 'sessions_elite_trim', name: 'Элита стола', unlock: { type: 'achievement', id: 'sessions_elite' } },
+  { id: 'champion_halo', name: 'Чемпион', unlock: { type: 'achievement', id: 'champion' } },
+  { id: 'immortal_gate', name: 'Бессмертие', unlock: { type: 'achievement', id: 'sessions_immortal' } },
+  { id: 'chrono_corona', name: 'Хроно-корона', unlock: { type: 'achievement', id: 'time_ultra' } },
+];
+
 const PF_LOCK_HTML =
   '<span class="pf-lock" aria-hidden="true">' +
   '<svg class="pf-lock__svg" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -73,6 +92,161 @@ function escapeHtml(t) {
   const d = document.createElement('div');
   d.textContent = t ?? '';
   return d.innerHTML;
+}
+
+function pfGetFrameSelection() {
+  try {
+    return localStorage.getItem(PF_FRAME_KEY) || 'classic';
+  } catch (_) {
+    return 'classic';
+  }
+}
+
+function pfSetFrameSelection(id) {
+  try {
+    localStorage.setItem(PF_FRAME_KEY, id);
+  } catch (_) {}
+}
+
+function pfAchievementOkSet(defs) {
+  const o = {};
+  (defs || []).forEach((d) => {
+    if (d && d.ok) o[d.id] = true;
+  });
+  return o;
+}
+
+function pfFrameUnlocked(fr, level, achieved) {
+  const u = fr.unlock;
+  if (u.type === 'always') return true;
+  if (u.type === 'level') return level >= Number(u.min) || 0;
+  if (u.type === 'achievement') return !!achieved[u.id];
+  return false;
+}
+
+function pfNormalizeFrameSelection(sel, unlockedMap) {
+  const s = String(sel || '').trim();
+  if (s && unlockedMap[s]) return s;
+  return unlockedMap.classic ? 'classic' : PF_FRAMES[0].id;
+}
+
+function pfFrameHintText(fr, titleById, level, achieved) {
+  const u = fr.unlock;
+  if (u.type === 'always') return 'Всегда доступна';
+  if (u.type === 'level') {
+    const m = Number(u.min) || 1;
+    if (level >= m) return `Уровень ${m}+ · открыто`;
+    return `Нужен ${m}+ уровень · сейчас ${level}`;
+  }
+  if (u.type === 'achievement') {
+    const nm = titleById[u.id] || u.id;
+    return achieved[u.id] ? `Достижение «${nm}»` : `Открой: «${nm}»`;
+  }
+  return '';
+}
+
+function pfApplyAvatarFrameClass(frameId) {
+  const wrap = document.getElementById('pf-avatar-wrap');
+  if (!wrap) return;
+  PF_FRAMES.forEach((f) => wrap.classList.remove(`pf-avatar-wrap--frame-${f.id}`));
+  const id = PF_FRAMES.some((f) => f.id === frameId) ? frameId : 'classic';
+  wrap.classList.add(`pf-avatar-wrap--frame-${id}`);
+}
+
+function pfFrameCardHtml(fr, unlocked, selected, hint) {
+  const lockSvg =
+    unlocked || fr.unlock?.type === 'always'
+      ? ''
+      : '<span class="pf-frame-card__lock" aria-hidden="true">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M8 11V8a4 4 0 118 0v3"/><rect x="5" y="11" width="14" height="11" rx="2"/></svg></span>';
+
+  return (
+    `<button type="button" role="listitem" class="pf-frame-card` +
+    (unlocked ? '' : ' pf-frame-card--locked') +
+    (selected ? ' pf-frame-card--selected' : '') +
+    `" data-pf-frame="${escapeHtml(fr.id)}">` +
+    `<span class="pf-frame-card__mock" aria-hidden="true">` +
+    `<span class="pf-mini-wrap pf-avatar-wrap pf-avatar-wrap--frame-${fr.id} pf-avatar-wrap--mini">` +
+    `<span class="pf-mini-core"></span></span>${lockSvg}</span>` +
+    `<span class="pf-frame-card__body">` +
+    `<span class="pf-frame-card__name">${escapeHtml(fr.name)}</span>` +
+    `<span class="pf-frame-card__hint">${escapeHtml(hint)}</span>` +
+    `</span></button>`
+  );
+}
+
+function bindPfFramesOnce() {
+  const grid = document.getElementById('pf-frames-grid');
+  if (!grid || grid.dataset.pfBound === '1') return;
+  grid.dataset.pfBound = '1';
+  grid.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pf-frame]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-pf-frame');
+    const hs = window.hlorStats;
+    if (!id || !hs || typeof hs.computeProfileGamification !== 'function') return;
+    const s = hs.load();
+    const G = hs.computeProfileGamification(s);
+    const achieved = pfAchievementOkSet(G.defs);
+    const unlocked = {};
+    PF_FRAMES.forEach((fr) => {
+      unlocked[fr.id] = pfFrameUnlocked(fr, G.level, achieved);
+    });
+    if (!unlocked[id]) {
+      if (typeof showToast === 'function') showToast('Эта рамка ещё закрыта', 'error');
+      return;
+    }
+    pfSetFrameSelection(id);
+    pfApplyAvatarFrameClass(id);
+    void renderProfileDashboard();
+  });
+}
+
+function renderLevelAndFrames(hs) {
+  bindPfFramesOnce();
+  if (!hs || typeof hs.computeProfileGamification !== 'function') return;
+  const s = hs.load();
+  const G = hs.computeProfileGamification(s);
+  const titleById = {};
+  G.defs.forEach((d) => {
+    titleById[d.id] = d.title;
+  });
+  const achieved = pfAchievementOkSet(G.defs);
+  const unlocked = {};
+  PF_FRAMES.forEach((fr) => {
+    unlocked[fr.id] = pfFrameUnlocked(fr, G.level, achieved);
+  });
+
+  const prevSel = pfGetFrameSelection();
+  const sel = pfNormalizeFrameSelection(prevSel, unlocked);
+  if (sel !== prevSel) pfSetFrameSelection(sel);
+  pfApplyAvatarFrameClass(sel);
+
+  const lvlChip = document.getElementById('pf-level-num');
+  const lvlDup = document.getElementById('pf-xp-level-dup');
+  if (lvlChip) lvlChip.textContent = String(G.level);
+  if (lvlDup) lvlDup.textContent = String(G.level);
+
+  const need = Math.max(1, G.xpForNextLevel || 1);
+  const pct = Math.min(100, Math.round((Math.max(0, G.xpIntoLevel) / need) * 100));
+  const bar = document.getElementById('pf-xp-bar-fill');
+  if (bar) bar.style.width = `${pct}%`;
+
+  const left = Math.max(0, need - Math.max(0, G.xpIntoLevel));
+  const sumEl = document.getElementById('pf-xp-summary');
+  if (sumEl) {
+    sumEl.textContent = `${(G.xpTotal || 0).toLocaleString('ru-RU')} XP · до уровня ${
+      G.level + 1
+    }: ещё ${left.toLocaleString('ru-RU')} XP`;
+  }
+
+  const grid = document.getElementById('pf-frames-grid');
+  if (grid) {
+    grid.innerHTML = PF_FRAMES.map((fr) =>
+      pfFrameCardHtml(fr, unlocked[fr.id], sel === fr.id, pfFrameHintText(fr, titleById, G.level, achieved)),
+    ).join('');
+  }
 }
 
 function getAchievementSortMode() {
@@ -242,6 +416,7 @@ async function renderProfileDashboard() {
   }
 
   renderLocalStatNumbers(hs);
+  renderLevelAndFrames(hs);
   renderAchievementsFromLocal(hs);
 }
 

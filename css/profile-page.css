@@ -45,7 +45,7 @@ body.pf-page {
 }
 
 .pf-hero.pf-hero--panel {
-  grid-template-columns: minmax(0, 128px) 1fr;
+  grid-template-columns: minmax(0, 154px) 1fr;
   gap: clamp(20px, 4vw, 32px);
   padding: clamp(22px, 4vw, 34px) clamp(22px, 4vw, 38px);
   background: linear-gradient(145deg, rgba(16, 20, 16, 0.97) 0%, rgba(8, 10, 8, 0.99) 45%, rgba(16, 20, 14, 0.95) 100%);
@@ -64,7 +64,7 @@ body.pf-page {
   opacity: 0.92;
 }
 
-.pf-hero.pf-hero--panel .pf-hero__avatar {
+.pf-hero.pf-hero--panel .pf-avatar-wrap .pf-hero__avatar {
   width: 120px;
   height: 120px;
   border-radius: 22px;
@@ -788,6 +788,354 @@ body.pf-page {
   margin-top: 24px;
 }
 
+/* ── Уровень, опыт и рамки аватара ───────────────────────────── */
+
+.pf-hero__avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 1;
+}
+
+.pf-level-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 14px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--lime) 28%, var(--border));
+  background: color-mix(in srgb, var(--lime) 9%, var(--bg-card));
+  box-shadow: 0 0 28px color-mix(in srgb, var(--lime) 12%, transparent);
+}
+
+.pf-level-chip__n {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--lime);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.pf-level-chip__lbl {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.pf-avatar-wrap {
+  position: relative;
+  z-index: 1;
+  border-radius: 28px;
+  padding: 0;
+  isolation: isolate;
+}
+
+.pf-avatar-wrap .pf-hero__avatar {
+  position: relative;
+  z-index: 1;
+}
+
+/* Мини-превью в сетке рамок */
+.pf-mini-wrap.pf-avatar-wrap--mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.pf-mini-core {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, var(--bg-card-2), var(--bg-card));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pf-frames-section {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.pf-xp-card {
+  padding: 20px 22px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: linear-gradient(165deg, var(--bg-card) 0%, rgba(0, 0, 0, 0.12) 100%);
+  box-shadow: var(--shadow);
+}
+
+.pf-xp-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.pf-xp-card__title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lime);
+}
+
+.pf-xp-card__meta {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.pf-xp-card__lvl {
+  flex-shrink: 0;
+  min-width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--lime);
+  background: color-mix(in srgb, var(--lime) 12%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--lime) 35%, transparent);
+  box-shadow: 0 0 32px color-mix(in srgb, var(--lime) 10%, transparent);
+}
+
+.pf-xp-bar {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pf-xp-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lime-dim), var(--lime));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--lime) 35%, transparent);
+  transition: width 0.45s ease;
+}
+
+.pf-frames-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.pf-frame-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px;
+  margin: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.18s ease;
+}
+
+.pf-frame-card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--lime) 25%, var(--border));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.pf-frame-card--locked {
+  opacity: 0.76;
+}
+
+.pf-frame-card--locked:hover {
+  opacity: 0.88;
+}
+
+.pf-frame-card--selected {
+  border-color: color-mix(in srgb, var(--lime) 55%, transparent);
+  background: color-mix(in srgb, var(--lime) 7%, var(--bg-card));
+  box-shadow: 0 0 36px color-mix(in srgb, var(--lime) 12%, transparent);
+}
+
+.pf-frame-card__mock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% -20%, color-mix(in srgb, var(--lime) 15%, transparent), transparent 60%),
+    rgba(0, 0, 0, 0.15);
+}
+
+.pf-frame-card__lock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
+.pf-frame-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.pf-frame-card__name {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.pf-frame-card__hint {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Рамки: кольца вокруг аватара (и мини-превью через те же модификаторы) */
+
+.pf-avatar-wrap--frame-classic {
+  padding: 4px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lime) 22%, transparent) inset,
+    0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.pf-avatar-wrap--frame-mist {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 2px color-mix(in srgb, var(--lime) 18%, transparent),
+    0 0 44px color-mix(in srgb, var(--lime) 14%, transparent);
+}
+
+.pf-avatar-wrap--frame-jade::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--lime) 55%, cyan), transparent 55%, color-mix(in srgb, var(--lime) 40%, teal));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: 0;
+}
+
+.pf-avatar-wrap--frame-jade {
+  padding: 5px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+}
+
+.pf-avatar-wrap--frame-volt {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lime) 35%, transparent),
+    0 0 28px color-mix(in srgb, var(--lime) 25%, transparent),
+    0 0 54px color-mix(in srgb, var(--lime-dim) 15%, transparent);
+}
+
+.pf-avatar-wrap--frame-aurora {
+  padding: 6px;
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--lime) 22%, transparent),
+    rgba(147, 51, 234, 0.12),
+    color-mix(in srgb, var(--lime-dim) 28%, transparent)
+  );
+  box-shadow:
+    0 0 40px color-mix(in srgb, var(--lime) 12%, transparent),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+.pf-avatar-wrap--frame-ember {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 0 26px rgba(245, 158, 11, 0.15),
+    0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.pf-avatar-wrap--frame-finisher_trim {
+  padding: 5px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.1),
+    0 0 0 3px color-mix(in srgb, var(--lime) 40%, transparent) inset,
+    0 10px 32px rgba(0, 0, 0, 0.45);
+}
+
+.pf-avatar-wrap--frame-duo_orbit {
+  padding: 6px;
+  outline: 1px dashed color-mix(in srgb, var(--lime) 35%, transparent);
+  outline-offset: 2px;
+  box-shadow: 0 0 42px color-mix(in srgb, var(--lime) 10%, transparent);
+}
+
+.pf-avatar-wrap--frame-veteran_trim {
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(234, 179, 8, 0.5),
+    0 8px 28px rgba(234, 179, 8, 0.12),
+    inset 0 0 28px rgba(234, 179, 8, 0.06);
+}
+
+.pf-avatar-wrap--frame-sessions_elite_trim {
+  padding: 6px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    linear-gradient(145deg, var(--lime), rgba(147, 51, 234, 0.55)) border-box;
+  box-shadow: 0 14px 48px rgba(0, 0, 0, 0.48);
+}
+
+.pf-avatar-wrap--frame-champion_halo {
+  padding: 6px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lime) 50%, transparent),
+    0 0 52px color-mix(in srgb, var(--lime) 22%, transparent),
+    0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.pf-avatar-wrap--frame-immortal_gate {
+  padding: 7px;
+  box-shadow:
+    0 0 52px color-mix(in srgb, var(--lime) 20%, transparent),
+    0 0 0 2px rgba(255, 255, 255, 0.1),
+    0 0 0 1px color-mix(in srgb, var(--lime) 45%, transparent) inset;
+}
+
+.pf-avatar-wrap--frame-chrono_corona {
+  padding: 6px;
+  box-shadow:
+    0 0 24px rgba(56, 189, 248, 0.2),
+    0 0 0 2px rgba(125, 211, 252, 0.25),
+    0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
 @media (max-width: 760px) {
   .pf-hero,
   .pf-hero.pf-hero--panel {
@@ -795,7 +1143,7 @@ body.pf-page {
     text-align: center;
   }
 
-  .pf-hero__avatar {
+  .pf-hero__avatar-col {
     margin: 0 auto;
   }
 

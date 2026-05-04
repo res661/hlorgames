@@ -498,6 +498,58 @@
     return Math.round((s.playTimeSeconds || 0) / sc);
   }
 
+  /** Суммарный опыт профиля: активность + бонусы за открытые достижения */
+  function totalProfileXP(stats) {
+    var s = Object.assign({}, defaults(), stats || {});
+    var defs = achievementDefs(s);
+    var tierXp = { common: 14, uncommon: 26, rare: 42, epic: 68, legendary: 105 };
+    var xp = 0;
+    xp += Math.min(14000, Math.floor((s.sessionsCompleted || 0) * 40));
+    xp += Math.min(7000, Math.floor((s.mafiaTableOpens || 0) * 8));
+    xp += Math.min(7000, Math.floor((s.whoamiTableOpens || 0) * 8));
+    xp += Math.min(9000, Math.floor((s.playTimeSeconds || 0) / 40));
+    for (var i = 0; i < defs.length; i++) {
+      if (defs[i].ok) xp += tierXp[defs[i].tier] || 14;
+    }
+    return Math.max(0, Math.floor(xp));
+  }
+
+  /**
+   * Кривая уровней: каждый уровень дороже; ~60 уровней до очень высокого XP.
+   * @returns {{ level: number, xpIntoLevel: number, xpForNextLevel: number }}
+   */
+  function profileLevelProgress(xpTotal) {
+    var xp = Math.max(0, Math.floor(Number(xpTotal) || 0));
+    var level = 1;
+    var need = 200;
+    var carry = xp;
+    while (level < 99 && carry >= need) {
+      carry -= need;
+      level++;
+      need = Math.min(12000, Math.round(need * 1.125 + 32));
+    }
+    return {
+      level: level,
+      xpIntoLevel: carry,
+      xpForNextLevel: need,
+      xpTotal: xp,
+    };
+  }
+
+  function computeProfileGamification(stats) {
+    var s = Object.assign({}, defaults(), stats || {});
+    var defs = achievementDefs(s);
+    var xpTotal = totalProfileXP(s);
+    var lv = profileLevelProgress(xpTotal);
+    return {
+      defs: defs,
+      xpTotal: xpTotal,
+      level: lv.level,
+      xpIntoLevel: lv.xpIntoLevel,
+      xpForNextLevel: lv.xpForNextLevel,
+    };
+  }
+
   window.hlorStats = {
     load: load,
     save: save,
@@ -508,5 +560,8 @@
     formatDuration: formatDuration,
     achievementDefs: achievementDefs,
     avgSecondsPerEndedSession: avgSecondsPerEndedSession,
+    totalProfileXP: totalProfileXP,
+    profileLevelProgress: profileLevelProgress,
+    computeProfileGamification: computeProfileGamification,
   };
 })();
