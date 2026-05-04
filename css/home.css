@@ -83,8 +83,13 @@ html[data-hlor-page='home'] .hero__featured-coming {
   justify-content: flex-start;
 }
 
-html[data-hlor-page='home'] .hero__featured-coming span {
-  font-size: 0.74rem;
+html[data-hlor-page='home'] .games .section-header .section-label {
+  margin-bottom: 22px;
+}
+
+.hero__subtitle-games strong {
+  color: var(--text);
+  font-weight: 800;
 }
 
 @media (max-width: 960px) {

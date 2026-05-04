@@ -65,6 +65,45 @@ function initHeroButtons() {
   });
 }
 
+/** Главная: ротация имён доступных игр в подзаголовке героя */
+function initHomeHeroGameRotate() {
+  if (document.documentElement.dataset.hlorPage !== 'home') return;
+  const container = document.getElementById('heroRotatingGames');
+  if (!container) return;
+
+  const cards = document.querySelectorAll('#games .game-card:not(.game-card--soon)');
+  const names = [...cards]
+    .map((c) => c.querySelector('.game-card__title')?.textContent?.trim())
+    .filter(Boolean);
+
+  if (!names.length) {
+    container.textContent = '';
+    return;
+  }
+
+  let idx = 0;
+  function render() {
+    const n = names.length;
+    const parts = [];
+    for (let k = 0; k < n; k++) parts.push(names[(idx + k) % n]);
+    container.textContent = '';
+    const strong = document.createElement('strong');
+    strong.textContent = parts[0];
+    container.appendChild(strong);
+    if (parts.length > 1) {
+      container.appendChild(document.createTextNode(', ' + parts.slice(1).join(', ')));
+    }
+  }
+
+  render();
+  if (names.length < 2) return;
+
+  window.setInterval(() => {
+    idx = (idx + 1) % names.length;
+    render();
+  }, 10000);
+}
+
 /** Главная: плавное появление блоков при скролле */
 function initHomeReveal() {
   if (document.documentElement.dataset.hlorPage !== 'home') return;
@@ -374,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initHeroButtons();
   initHomeReveal();
+  initHomeHeroGameRotate();
   // Ждём пока supabase инициализируется, затем грузим
   function tryLoadStats(attempts) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {
