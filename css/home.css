@@ -1,6 +1,144 @@
 /**
- * Главная страница — дополнительные анимации (подключается только с index.html).
+ * Главная страница — компоновка героя и анимации.
  */
+
+/* ── Герой: текст слева, карточка игры справа (не «бесконечная колонка по центру») ── */
+html[data-hlor-page='home'] .hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  grid-template-areas: 'content featured';
+  align-items: center;
+  column-gap: clamp(28px, 5vw, 56px);
+  row-gap: 28px;
+  justify-items: stretch;
+  text-align: left;
+  min-height: 0;
+  justify-content: normal;
+  padding: clamp(92px, 11vh, 118px) clamp(20px, 4vw, 32px) 56px;
+  max-width: 1180px;
+}
+
+html[data-hlor-page='home'] .hero__content {
+  grid-area: content;
+  max-width: 560px;
+}
+
+html[data-hlor-page='home'] .hero__title {
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+html[data-hlor-page='home'] .hero__subtitle {
+  margin: 0 0 28px;
+  max-width: 480px;
+}
+
+html[data-hlor-page='home'] .hero__actions {
+  justify-content: flex-start;
+  margin-bottom: 0;
+  gap: 10px;
+}
+
+html[data-hlor-page='home'] .hero__featured {
+  grid-area: featured;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 18px;
+  padding: 22px 22px 20px;
+  text-align: left;
+}
+
+html[data-hlor-page='home'] .hero__featured-left {
+  flex: 1;
+  min-width: 0;
+}
+
+html[data-hlor-page='home'] .hero__featured-desc {
+  max-width: none;
+  margin-bottom: 12px;
+}
+
+html[data-hlor-page='home'] .hero__featured-right {
+  width: 100%;
+  align-items: stretch;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+html[data-hlor-page='home'] .hero__featured-cta {
+  width: 100%;
+  justify-content: center;
+}
+
+html[data-hlor-page='home'] .hero__featured-coming {
+  text-align: left;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  justify-content: flex-start;
+}
+
+html[data-hlor-page='home'] .hero__featured-coming span {
+  font-size: 0.74rem;
+}
+
+@media (max-width: 960px) {
+  html[data-hlor-page='home'] .hero {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'content'
+      'featured';
+    text-align: center;
+    justify-items: center;
+    padding-bottom: 48px;
+  }
+
+  html[data-hlor-page='home'] .hero__content {
+    max-width: 640px;
+  }
+
+  html[data-hlor-page='home'] .hero__title {
+    text-align: center;
+  }
+
+  html[data-hlor-page='home'] .hero__subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  html[data-hlor-page='home'] .hero__actions {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  html[data-hlor-page='home'] .hero__featured {
+    max-width: 520px;
+    text-align: center;
+  }
+
+  html[data-hlor-page='home'] .hero__featured-right {
+    align-items: center;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  html[data-hlor-page='home'] .hero__featured-coming {
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-hlor-page='home'] .hero__featured-coming {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
 
 @keyframes hlorHeroGlow {
   0% {
