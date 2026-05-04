@@ -2,6 +2,9 @@
 -- HLOR — публичный топ игроков (агрегация из user_lobby_history)
 -- Выполни целиком в Supabase → SQL Editor (одним скриптом).
 -- После запуска: SELECT public.leaderboard_refresh_stats();
+-- История лобби: имей триггер user_lobby_history_sync_on_lobby_ended.sql — иначе «завершено»
+-- может не попасть участникам офлайн; таблица leaderboard_public не обновляется сама —
+-- нужен cron или ручной leaderboard_refresh_stats() (раз в N минут).
 --
 -- Если в браузере 404 или «schema cache»:
 -- 1) Table Editor → таблица leaderboard_public → включи доступ к Data API (бейдж

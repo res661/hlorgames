@@ -15,7 +15,6 @@
   const tabKeys = ['total', 'mafia', 'whoami', 'time'];
   let rows = [];
   let activeTab = 'total';
-  let refreshedAt = null;
   let pollTimer = null;
 
   function esc(s) {
@@ -49,24 +48,35 @@
     return c ? c.toUpperCase() : '?';
   }
 
-  function setMeta() {
-    const el = document.getElementById('lb-refreshed');
+  /** Одна строка сводки под заголовком (без технических таймштампов для игроков). */
+  function setSummary(sortedSlice) {
+    const el = document.getElementById('lb-summary');
     if (!el) return;
-    if (!refreshedAt) {
-      el.textContent = '—';
+    if (!sortedSlice || !sortedSlice.length) {
+      el.textContent = '';
+      el.classList.add('hidden');
       return;
     }
-    try {
-      const d = new Date(refreshedAt);
-      el.textContent = d.toLocaleString('ru-RU', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (_) {
-      el.textContent = refreshedAt;
+    el.classList.remove('hidden');
+    let sumDone = 0;
+    let sumMafia = 0;
+    let sumWho = 0;
+    for (const r of sortedSlice) {
+      sumDone += Number(r.completed_total) || 0;
+      sumMafia += Number(r.games_mafia) || 0;
+      sumWho += Number(r.games_whoami) || 0;
     }
+    el.textContent =
+      'Показано до ' +
+      LIMIT +
+      ' мест: ' +
+      sortedSlice.length +
+      ' игроков · завершённых лобби (сумма по списку): ' +
+      sumDone +
+      ' · мафия: ' +
+      sumMafia +
+      ' · «Кто я?»: ' +
+      sumWho;
   }
 
   function renderPodium(sorted) {
@@ -190,12 +200,13 @@
       document.getElementById('lb-podium').innerHTML = '';
       const body = document.getElementById('lb-rows');
       if (body) body.innerHTML = '';
+      setSummary([]);
       return;
     }
 
     renderPodium(sorted);
     renderTable(sorted, myId);
-    setMeta();
+    setSummary(sorted);
   }
 
   function leaderboardRestUnreachable(err) {
@@ -329,15 +340,6 @@
       if (combinedError) throw combinedError;
 
       rows = Array.isArray(data) ? data : [];
-      refreshedAt =
-        rows.length === 0
-          ? null
-          : rows.reduce((best, r) => {
-              const t = r.refreshed_at;
-              if (!t) return best;
-              if (!best || t > best) return t;
-              return best;
-            }, null);
 
       const empty = document.getElementById('lb-empty');
       const list = document.getElementById('lb-board');

@@ -65,6 +65,23 @@ body.lb-page {
   line-height: 1.55;
 }
 
+.lb-summary {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.lb-summary.hidden {
+  display: none;
+}
+
 .lb-meta {
   display: inline-flex;
   align-items: center;

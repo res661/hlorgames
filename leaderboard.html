@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/leaderboard-page.css?v=1" />
+  <link rel="stylesheet" href="css/leaderboard-page.css?v=2" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="lb-page">
@@ -43,12 +43,10 @@
       <div class="lb-hero__kicker"><span></span> Соревнуйся с компанией</div>
       <h1 class="lb-hero__title"><span class="gradient-text">Топ игроков</span></h1>
       <p class="lb-hero__sub">
-        Считаем только залогиненных: завершённые лобби из истории комнат и оценочное время внутри них.
-        Данные на сервере обновляются по расписанию — страница подтягивает список раз в полчаса.
+        Считаем залогиненных: завершённые лобби по истории комнат и оценочное время в них.
+        Таблица на сервере пересобирается командой <code style="font-size:0.88em">leaderboard_refresh_stats</code> (ручной запуск или cron); страница перечитывает данные раз в полчаса.
       </p>
-      <div class="lb-meta">
-        Последний срез данных: <strong id="lb-refreshed">—</strong>
-      </div>
+      <p id="lb-summary" class="lb-summary hidden" aria-live="polite"></p>
     </div>
 
     <div class="lb-tabs" role="tablist" aria-label="Режим топа">
@@ -180,6 +178,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/leaderboard-page.js?v=6"></script>
+  <script src="js/leaderboard-page.js?v=7"></script>
 </body>
 </html>

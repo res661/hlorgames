@@ -51,6 +51,9 @@ grant usage on schema public to anon, authenticated, service_role;
 grant select, insert, update, delete on table public.user_lobby_history to authenticated;
 grant select, insert, update, delete on table public.user_lobby_history to service_role;
 
+-- После этого выполни supabase/user_lobby_history_sync_on_lobby_ended.sql —
+-- иначе завершение лобби учитывается только у клиентов, которые онлайн и получили status=ended.
+
 -- Обновить кэш схемы PostgREST сразу после создания таблицы
 notify pgrst, 'reload schema';
 
