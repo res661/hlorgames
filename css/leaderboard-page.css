@@ -163,6 +163,17 @@ body.lb-page {
   overflow: hidden;
 }
 
+a.lb-podium-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.lb-podium-card:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.45);
+  outline-offset: 3px;
+}
+
 .lb-podium-card::before {
   content: '';
   position: absolute;
@@ -301,6 +312,17 @@ body.lb-page {
 
 .lb-row:hover {
   background: rgba(var(--accent-rgb), 0.04);
+}
+
+a.lb-row {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.lb-row:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.45);
+  outline-offset: -2px;
 }
 
 .lb-row--me {

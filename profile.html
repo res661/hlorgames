@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=15" />
+  <link rel="stylesheet" href="css/profile-page.css?v=16" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -63,6 +63,7 @@
           Статистика хранится локально в этом браузере (время за столами мафии и «Кто я?», закрытые лобби). Войди, чтобы сохранить ник, цвет или эмодзи‑аватар.
         </p>
         <div class="pf-actions">
+          <a href="leaderboard.html" class="btn btn--ghost btn--lg hidden" id="pf-public-back">← К топу</a>
           <button type="button" class="btn btn--primary btn--lg" onclick="if(typeof currentUser!=='undefined'&&currentUser)openProfileModal();else openAuthModal('login')" id="pf-btn-settings">
             Ник, аватар
           </button>
@@ -308,6 +309,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=17"></script>
+  <script src="js/profile-page.js?v=18"></script>
 </body>
 </html>

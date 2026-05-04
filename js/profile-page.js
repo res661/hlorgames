@@ -707,7 +707,155 @@ function renderLocalStatNumbers(hs) {
   setTxt('pf-stat-avg-session', avgSec == null ? '—' : hs.formatDuration(avgSec));
 }
 
+function parseProfileUserIdFromSearch() {
+  try {
+    const u = new URL(location.href);
+    const raw = (u.searchParams.get('user') || u.searchParams.get('id') || '').trim();
+    if (!raw) return null;
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)
+    ) {
+      return null;
+    }
+    return raw;
+  } catch (_) {
+    return null;
+  }
+}
+
+function resetProfileHeroBadgeDefault() {
+  const badgeEl = document.querySelector('.pf-hero__badge');
+  if (!badgeEl) return;
+  badgeEl.innerHTML = '<span class="pf-hero__badge-dot"></span>\n          Профиль';
+}
+
+function setPublicProfileChrome(on) {
+  document.body.classList.toggle('pf-page--public', !!on);
+  const back = document.getElementById('pf-public-back');
+  const settings = document.getElementById('pf-btn-settings');
+  const gamesLink = document.querySelector('.pf-actions a[href="index.html#games"]');
+  const lvl = document.querySelector('.pf-level-chip');
+  const badges = document.getElementById('pf-hero-badges');
+  if (back) back.classList.toggle('hidden', !on);
+  if (settings) settings.classList.toggle('hidden', !!on);
+  if (gamesLink) gamesLink.classList.toggle('hidden', !!on);
+  if (lvl) lvl.classList.toggle('hidden', !!on);
+  if (badges && on) badges.innerHTML = '';
+  if (on) pfApplyAvatarFrameClass('classic');
+}
+
+async function fetchPublicLeaderboardProfile(userId) {
+  const cl = typeof supabaseClient !== 'undefined' ? supabaseClient : null;
+  if (!cl) return { row: null, avatar: null };
+  const { data: row, error } = await cl
+    .from('leaderboard_public')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error || !row) return { row: null, avatar: null };
+  let avatar = null;
+  try {
+    const { data: prof } = await cl.from('profiles').select('avatar').eq('id', userId).maybeSingle();
+    if (prof && prof.avatar != null) avatar = prof.avatar;
+  } catch (_) {}
+  return { row, avatar };
+}
+
+async function renderPublicProfileDashboard(userId) {
+  setPublicProfileChrome(true);
+  applyPfLabels();
+
+  const nameEl = document.getElementById('pf-display-name');
+  const emailEl = document.getElementById('pf-email');
+  const avatarEl = document.getElementById('pf-hero-avatar');
+  const guestNote = document.getElementById('pf-guest-note');
+  guestNote?.classList.add('hidden');
+
+  const badgeEl = document.querySelector('.pf-hero__badge');
+  if (badgeEl) {
+    badgeEl.innerHTML = '<span class="pf-hero__badge-dot"></span> Игрок из топа';
+  }
+
+  document.querySelector('.pf-tabs-sticky')?.classList.add('hidden');
+  document.querySelectorAll('.pf-panel[data-pf-panel]').forEach((panel) => {
+    const id = panel.getAttribute('data-pf-panel');
+    const show = id === 'overview';
+    panel.classList.toggle('pf-panel--active', show);
+    panel.toggleAttribute('hidden', !show);
+    panel.setAttribute('aria-hidden', show ? 'false' : 'true');
+  });
+
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? String(val) : '—';
+  };
+
+  const { row, avatar } = await fetchPublicLeaderboardProfile(userId);
+
+  if (!row) {
+    if (nameEl) nameEl.textContent = 'Профиль недоступен';
+    if (emailEl) {
+      emailEl.textContent =
+        'Игрока нет в топе или он скрыл профиль в настройках. Вернись к списку и выбери другого.';
+    }
+    if (avatarEl) {
+      avatarEl.innerHTML = '';
+      avatarEl.textContent = '?';
+      avatarEl.classList.add('pf-hero__avatar--guest');
+    }
+    setTxt('pf-stat-mafia-opens', '—');
+    setTxt('pf-stat-whoami-opens', '—');
+    setTxt('pf-stat-sessions', '—');
+    setTxt('pf-stat-time', '—');
+    setTxt('pf-stat-avg-session', '—');
+    return;
+  }
+
+  const fauxUser = { nickname: row.nickname, avatar };
+  if (nameEl) nameEl.textContent = row.nickname || 'Игрок';
+  if (emailEl) {
+    emailEl.textContent = 'Публичная статистика · те же цифры, что в общем топе';
+  }
+  if (avatarEl && typeof window.hlorBuildAvatarInnerHtml === 'function') {
+    avatarEl.innerHTML = window.hlorBuildAvatarInnerHtml(fauxUser);
+    avatarEl.classList.remove('pf-hero__avatar--guest');
+  } else if (avatarEl) {
+    avatarEl.innerHTML = '';
+    const c = String(row.nickname || '?').trim()[0];
+    avatarEl.textContent = c ? c.toUpperCase() : '?';
+    avatarEl.classList.remove('pf-hero__avatar--guest');
+  }
+
+  const hs = window.hlorStats;
+  const formatDur =
+    hs && typeof hs.formatDuration === 'function' ? hs.formatDuration.bind(hs) : (s) => String(s);
+  const playSec = Number(row.play_seconds_estimate) || 0;
+  const completed = Number(row.completed_total) || 0;
+  const avgSec = completed > 0 ? Math.round(playSec / completed) : null;
+
+  setTxt('pf-stat-mafia-opens', row.games_mafia ?? 0);
+  setTxt('pf-stat-whoami-opens', row.games_whoami ?? 0);
+  setTxt('pf-stat-sessions', completed);
+  setTxt('pf-stat-time', formatDur(playSec));
+  setTxt('pf-stat-avg-session', avgSec == null ? '—' : formatDur(avgSec));
+
+  const hintAvg = document.getElementById('pf-hint-avg');
+  if (hintAvg) hintAvg.textContent = 'Как в топе: время за столами ÷ закрытые лобби';
+}
+
 async function renderProfileDashboard() {
+  const publicId = parseProfileUserIdFromSearch();
+  const selfId = typeof currentUser !== 'undefined' && currentUser?.id ? String(currentUser.id) : null;
+  if (publicId && (!selfId || publicId !== selfId)) {
+    await renderPublicProfileDashboard(publicId);
+    return;
+  }
+
+  setPublicProfileChrome(false);
+  resetProfileHeroBadgeDefault();
+  document.querySelector('.pf-tabs-sticky')?.classList.remove('hidden');
+  setProfileTab(pfTabIdFromHash(), { skipHash: true });
+
   renderProfileHero();
 
   const hs = window.hlorStats;
@@ -797,6 +945,7 @@ function initProfileTabs() {
   });
 
   window.addEventListener('hashchange', () => {
+    if (document.body.classList.contains('pf-page--public')) return;
     setProfileTab(pfTabIdFromHash(), { skipHash: true });
   });
 }

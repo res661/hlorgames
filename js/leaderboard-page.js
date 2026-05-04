@@ -57,8 +57,12 @@
     const medals = ['2', '1', '3'];
     for (let i = 0; i < 3; i++) {
       const row = top[i];
-      const card = document.createElement('div');
+      const card = document.createElement(row ? 'a' : 'div');
       card.className = 'lb-podium-card lb-podium-card--' + tiers[i];
+      if (row) {
+        card.href = 'profile.html?user=' + encodeURIComponent(row.user_id);
+        card.setAttribute('aria-label', 'Профиль: ' + row.nickname);
+      }
       if (!row) {
         card.innerHTML =
           '<div class="lb-podium-rank">' +
@@ -123,8 +127,10 @@
       const isMe = myId && String(row.user_id) === String(myId);
       const val = sortValue(row, activeTab);
       const mainDisplay = activeTab === 'time' ? formatDuration(val) : String(val);
-      const tr = document.createElement('div');
+      const tr = document.createElement('a');
       tr.className = 'lb-row' + (isMe ? ' lb-row--me' : '');
+      tr.href = 'profile.html?user=' + encodeURIComponent(row.user_id);
+      tr.setAttribute('aria-label', 'Профиль: ' + row.nickname);
       tr.innerHTML =
         '<div class="lb-rank-cell">#' +
         rank +

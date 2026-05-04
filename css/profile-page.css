@@ -9,6 +9,10 @@ body.pf-page {
     radial-gradient(ellipse 45% 35% at 0% 80%, rgba(120, 200, 100, 0.05), transparent);
 }
 
+body.pf-page--public .pf-tabs-sticky {
+  display: none !important;
+}
+
 .pf-main {
   max-width: 1120px;
   margin: 0 auto;
