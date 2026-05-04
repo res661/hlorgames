@@ -14,8 +14,13 @@ html[data-hlor-page='home'] .hero {
   text-align: left;
   min-height: 0;
   justify-content: normal;
-  padding: clamp(92px, 11vh, 118px) clamp(20px, 4vw, 32px) 56px;
+  padding: clamp(92px, 11vh, 118px) clamp(20px, 4vw, 32px) clamp(80px, 14vh, 160px);
   max-width: 1180px;
+}
+
+/* Ниже героя — больше воздуха, чтобы «Каталог» не торчал у нижнего края при 100% масштабе */
+html[data-hlor-page='home'] #games {
+  padding-top: clamp(100px, 16vh, 200px);
 }
 
 html[data-hlor-page='home'] .hero__content {
@@ -100,7 +105,7 @@ html[data-hlor-page='home'] .games .section-header .section-label {
       'featured';
     text-align: center;
     justify-items: center;
-    padding-bottom: 48px;
+    padding-bottom: clamp(64px, 12vh, 120px);
   }
 
   html[data-hlor-page='home'] .hero__content {
@@ -139,6 +144,10 @@ html[data-hlor-page='home'] .games .section-header .section-label {
 }
 
 @media (max-width: 640px) {
+  html[data-hlor-page='home'] #games {
+    padding-top: clamp(72px, 12vh, 140px);
+  }
+
   html[data-hlor-page='home'] .hero__featured-coming {
     flex-direction: column;
     gap: 6px;
