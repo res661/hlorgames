@@ -199,7 +199,13 @@ function pfAchievementOkSet(defs) {
   return o;
 }
 
+/** Суперадмин видит и может надеть любые рамки и бейджи (локальный превью-коллектор). */
+function pfIsCosmeticsUnlockAll() {
+  return typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'superadmin';
+}
+
 function pfFrameUnlocked(fr, level, achieved) {
+  if (pfIsCosmeticsUnlockAll()) return true;
   const u = fr.unlock;
   if (u.type === 'always') return true;
   if (u.type === 'level') return level >= Number(u.min) || 0;
@@ -214,6 +220,9 @@ function pfNormalizeFrameSelection(sel, unlockedMap) {
 }
 
 function pfFrameHintText(fr, titleById, level, achieved) {
+  if (pfIsCosmeticsUnlockAll() && fr.unlock?.type !== 'always') {
+    return 'Все рамки открыты (суперадмин)';
+  }
   const u = fr.unlock;
   if (u.type === 'always') return 'Всегда доступна';
   if (u.type === 'level') {
@@ -351,6 +360,7 @@ function pfSetEquippedBadges(ids) {
 }
 
 function pfBadgeUnlocked(b, level, achieved, stats) {
+  if (pfIsCosmeticsUnlockAll()) return true;
   const u = b.unlock;
   if (u.type === 'always') return true;
   if (u.type === 'level') return level >= (Number(u.min) || 0);
@@ -360,6 +370,9 @@ function pfBadgeUnlocked(b, level, achieved, stats) {
 }
 
 function pfBadgeHintText(b, titleById, level, achieved, stats, hs) {
+  if (pfIsCosmeticsUnlockAll() && b.unlock?.type !== 'always') {
+    return 'Все бейджи открыты (суперадмин)';
+  }
   const u = b.unlock;
   if (u.type === 'always') return 'Всегда в коллекции';
   if (u.type === 'level') {
@@ -495,7 +508,9 @@ function renderBadgesSection(hs) {
   }
 
   if (capEl) {
-    capEl.textContent = `На ник закреплено ${equipped.length} из ${PF_BADGE_MAX}. Клик по карточке — добавить или снять.`;
+    capEl.textContent = pfIsCosmeticsUnlockAll()
+      ? `Суперадмин: полная коллекция. На ник — ${equipped.length} из ${PF_BADGE_MAX}. Клик по карточке — добавить или снять.`
+      : `На ник закреплено ${equipped.length} из ${PF_BADGE_MAX}. Клик по карточке — добавить или снять.`;
   }
 
   if (grid) {
@@ -677,6 +692,81 @@ async function renderProfileDashboard() {
   renderAchievementsFromLocal(hs);
 }
 
+const PF_TAB_IDS = ['overview', 'achievements', 'badges', 'frames'];
+
+function pfTabIdFromHash() {
+  const raw = (typeof location !== 'undefined' && location.hash ? location.hash.slice(1) : '').trim().toLowerCase();
+  return PF_TAB_IDS.includes(raw) ? raw : 'overview';
+}
+
+function setProfileTab(tabId, opts) {
+  const skipHash = opts && opts.skipHash;
+  const id = PF_TAB_IDS.includes(tabId) ? tabId : 'overview';
+  const tabs = document.querySelectorAll('.pf-tabs [role="tab"][data-pf-tab]');
+  const panels = document.querySelectorAll('.pf-panel[data-pf-panel]');
+
+  tabs.forEach((btn) => {
+    const on = btn.getAttribute('data-pf-tab') === id;
+    btn.classList.toggle('pf-tab--active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    btn.tabIndex = on ? 0 : -1;
+  });
+
+  panels.forEach((panel) => {
+    const on = panel.getAttribute('data-pf-panel') === id;
+    panel.classList.toggle('pf-panel--active', on);
+    panel.toggleAttribute('hidden', !on);
+    panel.setAttribute('aria-hidden', on ? 'false' : 'true');
+  });
+
+  if (!skipHash && typeof history !== 'undefined' && history.replaceState) {
+    const path = `${location.pathname}${location.search}`;
+    const nextHash = id === 'overview' ? '' : `#${id}`;
+    const url = path + nextHash;
+    if (`${location.pathname}${location.search}${location.hash || ''}` !== url) {
+      history.replaceState(null, '', url);
+    }
+  }
+}
+
+function initProfileTabs() {
+  const nav = document.querySelector('.pf-tabs');
+  if (!nav || nav.dataset.pfBound === '1') return;
+  nav.dataset.pfBound = '1';
+
+  setProfileTab(pfTabIdFromHash(), { skipHash: true });
+
+  nav.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pf-tab]');
+    if (!btn || btn.getAttribute('role') !== 'tab') return;
+    const id = btn.getAttribute('data-pf-tab');
+    if (!PF_TAB_IDS.includes(id)) return;
+    setProfileTab(id);
+  });
+
+  nav.addEventListener('keydown', (ev) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(ev.key)) return;
+    const tabs = [...nav.querySelectorAll('[role="tab"][data-pf-tab]')];
+    if (!tabs.length) return;
+    const i = tabs.findIndex((t) => t.classList.contains('pf-tab--active'));
+    if (i < 0) return;
+    ev.preventDefault();
+    let next = i;
+    if (ev.key === 'ArrowLeft') next = (i + tabs.length - 1) % tabs.length;
+    else if (ev.key === 'ArrowRight') next = (i + 1) % tabs.length;
+    else if (ev.key === 'Home') next = 0;
+    else if (ev.key === 'End') next = tabs.length - 1;
+    const id = tabs[next].getAttribute('data-pf-tab');
+    setProfileTab(id);
+    tabs[next].focus();
+  });
+
+  window.addEventListener('hashchange', () => {
+    setProfileTab(pfTabIdFromHash(), { skipHash: true });
+  });
+}
+
 function initProfileNavbar() {
   const burgerBtn = document.getElementById('burgerBtn');
   const navLinks = document.getElementById('navLinks');
@@ -702,6 +792,7 @@ function initProfileNavbar() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initProfileNavbar();
+  initProfileTabs();
   window._onAuthUpdate = function () {
     void renderProfileDashboard();
   };

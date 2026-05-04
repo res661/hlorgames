@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=10" />
+  <link rel="stylesheet" href="css/profile-page.css?v=11" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -71,109 +71,136 @@
       </div>
     </section>
 
-    <section class="pf-frames-section" aria-labelledby="pf-frames-heading">
-      <header class="pf-block-head">
-        <h2 id="pf-frames-heading" class="pf-block-head__title">Уровень и рамки</h2>
-        <p class="pf-block-head__sub">
-          Опыт растёт за закрытые лобби, заходы за стол и открытые достижения. Рамки — награды: часть открывается с уровнем, часть — за конкретные достижения.
-        </p>
-      </header>
-      <div class="pf-xp-card">
-        <div class="pf-xp-card__row">
-          <div>
-            <span class="pf-xp-card__title">Опыт профиля</span>
-            <p class="pf-xp-card__meta" id="pf-xp-summary">—</p>
-          </div>
-          <div class="pf-xp-card__lvl" aria-hidden="true">
-            <span id="pf-xp-level-dup">1</span>
-          </div>
-        </div>
-        <div class="pf-xp-bar" aria-label="Прогресс уровня">
-          <div class="pf-xp-bar__fill" id="pf-xp-bar-fill" style="width: 0%"></div>
-        </div>
-      </div>
-      <div class="pf-frames-grid" id="pf-frames-grid" role="list" aria-label="Выбор рамки аватара"></div>
-    </section>
+    <div class="pf-tabs-sticky">
+      <nav class="pf-tabs" role="tablist" aria-label="Разделы профиля">
+        <button type="button" class="pf-tab pf-tab--active" role="tab" id="pf-tab-overview" aria-controls="pf-panel-overview" aria-selected="true" data-pf-tab="overview" tabindex="0">
+          Обзор
+        </button>
+        <button type="button" class="pf-tab" role="tab" id="pf-tab-achievements" aria-controls="pf-panel-achievements" aria-selected="false" data-pf-tab="achievements" tabindex="-1">
+          Достижения
+        </button>
+        <button type="button" class="pf-tab" role="tab" id="pf-tab-badges" aria-controls="pf-panel-badges" aria-selected="false" data-pf-tab="badges" tabindex="-1">
+          Бейджи
+        </button>
+        <button type="button" class="pf-tab" role="tab" id="pf-tab-frames" aria-controls="pf-panel-frames" aria-selected="false" data-pf-tab="frames" tabindex="-1">
+          Уровень и рамки
+        </button>
+      </nav>
+    </div>
 
-    <section class="pf-stats-section" aria-labelledby="pf-stats-heading">
-      <header class="pf-block-head">
-        <h2 id="pf-stats-heading" class="pf-block-head__title">Статистика</h2>
-        <p class="pf-block-head__sub">Считается по тем же числам, что и в топе — когда хост закрыл лобби.</p>
-      </header>
-      <div class="pf-stats-grid">
-        <div class="pf-stat-card pf-stat-card--mafia">
-          <div class="pf-stat-card__label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            <span id="pf-label-mafia">Мафия — завершённые лобби</span>
+    <div class="pf-panels">
+      <div class="pf-panel pf-panel--active" id="pf-panel-overview" role="tabpanel" aria-labelledby="pf-tab-overview" data-pf-panel="overview" aria-hidden="false">
+        <section class="pf-stats-section" aria-labelledby="pf-stats-heading">
+          <header class="pf-block-head">
+            <h2 id="pf-stats-heading" class="pf-block-head__title">Статистика</h2>
+            <p class="pf-block-head__sub">Считается по тем же числам, что и в топе — когда хост закрыл лобби.</p>
+          </header>
+          <div class="pf-stats-grid">
+            <div class="pf-stat-card pf-stat-card--mafia">
+              <div class="pf-stat-card__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+                <span id="pf-label-mafia">Мафия — завершённые лобби</span>
+              </div>
+              <div class="pf-stat-card__num" id="pf-stat-mafia-opens">0</div>
+            </div>
+            <div class="pf-stat-card pf-stat-card--whoami">
+              <div class="pf-stat-card__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+                <span id="pf-label-whoami">Кто я? — завершённые лобби</span>
+              </div>
+              <div class="pf-stat-card__num" id="pf-stat-whoami-opens">0</div>
+            </div>
+            <div class="pf-stat-card pf-stat-card--sessions">
+              <div class="pf-stat-card__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
+                <span id="pf-label-sessions">Всего закрытых лобби</span>
+              </div>
+              <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
+            </div>
+            <div class="pf-stat-card pf-stat-card--time">
+              <div class="pf-stat-card__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="pf-label-time">Время в комнатах (оценка)</span>
+              </div>
+              <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
+            </div>
+            <div class="pf-stat-card pf-stat-card--wide pf-stat-card--avg">
+              <div class="pf-stat-card__label pf-stat-card__label--plain">
+                <span id="pf-label-avg">Среднее время на одно закрытое лобби</span>
+              </div>
+              <div class="pf-stat-card__num" id="pf-stat-avg-session">—</div>
+              <span id="pf-hint-avg" class="pf-stat-card__hint">Время ÷ число закрытых лобби</span>
+            </div>
           </div>
-          <div class="pf-stat-card__num" id="pf-stat-mafia-opens">0</div>
-        </div>
-        <div class="pf-stat-card pf-stat-card--whoami">
-          <div class="pf-stat-card__label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
-            <span id="pf-label-whoami">Кто я? — завершённые лобби</span>
-          </div>
-          <div class="pf-stat-card__num" id="pf-stat-whoami-opens">0</div>
-        </div>
-        <div class="pf-stat-card pf-stat-card--sessions">
-          <div class="pf-stat-card__label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
-            <span id="pf-label-sessions">Всего закрытых лобби</span>
-          </div>
-          <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
-        </div>
-        <div class="pf-stat-card pf-stat-card--time">
-          <div class="pf-stat-card__label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span id="pf-label-time">Время в комнатах (оценка)</span>
-          </div>
-          <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
-        </div>
-        <div class="pf-stat-card pf-stat-card--wide pf-stat-card--avg">
-          <div class="pf-stat-card__label pf-stat-card__label--plain">
-            <span id="pf-label-avg">Среднее время на одно закрытое лобби</span>
-          </div>
-          <div class="pf-stat-card__num" id="pf-stat-avg-session">—</div>
-          <span id="pf-hint-avg" class="pf-stat-card__hint">Время ÷ число закрытых лобби</span>
-        </div>
+        </section>
       </div>
-    </section>
 
-    <section class="pf-badges-section" aria-labelledby="pf-badges-heading">
-      <header class="pf-block-head">
-        <h2 id="pf-badges-heading" class="pf-block-head__title">Бейджи</h2>
-        <p class="pf-block-head__sub">
-          Редкость как у достижений: обычный, необычный, редкий, эпический, легендарный. Открываются за стол, время, уровень и трофеи. До четырёх бейджей можно закрепить рядом с ником.
-        </p>
-      </header>
-      <p class="pf-badges-cap" id="pf-badges-cap" aria-live="polite"></p>
-      <div class="pf-badges-grid" id="pf-badges-grid" role="list" aria-label="Коллекция бейджей"></div>
-    </section>
+      <div class="pf-panel" id="pf-panel-achievements" role="tabpanel" aria-labelledby="pf-tab-achievements" data-pf-panel="achievements" aria-hidden="true" hidden>
+        <section class="pf-achievements-section" aria-labelledby="pf-achievements-heading">
+          <header class="pf-block-head pf-block-head--ach">
+            <div class="pf-block-head__title-row">
+              <h2 id="pf-achievements-heading" class="pf-block-head__title">Достижения</h2>
+              <span id="pf-achievements-summary" class="pf-summary-pill" aria-live="polite"></span>
+            </div>
+            <p class="pf-block-head__sub pf-block-head__sub--narrow">Локально в браузере; может отличаться от сервера до синка.</p>
+          </header>
+          <div class="pf-achievements-track" aria-hidden="true">
+            <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
+          </div>
+          <div class="pf-achievements-toolbar" role="group" aria-label="Сортировка достижений">
+            <span class="pf-achievements-toolbar__label">Порядок</span>
+            <div class="pf-achievements-sort" id="pf-achievements-sort">
+              <button type="button" class="pf-sort-btn is-active" data-pf-sort="default">Как в списке</button>
+              <button type="button" class="pf-sort-btn" data-pf-sort="done_first">Сначала открытые</button>
+              <button type="button" class="pf-sort-btn" data-pf-sort="locked_first">Сначала в процессе</button>
+              <button type="button" class="pf-sort-btn" data-pf-sort="tier_high">Редкость выше</button>
+              <button type="button" class="pf-sort-btn" data-pf-sort="tier_low">Редкость ниже</button>
+              <button type="button" class="pf-sort-btn" data-pf-sort="progress_desc">Почти готово</button>
+            </div>
+          </div>
+          <div class="pf-achievements-grid" id="pf-achievements"></div>
+        </section>
+      </div>
 
-    <section class="pf-achievements-section" aria-labelledby="pf-achievements-heading">
-      <header class="pf-block-head pf-block-head--ach">
-        <div class="pf-block-head__title-row">
-          <h2 id="pf-achievements-heading" class="pf-block-head__title">Достижения</h2>
-          <span id="pf-achievements-summary" class="pf-summary-pill" aria-live="polite"></span>
-        </div>
-        <p class="pf-block-head__sub pf-block-head__sub--narrow">Локально в браузере; может отличаться от сервера до синка.</p>
-      </header>
-      <div class="pf-achievements-track" aria-hidden="true">
-        <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
+      <div class="pf-panel" id="pf-panel-badges" role="tabpanel" aria-labelledby="pf-tab-badges" data-pf-panel="badges" aria-hidden="true" hidden>
+        <section class="pf-badges-section" aria-labelledby="pf-badges-heading">
+          <header class="pf-block-head">
+            <h2 id="pf-badges-heading" class="pf-block-head__title">Бейджи</h2>
+            <p class="pf-block-head__sub">
+              Редкость как у достижений: обычный, необычный, редкий, эпический, легендарный. Открываются за стол, время, уровень и трофеи. До четырёх бейджей можно закрепить рядом с ником.
+            </p>
+          </header>
+          <p class="pf-badges-cap" id="pf-badges-cap" aria-live="polite"></p>
+          <div class="pf-badges-grid" id="pf-badges-grid" role="list" aria-label="Коллекция бейджей"></div>
+        </section>
       </div>
-      <div class="pf-achievements-toolbar" role="group" aria-label="Сортировка достижений">
-        <span class="pf-achievements-toolbar__label">Порядок</span>
-        <div class="pf-achievements-sort" id="pf-achievements-sort">
-          <button type="button" class="pf-sort-btn is-active" data-pf-sort="default">Как в списке</button>
-          <button type="button" class="pf-sort-btn" data-pf-sort="done_first">Сначала открытые</button>
-          <button type="button" class="pf-sort-btn" data-pf-sort="locked_first">Сначала в процессе</button>
-          <button type="button" class="pf-sort-btn" data-pf-sort="tier_high">Редкость выше</button>
-          <button type="button" class="pf-sort-btn" data-pf-sort="tier_low">Редкость ниже</button>
-          <button type="button" class="pf-sort-btn" data-pf-sort="progress_desc">Почти готово</button>
-        </div>
+
+      <div class="pf-panel" id="pf-panel-frames" role="tabpanel" aria-labelledby="pf-tab-frames" data-pf-panel="frames" aria-hidden="true" hidden>
+        <section class="pf-frames-section" aria-labelledby="pf-frames-heading">
+          <header class="pf-block-head">
+            <h2 id="pf-frames-heading" class="pf-block-head__title">Уровень и рамки</h2>
+            <p class="pf-block-head__sub">
+              Опыт растёт за закрытые лобби, заходы за стол и открытые достижения. Рамки — награды: часть открывается с уровнем, часть — за конкретные достижения.
+            </p>
+          </header>
+          <div class="pf-xp-card">
+            <div class="pf-xp-card__row">
+              <div>
+                <span class="pf-xp-card__title">Опыт профиля</span>
+                <p class="pf-xp-card__meta" id="pf-xp-summary">—</p>
+              </div>
+              <div class="pf-xp-card__lvl" aria-hidden="true">
+                <span id="pf-xp-level-dup">1</span>
+              </div>
+            </div>
+            <div class="pf-xp-bar" aria-label="Прогресс уровня">
+              <div class="pf-xp-bar__fill" id="pf-xp-bar-fill" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="pf-frames-grid" id="pf-frames-grid" role="list" aria-label="Выбор рамки аватара"></div>
+        </section>
       </div>
-      <div class="pf-achievements-grid" id="pf-achievements"></div>
-    </section>
+    </div>
   </main>
 
   <footer class="footer">
@@ -281,6 +308,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=13"></script>
+  <script src="js/profile-page.js?v=14"></script>
 </body>
 </html>

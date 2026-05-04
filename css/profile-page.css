@@ -18,6 +18,89 @@ body.pf-page {
   gap: clamp(28px, 4vw, 40px);
 }
 
+/* ── Вкладки профиля (Обзор / Достижения / Бейджи / Рамки) ───────── */
+
+.pf-tabs-sticky {
+  position: sticky;
+  top: 66px;
+  z-index: 90;
+  margin: -8px 0 0;
+  padding: 10px 0 14px;
+  background: linear-gradient(180deg, var(--bg) 72%, transparent);
+}
+
+.pf-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 90%, transparent);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+
+.pf-tab {
+  flex: 1 1 auto;
+  min-width: min(132px, 46%);
+  margin: 0;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 10px 14px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pf-tab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.pf-tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lime) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.pf-tab--active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--lime) 38%, var(--border));
+  background: color-mix(in srgb, var(--lime) 10%, var(--bg-card));
+  box-shadow: 0 0 28px color-mix(in srgb, var(--lime) 10%, transparent);
+}
+
+.pf-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+
+.pf-panel {
+  scroll-margin-top: 96px;
+}
+
+.pf-panel[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .pf-tab {
+    min-width: calc(50% - 10px);
+    font-size: 0.8rem;
+    padding: 9px 10px;
+  }
+}
+
 .pf-hero {
   display: grid;
   grid-template-columns: minmax(0, 140px) 1fr;
