@@ -22,6 +22,13 @@ const PF_TIER_ORDER = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 }
 const PF_SORT_KEY = 'pf_achievement_sort_v1';
 const PF_SORT_MODES = ['default', 'done_first', 'locked_first', 'tier_high', 'tier_low', 'progress_desc'];
 
+const PF_LOCK_HTML =
+  '<span class="pf-lock" aria-hidden="true">' +
+  '<svg class="pf-lock__svg" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+  '<path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+  '<rect x="5" y="11" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.75"/>' +
+  '</svg></span>';
+
 function applyPfLabels() {
   const set = (id, text) => {
     const el = document.getElementById(id);
@@ -140,14 +147,9 @@ function achievementCardHtml(a) {
           <span class="pf-achievement__icon">${a.icon}</span>
         </div>
         <div class="pf-achievement__body">
-          <div class="pf-achievement__top">
-            <div class="pf-achievement__headline">
-              <span class="pf-achievement__tier">${escapeHtml(tierLabel)}</span>
-              <h3 class="pf-achievement__title">${a.ok ? '' : '<span class="pf-lock" aria-hidden="true">🔒</span> '}${escapeHtml(a.title)}</h3>
-            </div>
-            <span class="pf-achievement__chev" aria-hidden="true">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
+          <div class="pf-achievement__headline">
+            <span class="pf-achievement__tier">${escapeHtml(tierLabel)}</span>
+            <h3 class="pf-achievement__title">${a.ok ? '' : PF_LOCK_HTML + ' '}${escapeHtml(a.title)}</h3>
           </div>
           <p class="pf-achievement__desc">${escapeHtml(a.desc)}</p>
           <div class="pf-achievement__foot">

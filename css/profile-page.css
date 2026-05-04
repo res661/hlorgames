@@ -559,6 +559,7 @@ body.pf-page {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(232, 236, 229, 0.88);
   background: rgba(6, 8, 6, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -567,11 +568,25 @@ body.pf-page {
 .pf-achievement--got .pf-achievement__icon-box {
   border-color: rgba(200, 255, 78, 0.35);
   box-shadow: 0 0 20px rgba(200, 255, 78, 0.12);
+  color: var(--lime);
+}
+
+.pf-achievement--locked .pf-achievement__icon-box {
+  color: rgba(140, 150, 138, 0.45);
 }
 
 .pf-achievement__icon {
-  font-size: 1.75rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.pf-achievement__icon-svg {
+  width: 1.625rem;
+  height: 1.625rem;
+  display: block;
+  flex-shrink: 0;
 }
 
 .pf-achievement__body {
@@ -582,13 +597,6 @@ body.pf-page {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.pf-achievement__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .pf-achievement__headline {
@@ -627,24 +635,6 @@ body.pf-page {
   letter-spacing: -0.02em;
   line-height: 1.25;
   margin: 0;
-}
-
-.pf-achievement__chev {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.82);
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.pf-achievement__chev svg {
-  display: block;
-  margin-top: 1px;
 }
 
 .pf-achievement__desc {
@@ -780,8 +770,15 @@ body.pf-page {
 }
 
 .pf-lock {
-  font-size: 0.82rem;
-  margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: rgba(180, 188, 176, 0.75);
+}
+
+.pf-lock__svg {
+  display: block;
 }
 
 .pf-actions {
@@ -821,19 +818,5 @@ body.pf-page {
   .pf-achievement__icon-box {
     width: 52px;
     height: 52px;
-  }
-
-  .pf-achievement__top {
-    gap: 8px;
-  }
-
-  .pf-achievement__chev {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-  }
-
-  .pf-achievement__body {
-    padding-right: 40px;
   }
 }
