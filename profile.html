@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css?v=3" />
+  <link rel="stylesheet" href="css/profile-page.css?v=4" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -39,7 +39,7 @@
   </header>
 
   <main class="pf-main">
-    <section class="pf-hero" aria-labelledby="pf-display-name">
+    <section class="pf-hero pf-hero--panel" aria-labelledby="pf-display-name">
       <div id="pf-hero-avatar" class="pf-hero__avatar" aria-hidden="true">👋</div>
       <div class="pf-hero__text">
         <div class="pf-hero__badge">
@@ -60,40 +60,41 @@
       </div>
     </section>
 
-    <section aria-labelledby="pf-stats-heading">
-      <h2 id="pf-stats-heading" class="pf-section-title" style="margin-bottom:14px;">
-        Статистика
-      </h2>
+    <section class="pf-stats-section" aria-labelledby="pf-stats-heading">
+      <header class="pf-block-head">
+        <h2 id="pf-stats-heading" class="pf-block-head__title">Статистика</h2>
+        <p class="pf-block-head__sub">Считается по тем же числам, что и в топе — когда хост закрыл лобби.</p>
+      </header>
       <div class="pf-stats-grid">
-        <div class="pf-stat-card">
+        <div class="pf-stat-card pf-stat-card--mafia">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
             <span id="pf-label-mafia">Мафия — завершённые лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-mafia-opens">0</div>
         </div>
-        <div class="pf-stat-card">
+        <div class="pf-stat-card pf-stat-card--whoami">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
             <span id="pf-label-whoami">Кто я? — завершённые лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-whoami-opens">0</div>
         </div>
-        <div class="pf-stat-card">
+        <div class="pf-stat-card pf-stat-card--sessions">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/></svg>
             <span id="pf-label-sessions">Всего закрытых лобби</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-sessions">0</div>
         </div>
-        <div class="pf-stat-card">
+        <div class="pf-stat-card pf-stat-card--time">
           <div class="pf-stat-card__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span id="pf-label-time">Время в комнатах (оценка)</span>
           </div>
           <div class="pf-stat-card__num" id="pf-stat-time">0 мин</div>
         </div>
-        <div class="pf-stat-card pf-stat-card--wide">
+        <div class="pf-stat-card pf-stat-card--wide pf-stat-card--avg">
           <div class="pf-stat-card__label pf-stat-card__label--plain">
             <span id="pf-label-avg">Среднее время на одно закрытое лобби</span>
           </div>
@@ -104,15 +105,13 @@
     </section>
 
     <section class="pf-achievements-section" aria-labelledby="pf-achievements-heading">
-      <div class="pf-section-head">
-        <h2 id="pf-achievements-heading" class="pf-section-title pf-section-title--stacked">
-          Достижения
-        </h2>
-        <p class="pf-achievements-lead">
-          <span id="pf-achievements-summary" class="pf-achievements-summary"></span>
-          <span class="pf-achievements-lead__note">Считаются локально в браузере и могут расходиться с сервером.</span>
-        </p>
-      </div>
+      <header class="pf-block-head pf-block-head--ach">
+        <div class="pf-block-head__title-row">
+          <h2 id="pf-achievements-heading" class="pf-block-head__title">Достижения</h2>
+          <span id="pf-achievements-summary" class="pf-summary-pill" aria-live="polite"></span>
+        </div>
+        <p class="pf-block-head__sub pf-block-head__sub--narrow">Локально в браузере; может отличаться от сервера до синка.</p>
+      </header>
       <div class="pf-achievements-track" aria-hidden="true">
         <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
       </div>

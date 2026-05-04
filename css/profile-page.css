@@ -2,14 +2,20 @@
 
 body.pf-page {
   min-height: 100vh;
-  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(200, 255, 78, 0.08), transparent),
-    var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 100% 60% at 50% -15%, rgba(200, 255, 78, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(200, 255, 78, 0.04), transparent),
+    radial-gradient(ellipse 45% 35% at 0% 80%, rgba(120, 200, 100, 0.05), transparent);
 }
 
 .pf-main {
-  max-width: 1040px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: clamp(84px, 12vw, 120px) 20px 64px;
+  padding: clamp(84px, 12vw, 118px) clamp(18px, 4vw, 28px) 72px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vw, 40px);
 }
 
 .pf-hero {
@@ -36,6 +42,36 @@ body.pf-page {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(200, 255, 78, 0.12) 0%, transparent 70%);
   pointer-events: none;
+}
+
+.pf-hero.pf-hero--panel {
+  grid-template-columns: minmax(0, 128px) 1fr;
+  gap: clamp(20px, 4vw, 32px);
+  padding: clamp(22px, 4vw, 34px) clamp(22px, 4vw, 38px);
+  background: linear-gradient(145deg, rgba(16, 20, 16, 0.97) 0%, rgba(8, 10, 8, 0.99) 45%, rgba(16, 20, 14, 0.95) 100%);
+  border: 1px solid rgba(200, 255, 78, 0.2);
+  border-radius: clamp(22px, 4vw, 30px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 22px 56px rgba(0, 0, 0, 0.5),
+    0 0 100px rgba(200, 255, 78, 0.06);
+  margin-bottom: 0;
+  backdrop-filter: blur(10px);
+}
+
+.pf-hero.pf-hero--panel::before {
+  inset: auto -28% -42% auto;
+  opacity: 0.92;
+}
+
+.pf-hero.pf-hero--panel .pf-hero__avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 22px;
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(200, 255, 78, 0.2) inset,
+    0 0 40px rgba(200, 255, 78, 0.1);
 }
 
 .pf-hero__avatar {
@@ -130,24 +166,143 @@ body.pf-page {
   max-width: 52ch;
 }
 
+/* Блоки «Статистика» и «Достижения» */
+.pf-stats-section {
+  padding: clamp(22px, 3vw, 28px);
+  border-radius: clamp(18px, 2.5vw, 26px);
+  background: rgba(8, 10, 8, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pf-achievements-section {
+  padding: clamp(22px, 3vw, 28px);
+  margin-top: 0;
+  border-radius: clamp(18px, 2.5vw, 26px);
+  background: rgba(10, 12, 10, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38);
+}
+
+.pf-block-head {
+  margin-bottom: clamp(18px, 3vw, 22px);
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pf-block-head--ach {
+  border-bottom-color: rgba(200, 255, 78, 0.1);
+}
+
+.pf-block-head__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.pf-block-head__title {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.pf-block-head__sub {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 54ch;
+}
+
+.pf-block-head__sub--narrow {
+  max-width: 44ch;
+}
+
+.pf-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: rgba(210, 255, 130, 0.95);
+  background: rgba(200, 255, 78, 0.1);
+  border: 1px solid rgba(200, 255, 78, 0.28);
+}
+
+.pf-summary-pill:empty {
+  display: none;
+}
+
 .pf-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .pf-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .pf-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pf-stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px 18px 16px;
-  transition: border-color var(--transition), transform var(--transition);
+  position: relative;
+  background: rgba(14, 18, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pf-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: rgba(107, 120, 112, 0.35);
+  opacity: 0.9;
+}
+
+.pf-stat-card--mafia::before {
+  background: linear-gradient(90deg, rgba(100, 150, 90, 0.5), var(--lime-dim));
+}
+
+.pf-stat-card--whoami::before {
+  background: linear-gradient(90deg, rgba(80, 130, 200, 0.45), rgba(200, 255, 78, 0.55));
+}
+
+.pf-stat-card--sessions::before {
+  background: linear-gradient(90deg, #f59e0baa, rgba(200, 255, 78, 0.6));
+}
+
+.pf-stat-card--time::before {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.5), rgba(200, 255, 78, 0.5));
+}
+
+.pf-stat-card--avg::before {
+  background: linear-gradient(90deg, rgba(200, 255, 78, 0.25), rgba(200, 255, 78, 0.75));
 }
 
 .pf-stat-card:hover {
-  border-color: rgba(200, 255, 78, 0.2);
-  transform: translateY(-2px);
+  border-color: rgba(200, 255, 78, 0.22);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
 .pf-stat-card__label {
@@ -178,14 +333,14 @@ body.pf-page {
 }
 
 .pf-stat-card__num {
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 900;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
 .pf-stat-card--wide {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .pf-note {
@@ -224,39 +379,6 @@ body.pf-page {
   gap: 10px;
 }
 
-.pf-achievements-section {
-  margin-top: 8px;
-}
-
-.pf-section-head {
-  margin-bottom: 14px;
-}
-
-.pf-section-title--stacked {
-  margin-bottom: 6px;
-  display: block;
-}
-
-.pf-achievements-lead {
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-  max-width: 56ch;
-}
-
-.pf-achievements-summary {
-  display: inline;
-  font-weight: 700;
-  color: var(--lime-dim);
-}
-
-.pf-achievements-lead__note {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.76rem;
-  opacity: 0.9;
-}
-
 .pf-achievements-toolbar {
   margin-bottom: 16px;
 }
@@ -273,11 +395,41 @@ body.pf-page {
 
 .pf-achievements-sort {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 10px;
+  margin: 0 -4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 255, 78, 0.35) rgba(0, 0, 0, 0.2);
+}
+
+.pf-achievements-sort::-webkit-scrollbar {
+  height: 5px;
+}
+
+.pf-achievements-sort::-webkit-scrollbar-thumb {
+  background: rgba(200, 255, 78, 0.35);
+  border-radius: 999px;
+}
+
+@media (min-width: 960px) {
+  .pf-achievements-sort {
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 2px;
+    margin: 0;
+    scroll-snap-type: none;
+  }
 }
 
 .pf-sort-btn {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  white-space: nowrap;
   padding: 8px 14px;
   border-radius: var(--radius-full);
   font-size: 0.72rem;
@@ -287,6 +439,11 @@ body.pf-page {
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.pf-sort-btn:focus-visible {
+  outline: 2px solid rgba(200, 255, 78, 0.55);
+  outline-offset: 2px;
 }
 
 .pf-sort-btn:hover {
@@ -635,7 +792,8 @@ body.pf-page {
 }
 
 @media (max-width: 760px) {
-  .pf-hero {
+  .pf-hero,
+  .pf-hero.pf-hero--panel {
     grid-template-columns: 1fr;
     text-align: center;
   }
@@ -651,7 +809,7 @@ body.pf-page {
   }
 
   .pf-stat-card--wide {
-    grid-column: span 1;
+    grid-column: 1 / -1;
   }
 
   .pf-achievement {
