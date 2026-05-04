@@ -56,29 +56,64 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
+const PF_TIER_LABEL = {
+  common: 'Обычное',
+  uncommon: 'Необычное',
+  rare: 'Редкое',
+  epic: 'Эпическое',
+  legendary: 'Легендарное',
+};
+
 function renderAchievementsFromLocal(hs) {
   if (!hs) return;
   const s = hs.load();
   const grid = document.getElementById('pf-achievements');
+  const summaryEl = document.getElementById('pf-achievements-summary');
   if (grid) {
     const defs = hs.achievementDefs(s);
     grid.innerHTML = defs
-      .map(
-        (a) => `
-      <div class="pf-achievement ${a.ok ? 'pf-achievement--got' : 'pf-achievement--locked'}" role="article">
-        <span class="pf-achievement__icon" aria-hidden="true">${a.icon}</span>
-        <div class="pf-achievement__meta">
-          <div class="pf-achievement__title">${a.ok ? '' : '<span class="pf-lock">🔒 </span>'}${escapeHtml(a.title)}</div>
-          <p class="pf-achievement__desc">${escapeHtml(a.desc)}</p>
+      .map((a) => {
+        const tier = a.tier && PF_TIER_LABEL[a.tier] ? a.tier : 'common';
+        const tierLabel = PF_TIER_LABEL[tier] || PF_TIER_LABEL.common;
+        const pct = a.ok ? 100 : Math.max(0, Math.min(100, Number(a.progress) || 0));
+        const statusLabel = a.ok ? 'Получено' : 'В процессе';
+        const stateClass = a.ok ? 'pf-achievement--got' : 'pf-achievement--locked';
+        return `
+      <div class="pf-achievement pf-achievement--tier-${tier} ${stateClass}" role="article" data-achievement-id="${escapeHtml(a.id)}">
+        <span class="pf-achievement__watermark" aria-hidden="true">${a.icon}</span>
+        <div class="pf-achievement__icon-box" aria-hidden="true">
+          <span class="pf-achievement__icon">${a.icon}</span>
         </div>
-      </div>`,
-      )
+        <div class="pf-achievement__body">
+          <div class="pf-achievement__top">
+            <div class="pf-achievement__headline">
+              <span class="pf-achievement__tier">${escapeHtml(tierLabel)}</span>
+              <h3 class="pf-achievement__title">${a.ok ? '' : '<span class="pf-lock" aria-hidden="true">🔒</span> '}${escapeHtml(a.title)}</h3>
+            </div>
+            <span class="pf-achievement__chev" aria-hidden="true">»</span>
+          </div>
+          <p class="pf-achievement__desc">${escapeHtml(a.desc)}</p>
+          <div class="pf-achievement__foot">
+            <div class="pf-achievement__progress-wrap">
+              <div class="pf-achievement__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Прогресс достижения">
+                <div class="pf-achievement__progress-bar" style="width:${pct}%"></div>
+              </div>
+              <span class="pf-achievement__pct">${pct}%</span>
+            </div>
+            <span class="pf-achievement__status pf-achievement__status--${a.ok ? 'done' : 'todo'}">${escapeHtml(statusLabel)}</span>
+          </div>
+        </div>
+      </div>`;
+      })
       .join('');
 
     const done = defs.filter((d) => d.ok).length;
+    const total = defs.length;
+    if (summaryEl) {
+      summaryEl.textContent = total ? `${done} из ${total} открыто` : '';
+    }
     const bar = document.getElementById('pf-achievements-bar');
-    if (bar)
-      bar.style.width = defs.length ? Math.min(100, Math.round((done / defs.length) * 100)) + '%' : '0%';
+    if (bar) bar.style.width = total ? Math.min(100, Math.round((done / total) * 100)) + '%' : '0%';
   }
 }
 

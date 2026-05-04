@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-page.css" />
+  <link rel="stylesheet" href="css/profile-page.css?v=2" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="pf-page">
@@ -108,11 +108,16 @@
       </div>
     </section>
 
-    <section aria-labelledby="pf-achievements-heading">
-      <h2 id="pf-achievements-heading" class="pf-section-title">
-        Достижения
-        <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Локально в браузере — могут расходиться с сервером</span>
-      </h2>
+    <section class="pf-achievements-section" aria-labelledby="pf-achievements-heading">
+      <div class="pf-section-head">
+        <h2 id="pf-achievements-heading" class="pf-section-title pf-section-title--stacked">
+          Достижения
+        </h2>
+        <p class="pf-achievements-lead">
+          <span id="pf-achievements-summary" class="pf-achievements-summary"></span>
+          <span class="pf-achievements-lead__note">Считаются локально в браузере и могут расходиться с сервером.</span>
+        </p>
+      </div>
       <div class="pf-achievements-track" aria-hidden="true">
         <div class="pf-achievements-track__bar" id="pf-achievements-bar" style="width:0%"></div>
       </div>
@@ -218,13 +223,13 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/stats.js?v=4"></script>
+  <script src="js/stats.js?v=5"></script>
   <script src="js/profile-stats-sync.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/profile-page.js?v=5"></script>
+  <script src="js/profile-page.js?v=6"></script>
 </body>
 </html>

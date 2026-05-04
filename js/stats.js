@@ -108,54 +108,165 @@
     return sec + ' с';
   }
 
+  function clampPct(n) {
+    var x = Number(n);
+    if (!isFinite(x)) return 0;
+    return Math.max(0, Math.min(100, Math.round(x)));
+  }
+
+  /**
+   * @typedef {{ id: string, tier: 'common'|'uncommon'|'rare'|'epic'|'legendary', icon: string, title: string, desc: string, ok: boolean, progress: number }} AchievementDef
+   * @param {object} stats
+   * @returns {AchievementDef[]}
+   */
   function achievementDefs(stats) {
     var s = Object.assign({}, defaults(), stats || {});
     var sc = s.sessionsCompleted || 0;
-    var anyTable = (s.mafiaTableOpens || 0) + (s.whoamiTableOpens || 0);
-    return [
+    var mafia = s.mafiaTableOpens || 0;
+    var whoami = s.whoamiTableOpens || 0;
+    var anyTable = mafia + whoami;
+    var pt = s.playTimeSeconds || 0;
+
+    /** @type {AchievementDef[]} */
+    var list = [
       {
         id: 'first_visit',
+        tier: 'common',
         icon: '🎲',
         title: 'За столом',
-        desc: 'Один раз зайди в комнату по коду (мафия или «Кто я?») в этой сессии браузера',
+        desc: 'Зайди в комнату по коду — мафия или «Кто я?» (счётчик в этом браузере)',
         ok: anyTable >= 1,
+        progress: clampPct((anyTable / 1) * 100),
       },
       {
         id: 'finisher',
+        tier: 'common',
         icon: '🏁',
-        title: 'До финиша лобби',
-        desc: 'Хоть раз остаёшься в игре, когда хост закрыл лобби (любая игра)',
+        title: 'До финиша',
+        desc: 'Останься в игре, когда хост закрыл лобби (хотя бы раз)',
         ok: sc >= 1,
+        progress: clampPct((sc / 1) * 100),
+      },
+      {
+        id: 'table_regular',
+        tier: 'common',
+        icon: '🚪',
+        title: 'Знакомый вход',
+        desc: '10+ заходов за стол (мафия и «Кто я?» в сумме)',
+        ok: anyTable >= 10,
+        progress: clampPct((anyTable / 10) * 100),
+      },
+      {
+        id: 'mafia_fan',
+        tier: 'uncommon',
+        icon: '🎭',
+        title: 'Мафия не отпускает',
+        desc: '5+ раз заходил в комнату мафии',
+        ok: mafia >= 5,
+        progress: clampPct((mafia / 5) * 100),
+      },
+      {
+        id: 'whoami_fan',
+        tier: 'uncommon',
+        icon: '❓',
+        title: 'Кто я? — свой человек',
+        desc: '5+ раз заходил в комнату «Кто я?»',
+        ok: whoami >= 5,
+        progress: clampPct((whoami / 5) * 100),
+      },
+      {
+        id: 'both_games',
+        tier: 'rare',
+        icon: '⚡',
+        title: 'Две игры — один игрок',
+        desc: 'Попробуй и мафию, и «Кто я?» хотя бы по разу',
+        ok: mafia >= 1 && whoami >= 1,
+        progress: clampPct(Math.min((mafia / 1) * 50, 50) + Math.min((whoami / 1) * 50, 50)),
+      },
+      {
+        id: 'committed',
+        tier: 'uncommon',
+        icon: '🎯',
+        title: 'В деле',
+        desc: '5 партий закончены вместе с лобби',
+        ok: sc >= 5,
+        progress: clampPct((sc / 5) * 100),
       },
       {
         id: 'soldier',
+        tier: 'uncommon',
         icon: '🃏',
-        title: 'Ветеран',
-        desc: '10 завершённых лобби, пока ты был за столом',
+        title: 'Ветеран стола',
+        desc: '10 завершённых лобби, пока ты был в комнате',
         ok: sc >= 10,
+        progress: clampPct((sc / 10) * 100),
+      },
+      {
+        id: 'veteran',
+        tier: 'rare',
+        icon: '🛡️',
+        title: 'Боевой склад',
+        desc: '25+ партий до конца лобби',
+        ok: sc >= 25,
+        progress: clampPct((sc / 25) * 100),
+      },
+      {
+        id: 'champion',
+        tier: 'epic',
+        icon: '👑',
+        title: 'Чемпион вечера',
+        desc: '50+ завершённых лобби',
+        ok: sc >= 50,
+        progress: clampPct((sc / 50) * 100),
+      },
+      {
+        id: 'legend_sessions',
+        tier: 'legendary',
+        icon: '🏆',
+        title: 'Легенда HLOR',
+        desc: '100+ завершённых лобби',
+        ok: sc >= 100,
+        progress: clampPct((sc / 100) * 100),
+      },
+      {
+        id: 'time_30',
+        tier: 'common',
+        icon: '☕',
+        title: 'Перерыв на партию',
+        desc: '30+ минут с активной вкладкой за столом',
+        ok: pt >= 1800,
+        progress: clampPct((pt / 1800) * 100),
       },
       {
         id: 'time_sink',
+        tier: 'uncommon',
         icon: '⏱️',
         title: 'Долго в игре',
-        desc: '60+ минут с активной вкладкой мафии или «Кто я?» за столом',
-        ok: (s.playTimeSeconds || 0) >= 3600,
+        desc: '60+ минут суммарно за столами (вкладка активна)',
+        ok: pt >= 3600,
+        progress: clampPct((pt / 3600) * 100),
+      },
+      {
+        id: 'night_shift',
+        tier: 'rare',
+        icon: '🌙',
+        title: 'Ночная смена',
+        desc: '5+ часов за столами',
+        ok: pt >= 5 * 3600,
+        progress: clampPct((pt / (5 * 3600)) * 100),
       },
       {
         id: 'marathon',
-        icon: '🌙',
-        title: 'Ночная смена',
-        desc: '5+ часов суммарно за столами',
-        ok: (s.playTimeSeconds || 0) >= 5 * 3600,
-      },
-      {
-        id: 'steady',
-        icon: '📊',
-        title: 'Стабильно',
-        desc: '10+ партий до конца — продолжаем набивать счётчик',
-        ok: sc >= 25,
+        tier: 'epic',
+        icon: '🔥',
+        title: 'Марафон',
+        desc: '10+ часов суммарно за столами',
+        ok: pt >= 10 * 3600,
+        progress: clampPct((pt / (10 * 3600)) * 100),
       },
     ];
+
+    return list;
   }
 
   /** Среднее время на одну закрытую комнату (грубо, по суммарному времени за столами) */

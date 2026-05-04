@@ -224,70 +224,368 @@ body.pf-page {
   gap: 10px;
 }
 
+.pf-achievements-section {
+  margin-top: 8px;
+}
+
+.pf-section-head {
+  margin-bottom: 14px;
+}
+
+.pf-section-title--stacked {
+  margin-bottom: 6px;
+  display: block;
+}
+
+.pf-achievements-lead {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 56ch;
+}
+
+.pf-achievements-summary {
+  display: inline;
+  font-weight: 700;
+  color: var(--lime-dim);
+}
+
+.pf-achievements-lead__note {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.76rem;
+  opacity: 0.9;
+}
+
 .pf-achievements-track {
-  height: 4px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .pf-achievements-track__bar {
   height: 100%;
   border-radius: var(--radius-full);
   background: linear-gradient(90deg, var(--lime-dim), var(--lime));
-  transition: width 0.4s ease;
+  transition: width 0.45s ease;
+  box-shadow: 0 0 16px rgba(200, 255, 78, 0.35);
 }
 
 .pf-achievements-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
+/* ── Карточки достижений (игровой стиль, цвета сайта) ── */
 .pf-achievement {
+  --ach-border: rgba(255, 255, 255, 0.09);
+  --ach-glow: transparent;
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.15);
-  transition: background 0.2s;
+  align-items: stretch;
+  gap: 16px;
+  padding: 18px 20px 18px 18px;
+  border-radius: 22px;
+  border: 1px solid var(--ach-border);
+  background: linear-gradient(135deg, rgba(22, 26, 22, 0.96) 0%, rgba(10, 12, 10, 0.99) 100%);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.2) inset, var(--ach-glow);
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.pf-achievement:hover {
+  transform: translateY(-3px);
+}
+
+.pf-achievement--tier-common {
+  background: linear-gradient(125deg, rgba(28, 32, 28, 0.98) 0%, rgba(12, 14, 12, 1) 55%, rgba(8, 10, 8, 1) 100%);
+}
+
+.pf-achievement--tier-uncommon {
+  background: linear-gradient(
+    125deg,
+    rgba(36, 46, 28, 0.98) 0%,
+    rgba(18, 24, 14, 0.98) 45%,
+    rgba(10, 14, 10, 1) 100%
+  );
+  --ach-border: rgba(200, 255, 78, 0.16);
+}
+
+.pf-achievement--tier-rare {
+  background: linear-gradient(
+    125deg,
+    rgba(22, 38, 36, 0.98) 0%,
+    rgba(12, 26, 28, 0.95) 45%,
+    rgba(8, 14, 18, 1) 100%
+  );
+  --ach-border: rgba(45, 212, 191, 0.22);
+}
+
+.pf-achievement--tier-epic {
+  background: linear-gradient(
+    125deg,
+    rgba(48, 28, 62, 0.95) 0%,
+    rgba(28, 18, 42, 0.97) 48%,
+    rgba(12, 10, 22, 1) 100%
+  );
+  --ach-border: rgba(167, 139, 250, 0.35);
+}
+
+.pf-achievement--tier-legendary {
+  background: linear-gradient(
+    125deg,
+    rgba(52, 36, 14, 0.98) 0%,
+    rgba(36, 24, 10, 0.98) 42%,
+    rgba(18, 12, 8, 1) 100%
+  );
+  --ach-border: rgba(245, 158, 11, 0.4);
+}
+
+.pf-achievement__watermark {
+  position: absolute;
+  left: -4%;
+  top: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  font-size: clamp(4.5rem, 18vw, 7.5rem);
+  line-height: 1;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pf-achievement--tier-epic .pf-achievement__watermark,
+.pf-achievement--tier-legendary .pf-achievement__watermark {
+  opacity: 0.09;
+}
+
+.pf-achievement__icon-box {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 6, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.pf-achievement--got .pf-achievement__icon-box {
+  border-color: rgba(200, 255, 78, 0.35);
+  box-shadow: 0 0 20px rgba(200, 255, 78, 0.12);
 }
 
 .pf-achievement__icon {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   line-height: 1;
 }
 
-.pf-achievement__meta {
+.pf-achievement__body {
+  position: relative;
+  z-index: 1;
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-achievement__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pf-achievement__headline {
+  min-width: 0;
+}
+
+.pf-achievement__tier {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.pf-achievement--tier-uncommon .pf-achievement__tier {
+  color: rgba(200, 255, 120, 0.75);
+}
+
+.pf-achievement--tier-rare .pf-achievement__tier {
+  color: rgba(94, 234, 212, 0.85);
+}
+
+.pf-achievement--tier-epic .pf-achievement__tier {
+  color: rgba(196, 181, 253, 0.9);
+}
+
+.pf-achievement--tier-legendary .pf-achievement__tier {
+  color: rgba(252, 211, 77, 0.95);
 }
 
 .pf-achievement__title {
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   font-weight: 800;
-  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.pf-achievement__chev {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .pf-achievement__desc {
   font-size: 0.8rem;
+  color: rgba(240, 242, 237, 0.72);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 52ch;
+}
+
+.pf-achievement--locked .pf-achievement__desc {
   color: var(--text-muted);
-  line-height: 1.45;
+}
+
+.pf-achievement__foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 4px;
+}
+
+.pf-achievement__progress-wrap {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pf-achievement__progress-track {
+  flex: 1;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pf-achievement__progress-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--lime-dim), var(--lime));
+  transition: width 0.35s ease;
+  box-shadow: 0 0 12px rgba(200, 255, 78, 0.25);
+}
+
+.pf-achievement--tier-rare .pf-achievement__progress-bar {
+  background: linear-gradient(90deg, #0d9488, #5eead4);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.25);
+}
+
+.pf-achievement--tier-epic .pf-achievement__progress-bar {
+  background: linear-gradient(90deg, #7c3aed, #c4b5fd);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.35);
+}
+
+.pf-achievement--tier-legendary .pf-achievement__progress-bar {
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+
+.pf-achievement__pct {
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  width: 2.5rem;
+  text-align: right;
+}
+
+.pf-achievement__status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 11px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+}
+
+.pf-achievement__status--done {
+  color: #0a1408;
+  background: linear-gradient(135deg, var(--lime) 0%, #b8e850 100%);
+  border-color: rgba(200, 255, 78, 0.4);
+}
+
+.pf-achievement__status--todo {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .pf-achievement--got {
-  border-color: rgba(200, 255, 78, 0.22);
-  background: rgba(200, 255, 78, 0.04);
+  --ach-glow: 0 0 36px rgba(200, 255, 78, 0.08);
+}
+
+.pf-achievement--got.pf-achievement--tier-common {
+  border-color: rgba(200, 255, 78, 0.28);
+}
+
+.pf-achievement--got.pf-achievement--tier-uncommon {
+  border-color: rgba(200, 255, 78, 0.35);
+}
+
+.pf-achievement--got.pf-achievement--tier-rare {
+  border-color: rgba(45, 212, 191, 0.42);
+  --ach-glow: 0 0 40px rgba(45, 212, 191, 0.07);
+}
+
+.pf-achievement--got.pf-achievement--tier-epic {
+  border-color: rgba(167, 139, 250, 0.45);
+  --ach-glow: 0 0 44px rgba(139, 92, 246, 0.09);
+}
+
+.pf-achievement--got.pf-achievement--tier-legendary {
+  border-color: rgba(245, 158, 11, 0.5);
+  --ach-glow: 0 0 48px rgba(245, 158, 11, 0.08);
 }
 
 .pf-achievement--locked {
-  opacity: 0.55;
+  opacity: 0.72;
+  filter: saturate(0.88);
+}
+
+.pf-achievement--locked:hover {
+  opacity: 0.85;
 }
 
 .pf-lock {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  margin-right: 2px;
 }
 
 .pf-actions {
@@ -315,5 +613,30 @@ body.pf-page {
 
   .pf-stat-card--wide {
     grid-column: span 1;
+  }
+
+  .pf-achievement {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 16px 16px 16px;
+  }
+
+  .pf-achievement__icon-box {
+    width: 52px;
+    height: 52px;
+  }
+
+  .pf-achievement__top {
+    gap: 8px;
+  }
+
+  .pf-achievement__chev {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+
+  .pf-achievement__body {
+    padding-right: 40px;
   }
 }
