@@ -108,12 +108,13 @@ function initHomeHeroGameRotate() {
 function initHomeHeroFeaturedRotate() {
   if (document.documentElement.dataset.hlorPage !== 'home') return;
   const featuredCard = document.getElementById('heroFeaturedCard');
+  const body = document.getElementById('heroFeaturedBody');
   const left = document.getElementById('heroFeaturedLeft');
-  const emojiWrap = document.getElementById('heroFeaturedEmojiWrap');
   const titleEl = document.getElementById('heroFeaturedTitle');
   const descEl = document.getElementById('heroFeaturedDesc');
   const metaEl = document.getElementById('heroFeaturedMeta');
-  if (!featuredCard || !left || !emojiWrap || !titleEl || !descEl || !metaEl) return;
+  const artEl = document.getElementById('heroFeaturedArt');
+  if (!featuredCard || !body || !left || !titleEl || !descEl || !metaEl) return;
 
   const cards = document.querySelectorAll('#games .game-card:not(.game-card--soon)');
   const slides = [];
@@ -122,19 +123,17 @@ function initHomeHeroFeaturedRotate() {
     const desc = card.querySelector('.game-card__desc')?.textContent?.trim();
     const meta = card.querySelector('.game-card__info');
     const link = card.querySelector('a.game-card__btn[href]');
-    const emoji = card.querySelector('.game-card__emoji');
-    if (!title || !desc || !meta || !link || !emoji) return;
+    if (!title || !desc || !meta || !link) return;
     const href = link.getAttribute('href');
     if (!href) return;
-    let emojiClass = emoji.className || '';
-    emojiClass = emojiClass.replace(/\bgame-card__emoji\b/g, '').replace(/\s+/g, ' ').trim();
+    const posterImg = card.querySelector('.game-card__poster img');
+    const heroArt = posterImg?.getAttribute('src')?.trim() || '';
     slides.push({
       title,
       desc,
       metaHtml: meta.innerHTML,
       href,
-      emojiClass,
-      emojiHtml: emoji.innerHTML,
+      heroArt,
     });
   });
 
@@ -153,8 +152,15 @@ function initHomeHeroFeaturedRotate() {
     titleEl.textContent = s.title;
     descEl.textContent = s.desc;
     metaEl.innerHTML = s.metaHtml;
-    emojiWrap.className = ['hero__featured-emoji', s.emojiClass].filter(Boolean).join(' ');
-    emojiWrap.innerHTML = s.emojiHtml;
+    if (artEl) {
+      if (s.heroArt) {
+        artEl.src = s.heroArt;
+        artEl.classList.remove('hero__featured-art--hidden');
+      } else {
+        artEl.removeAttribute('src');
+        artEl.classList.add('hero__featured-art--hidden');
+      }
+    }
   }
 
   function fadeApply(i) {
@@ -162,10 +168,10 @@ function initHomeHeroFeaturedRotate() {
       apply(i);
       return;
     }
-    left.style.opacity = '0.5';
+    body.style.opacity = '0.5';
     window.setTimeout(() => {
       apply(i);
-      left.style.opacity = '1';
+      body.style.opacity = '1';
     }, 170);
   }
 

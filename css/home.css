@@ -57,12 +57,19 @@ html[data-hlor-page='home'] .hero__featured {
   text-align: left;
 }
 
-html[data-hlor-page='home'] .hero__featured-left {
-  flex: 1;
+html[data-hlor-page='home'] .hero__featured-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
   min-width: 0;
   transition: opacity 0.24s ease;
 }
 
+html[data-hlor-page='home'] .hero__featured-left {
+  flex: 1;
+  min-width: 0;
+}
 
 html[data-hlor-page='home'] .hero__featured-desc {
   max-width: none;
@@ -73,21 +80,24 @@ html[data-hlor-page='home'] .hero__featured-right {
   width: 100%;
   align-items: stretch;
   gap: 12px;
-  padding-top: 4px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
+  position: relative;
+}
+
+html[data-hlor-page='home'] .hero__featured-poster {
+  max-width: 100%;
+  max-height: min(200px, 42vw);
+  margin: 2px 0 4px;
+}
+
+html[data-hlor-page='home'] .hero__featured-right .hero__featured-poster {
+  align-self: stretch;
 }
 
 html[data-hlor-page='home'] .hero__featured-cta {
   width: 100%;
   justify-content: center;
-}
-
-html[data-hlor-page='home'] .hero__featured-coming {
-  text-align: left;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  justify-content: flex-start;
 }
 
 html[data-hlor-page='home'] .games .section-header .section-label {
@@ -138,21 +148,11 @@ html[data-hlor-page='home'] .games .section-header .section-label {
     border-top: none;
     padding-top: 0;
   }
-
-  html[data-hlor-page='home'] .hero__featured-coming {
-    text-align: center;
-    justify-content: center;
-  }
 }
 
 @media (max-width: 640px) {
   html[data-hlor-page='home'] #games {
     padding-top: clamp(72px, 12vh, 140px);
-  }
-
-  html[data-hlor-page='home'] .hero__featured-coming {
-    flex-direction: column;
-    gap: 6px;
   }
 }
 
@@ -234,20 +234,20 @@ html[data-hlor-page='home'] .sparkle svg {
     transform: translateY(0);
   }
 
-  .games__grid .home-reveal:nth-child(1) {
+  html[data-hlor-page='home'] #games .games__group-label:not(.games__group-label--soon).home-reveal {
     --home-reveal-delay: 0.04s;
   }
 
-  .games__grid .home-reveal:nth-child(2) {
-    --home-reveal-delay: 0.1s;
+  html[data-hlor-page='home'] #games .games__grid--available.home-reveal {
+    --home-reveal-delay: 0.08s;
   }
 
-  .games__grid .home-reveal:nth-child(3) {
-    --home-reveal-delay: 0.16s;
+  html[data-hlor-page='home'] #games .games__group-label--soon.home-reveal {
+    --home-reveal-delay: 0.14s;
   }
 
-  .games__grid .home-reveal:nth-child(4) {
-    --home-reveal-delay: 0.22s;
+  html[data-hlor-page='home'] #games .games__grid--soon.home-reveal {
+    --home-reveal-delay: 0.2s;
   }
 
   .how-cards .home-reveal:nth-child(1) {

@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/home.css?v=5" />
+  <link rel="stylesheet" href="css/home.css?v=9" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -94,39 +94,41 @@
 
       <!-- Карточка «в фокусе»: контент подставляется из доступных игр каталога -->
       <a href="play-mafia.html" class="hero__featured home-hero-in" id="heroFeaturedCard" aria-live="polite">
-        <div class="hero__featured-left" id="heroFeaturedLeft">
-          <span class="hero__featured-label">Доступно сейчас</span>
-          <div class="hero__featured-title">
-            <span class="hero__featured-emoji game-icon game-icon--mafia" id="heroFeaturedEmojiWrap">
-            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
-              <circle cx="20" cy="20" r="18" fill="rgba(232,93,93,0.15)" stroke="rgba(232,93,93,0.4)" stroke-width="1.5"/>
-              <circle cx="20" cy="15" r="6" fill="#f87171"/>
-              <path d="M8 32c0-6.627 5.373-10 12-10s12 3.373 12 10" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M13 14l-4-3M27 14l4-3" stroke="#fca5a5" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </span>
-            <span id="heroFeaturedTitle">Мафия</span>
+        <div class="hero__featured-body" id="heroFeaturedBody">
+          <div class="hero__featured-left" id="heroFeaturedLeft">
+            <span class="hero__featured-label">Доступно сейчас</span>
+            <div class="hero__featured-title">
+              <span id="heroFeaturedTitle">Мафия</span>
+            </div>
+            <p class="hero__featured-desc" id="heroFeaturedDesc">Классическая игра на дедукцию — мирные жители против мафии. Роли, ночные убийства, дневные голосования.</p>
+            <div class="hero__featured-meta" id="heroFeaturedMeta">
+              <span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+                4–12 игроков
+              </span>
+              <span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                30–60 минут
+              </span>
+            </div>
           </div>
-          <p class="hero__featured-desc" id="heroFeaturedDesc">Классическая игра на дедукцию — мирные жители против мафии. Роли, ночные убийства, дневные голосования.</p>
-          <div class="hero__featured-meta" id="heroFeaturedMeta">
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
-              4–12 игроков
-            </span>
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              30–60 минут
-            </span>
-          </div>
-        </div>
-        <div class="hero__featured-right">
-          <div class="hero__featured-cta">
-            Играть сейчас
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="hero__featured-coming">
-            <span>🏚️ Бункер — скоро</span>
-            <span>🗣️ Алиас — скоро</span>
+          <div class="hero__featured-right">
+            <div class="hero__featured-poster">
+              <img
+                id="heroFeaturedArt"
+                class="hero__featured-art"
+                src="img/games/mafia/poster.png"
+                alt=""
+                width="800"
+                height="1200"
+                decoding="async"
+                fetchpriority="high"
+              />
+            </div>
+            <div class="hero__featured-cta">
+              Играть сейчас
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
           </div>
         </div>
       </a>
@@ -140,18 +142,14 @@
         <h2 class="section-title">Выбери игру</h2>
         <p class="section-subtitle">Для каждой компании найдётся что-то своё</p>
       </div>
-      <div class="games__grid">
+      <p class="games__group-label home-reveal" id="games-available-heading">Сейчас можно играть</p>
+      <div class="games__grid games__grid--available home-reveal" role="list" aria-labelledby="games-available-heading">
 
-        <div class="game-card home-reveal" data-game="mafia">
-          <div class="game-card__header">
-            <span class="game-card__emoji game-icon game-icon--mafia">
-              <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
-                <circle cx="22" cy="22" r="20" fill="rgba(232,93,93,0.12)" stroke="rgba(232,93,93,0.35)" stroke-width="1.5"/>
-                <circle cx="22" cy="16" r="7" fill="#f87171"/>
-                <path d="M9 36c0-7.18 5.82-11 13-11s13 3.82 13 11" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M14 15l-5-3.5M30 15l5-3.5" stroke="#fca5a5" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </span>
+        <div class="game-card" role="listitem" data-game="mafia">
+          <div class="game-card__poster">
+            <img src="img/games/mafia/poster.png" alt="" width="800" height="1200" loading="lazy" decoding="async" />
+          </div>
+          <div class="game-card__header game-card__header--status-only">
             <div class="game-card__status game-card__status--available">Доступна</div>
           </div>
           <h3 class="game-card__title">Мафия</h3>
@@ -163,17 +161,29 @@
           <a href="play-mafia.html" class="btn btn--primary game-card__btn">Играть сейчас</a>
         </div>
 
-        <div class="game-card game-card--soon home-reveal" data-game="bunker">
-          <div class="game-card__header">
-            <span class="game-card__emoji game-icon game-icon--bunker">
-              <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
-                <circle cx="22" cy="22" r="20" fill="rgba(89,181,124,0.1)" stroke="rgba(89,181,124,0.3)" stroke-width="1.5"/>
-                <path d="M22 8L36 20H8L22 8Z" fill="#6ee7b7" opacity="0.9"/>
-                <rect x="10" y="20" width="24" height="14" rx="1" fill="#34d399" opacity="0.7"/>
-                <rect x="18" y="26" width="8" height="8" rx="1" fill="rgba(89,181,124,0.4)" stroke="#6ee7b7" stroke-width="1"/>
-                <circle cx="22" cy="16" r="2" fill="rgba(255,255,255,0.5)"/>
-              </svg>
-            </span>
+        <div class="game-card" role="listitem" data-game="whoami">
+          <div class="game-card__poster">
+            <img src="img/games/whoami/poster.png" alt="" width="800" height="1200" loading="lazy" decoding="async" />
+          </div>
+          <div class="game-card__header game-card__header--status-only">
+            <div class="game-card__status game-card__status--available">Доступна</div>
+          </div>
+          <h3 class="game-card__title">Кто я?</h3>
+          <p class="game-card__desc">Каждый загадывает слово другому — текст хранится только у тебя в браузере. Отдельная комната, как у мафии; камеры по желанию.</p>
+          <div class="game-card__info">
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 2–12 игроков</span>
+            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> свой темп</span>
+          </div>
+          <a href="game.html?g=whoami" class="btn btn--primary game-card__btn">Играть сейчас</a>
+        </div>
+
+      </div>
+
+      <p class="games__group-label games__group-label--soon home-reveal" id="games-soon-heading">Скоро</p>
+      <div class="games__grid games__grid--soon home-reveal" role="list" aria-labelledby="games-soon-heading">
+
+        <div class="game-card game-card--soon" role="listitem" data-game="bunker">
+          <div class="game-card__header game-card__header--status-only">
             <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Бункер</h3>
@@ -185,19 +195,8 @@
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
         </div>
 
-        <div class="game-card game-card--soon home-reveal" data-game="alias">
-          <div class="game-card__header">
-            <span class="game-card__emoji game-icon game-icon--alias">
-              <svg viewBox="0 0 44 44" fill="none" width="40" height="40">
-                <circle cx="22" cy="22" r="20" fill="rgba(155,127,232,0.1)" stroke="rgba(155,127,232,0.3)" stroke-width="1.5"/>
-                <rect x="10" y="12" width="20" height="14" rx="4" fill="#a78bfa" opacity="0.8"/>
-                <path d="M14 26l-4 5" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="15" y1="18" x2="25" y2="18" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
-                <line x1="15" y1="21" x2="22" y2="21" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-                <circle cx="30" cy="28" r="6" fill="#7c3aed" opacity="0.8"/>
-                <text x="30" y="32" text-anchor="middle" font-size="7" fill="white" font-weight="bold">A</text>
-              </svg>
-            </span>
+        <div class="game-card game-card--soon" role="listitem" data-game="alias">
+          <div class="game-card__header game-card__header--status-only">
             <div class="game-card__status game-card__status--soon">Скоро</div>
           </div>
           <h3 class="game-card__title">Алиас</h3>
@@ -207,20 +206,6 @@
             <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 15–30 мин</span>
           </div>
           <button class="btn game-card__btn game-card__btn--soon" disabled>Скоро</button>
-        </div>
-
-        <div class="game-card home-reveal" data-game="whoami">
-          <div class="game-card__header">
-            <span class="game-card__emoji game-icon" style="font-size:1.75rem">❔</span>
-            <div class="game-card__status game-card__status--available">Доступна</div>
-          </div>
-          <h3 class="game-card__title">Кто я?</h3>
-          <p class="game-card__desc">Каждый загадывает слово другому — текст хранится только у тебя в браузере. Отдельная комната, как у мафии; камеры по желанию.</p>
-          <div class="game-card__info">
-            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg> 2–12 игроков</span>
-            <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> свой темп</span>
-          </div>
-          <a href="game.html?g=whoami" class="btn btn--primary game-card__btn">Играть сейчас</a>
         </div>
 
       </div>
