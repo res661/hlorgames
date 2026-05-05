@@ -611,8 +611,10 @@ section { padding: 80px 24px; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--lime);
-  margin: 6px 0 12px;
+  margin: 6px auto 12px;
   padding-left: 2px;
+  max-width: 920px;
+  box-sizing: border-box;
 }
 
 .games__group-label--soon {
