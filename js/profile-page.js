@@ -114,6 +114,19 @@ const PF_FRAMES = [
   { id: 'dual_balance', name: 'Двойной резонанс', unlock: { type: 'achievement', id: 'both_packed' } },
   { id: 'steel_resolve', name: 'Сталь решений', unlock: { type: 'achievement', id: 'sessions_strong' } },
   { id: 'titan_forge', name: 'Кузня титана', unlock: { type: 'achievement', id: 'sessions_titan' } },
+  { id: 'nitro_bloom', name: 'Нитро-цветок', unlock: { type: 'level', min: 3 } },
+  { id: 'graphite_rim', name: 'Графитовый обод', unlock: { type: 'level', min: 6 } },
+  { id: 'cobalt_spire', name: 'Кобальтовый шпиль', unlock: { type: 'level', min: 11 } },
+  { id: 'velvet_neon', name: 'Бархатный неон', unlock: { type: 'level', min: 17 } },
+  { id: 'gilt_torque', name: 'Золотой обруч', unlock: { type: 'level', min: 24 } },
+  { id: 'prism_tower', name: 'Призменная башня', unlock: { type: 'level', min: 32 } },
+  { id: 'atlas_loop', name: 'Петля Атласа', unlock: { type: 'level', min: 40 } },
+  { id: 'guest_pillar', name: 'Столб гостя', unlock: { type: 'achievement', id: 'table_50' } },
+  { id: 'red_curtain', name: 'Красная сцена', unlock: { type: 'achievement', id: 'mafia_double' } },
+  { id: 'blue_prompt', name: 'Синяя подсказка', unlock: { type: 'achievement', id: 'whoami_double' } },
+  { id: 'sand_marathon', name: 'Песочный марафон', unlock: { type: 'achievement', id: 'marathon' } },
+  { id: 'lunar_shift', name: 'Лунная смена', unlock: { type: 'achievement', id: 'night_shift' } },
+  { id: 'legend_crest', name: 'Герб легенды', unlock: { type: 'achievement', id: 'legend_sessions' } },
 ];
 
 const PF_BADGE_KEY = 'pf_equipped_badges_v1';
