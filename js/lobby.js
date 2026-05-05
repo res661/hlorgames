@@ -5,7 +5,7 @@
 
 // ─── КРАСИВЫЙ ДИАЛОГ ПОДТВЕРЖДЕНИЯ ───────────────────────────────────────────
 
-function showConfirm({ title, text, okText = 'Подтвердить', danger = false, icon = '⚠️' }) {
+function showConfirm({ title, text, okText = 'Подтвердить', danger = false, icon = null }) {
   return new Promise((resolve) => {
     const dialog    = document.getElementById('confirmDialog');
     const titleEl   = document.getElementById('confirmTitle');
@@ -18,7 +18,15 @@ function showConfirm({ title, text, okText = 'Подтвердить', danger = 
 
     titleEl.textContent = title;
     textEl.textContent  = text;
-    iconEl.textContent  = icon;
+    if (iconEl) {
+      if (icon) {
+        iconEl.textContent = icon;
+        iconEl.classList.remove('hidden');
+      } else {
+        iconEl.textContent = '';
+        iconEl.classList.add('hidden');
+      }
+    }
     okBtn.textContent   = okText;
     okBtn.className     = `btn ${danger ? 'btn--danger-solid' : 'btn--primary'}`;
 
@@ -600,8 +608,8 @@ function exitLobbyPage() {
 // Покинуть лобби: убираем из лобби И уходим со страницы
 async function leaveAndExit() {
   const ok = await showConfirm(isHost
-    ? { title: 'Закрыть лобби', text: 'Ты хост. Лобби закроется для всех участников.', okText: 'Закрыть', danger: true, icon: '🚪' }
-    : { title: 'Покинуть лобби', text: 'Ты уйдёшь из комнаты. Вернуться можно по коду.', okText: 'Покинуть', danger: true, icon: '🚪' }
+    ? { title: 'Закрыть лобби', text: 'Ты хост. Лобби закроется для всех участников.', okText: 'Закрыть', danger: true }
+    : { title: 'Покинуть лобби', text: 'Ты уйдёшь из комнаты. Вернуться можно по коду.', okText: 'Покинуть', danger: true }
   );
   if (!ok) return;
 

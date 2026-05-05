@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title id="pageTitle">Лобби — HlorGames</title>
   <script src="js/site-config.js"></script>
+  <script src="js/theme-init.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/lobby.css?v=2" />
@@ -31,6 +32,9 @@
       </div>
     </div>
     <div class="lobby-topbar__right">
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="">
+        <span class="theme-toggle__thumb" aria-hidden="true"></span>
+      </button>
       <button class="lb-copy-link-btn" id="copyLinkBtn">🔗 Скопировать ссылку</button>
       <button type="button" class="lb-leave-btn" id="leaveLobbyBtn" onclick="leaveAndExit()">Выйти из комнаты</button>
     </div>
@@ -297,5 +301,6 @@
   <script src="js/lobby-seat-utils.js?v=5"></script>
   <script src="js/lobby-history.js?v=1"></script>
   <script src="js/lobby.js?v=4"></script>
+  <script src="js/theme.js"></script>
 </body>
 </html>

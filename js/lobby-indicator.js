@@ -297,15 +297,14 @@ function closeLobbyIndicator() {
 }
 
 function openLobbyLeaveConfirm(opts) {
-  const { title, text, okText, danger, onConfirm } = opts;
+  const { title, text, okText, onConfirm } = opts;
   const overlay = document.createElement('div');
   overlay.className = 'lobby-confirm-overlay';
   overlay.id = 'lobbyConfirmOverlay';
   overlay.innerHTML = `
     <div class="lobby-confirm-box">
-      <div class="lobby-confirm-icon">${danger ? '🚪' : '👋'}</div>
       <div class="lobby-confirm-title">${escHtml(title)}</div>
-      <div class="lobby-confirm-text">${text}</div>
+      <div class="lobby-confirm-text">${escHtml(text)}</div>
       <div class="lobby-confirm-actions">
         <button type="button" class="lobby-confirm-cancel">Остаться</button>
         <button type="button" class="lobby-confirm-ok">${escHtml(okText || 'Да')}</button>
@@ -360,7 +359,6 @@ async function leaveFromIndicator() {
     title,
     text,
     okText,
-    danger: true,
     onConfirm: async () => {
       const loc = getActiveLobby();
       const exitGame = loc && loc.game ? String(loc.game) : '';

@@ -8,6 +8,7 @@
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title>Админ панель — HlorGames</title>
   <script src="js/site-config.js"></script>
+  <script src="js/theme-init.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css?v=2" />
@@ -45,6 +46,9 @@
       </nav>
 
       <div class="admin-sidebar__footer">
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="">
+          <span class="theme-toggle__thumb" aria-hidden="true"></span>
+        </button>
         <div class="a-user-info" id="adminUserInfo">
           <div class="a-user-avatar">?</div>
           <span class="a-user-name">Загрузка...</span>
@@ -181,5 +185,6 @@ WHERE nickname = 'НИК_ИГРОКА';</pre>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/admin.js"></script>
+  <script src="js/theme.js"></script>
 </body>
 </html>

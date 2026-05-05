@@ -8,6 +8,7 @@
   <link rel="apple-touch-icon" href="img/logo.png" />
   <title>Профиль — HLOR GAMES</title>
   <script src="js/site-config.js"></script>
+  <script src="js/theme-init.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/profile-page.css?v=16" />
@@ -28,9 +29,14 @@
         <a href="leaderboard.html" class="nav-link">Топ</a>
         <a href="profile.html" class="nav-link active">Профиль</a>
       </nav>
+      <div class="navbar__end">
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="">
+        <span class="theme-toggle__thumb" aria-hidden="true"></span>
+      </button>
       <div class="navbar__auth" id="navAuth">
         <button class="btn btn--ghost" id="btnLogin">Войти</button>
         <button class="btn btn--primary" id="btnRegister">Регистрация</button>
+      </div>
       </div>
       <button class="navbar__burger" id="burgerBtn" aria-label="Меню">
         <span></span><span></span><span></span>
@@ -310,5 +316,6 @@
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
   <script src="js/profile-page.js?v=18"></script>
+  <script src="js/theme.js"></script>
 </body>
 </html>

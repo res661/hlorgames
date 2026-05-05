@@ -213,12 +213,110 @@ input, select { font-family: inherit; }
 .nav-link:hover { color: var(--text); }
 .nav-link.active { color: var(--lime); font-weight: 600; }
 
+.navbar__end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
 .navbar__auth {
   display: flex;
   align-items: center;
   gap: 8px;
   position: relative;
-  margin-left: auto;
+}
+
+.theme-toggle[data-theme-toggle] {
+  position: relative;
+  flex-shrink: 0;
+  width: 50px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-card-2) 100%, transparent) 0%,
+    color-mix(in srgb, var(--bg-card) 100%, transparent) 100%
+  );
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+  box-shadow: var(--shadow-inset-card), 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.theme-toggle[data-theme-toggle]:hover {
+  border-color: rgba(var(--accent-rgb), 0.35);
+}
+.theme-toggle[data-theme-toggle]:active {
+  transform: scale(0.97);
+}
+.theme-toggle[data-theme-toggle]:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.55);
+  outline-offset: 2px;
+}
+
+.theme-toggle__thumb {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--lime-cta-hover), var(--lime));
+  box-shadow:
+    0 2px 8px rgba(var(--accent-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition:
+    transform 0.26s cubic-bezier(0.34, 1.35, 0.64, 1),
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+  pointer-events: none;
+}
+
+html[data-theme='neutral'] .theme-toggle[data-theme-toggle] .theme-toggle__thumb {
+  transform: translateX(0);
+  background: linear-gradient(180deg, #f4f4f5, #c4c4cc);
+  box-shadow:
+    0 1px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+html:not([data-theme='neutral']) .theme-toggle[data-theme-toggle] .theme-toggle__thumb {
+  transform: translateX(20px);
+}
+
+/* Компакт в топбарах игр / лобби */
+.lobby-topbar .theme-toggle[data-theme-toggle],
+.mafia-topbar .theme-toggle[data-theme-toggle] {
+  width: 44px;
+  height: 26px;
+}
+
+.lobby-topbar .theme-toggle__thumb,
+.mafia-topbar .theme-toggle__thumb {
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+}
+
+html[data-theme='neutral'] .lobby-topbar .theme-toggle[data-theme-toggle] .theme-toggle__thumb,
+html[data-theme='neutral'] .mafia-topbar .theme-toggle[data-theme-toggle] .theme-toggle__thumb {
+  transform: translateX(0);
+}
+
+html:not([data-theme='neutral']) .lobby-topbar .theme-toggle[data-theme-toggle] .theme-toggle__thumb,
+html:not([data-theme='neutral']) .mafia-topbar .theme-toggle[data-theme-toggle] .theme-toggle__thumb {
+  transform: translateX(18px);
+}
+
+.admin-sidebar .theme-toggle[data-theme-toggle] {
+  margin-bottom: 8px;
+  align-self: flex-start;
 }
 .navbar__user {
   display: flex; align-items: center; gap: 8px;
@@ -970,6 +1068,7 @@ section { padding: 80px 24px; }
 /* ── CONFIRM ── */
 .modal--confirm { max-width: 360px; text-align: center; padding: 2.5rem 2rem; }
 .confirm-icon  { font-size: 2.4rem; margin-bottom: 12px; }
+.confirm-icon.hidden { display: none !important; margin: 0; padding: 0; }
 .confirm-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; }
 .confirm-text  { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
 .confirm-actions { display: flex; gap: 10px; justify-content: center; }
@@ -1082,8 +1181,7 @@ section { padding: 80px 24px; }
   box-shadow:var(--shadow-lg); animation:popIn .2s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes popIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
-.lobby-confirm-icon  { font-size:2.4rem; margin-bottom:10px; }
-.lobby-confirm-title { font-size:1.05rem; font-weight:800; color:var(--text); margin-bottom:6px; }
+.lobby-confirm-title { font-size:1.05rem; font-weight:800; color:var(--text); margin:0 0 8px; }
 .lobby-confirm-text  { font-size:.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:20px; }
 .lobby-confirm-actions { display:flex; gap:8px; }
 .lobby-confirm-cancel {
@@ -1191,6 +1289,92 @@ section { padding: 80px 24px; }
 /* nav helpers */
 .nav-separator { color:var(--text-dim); font-size:.75rem; padding:0 2px; pointer-events:none; }
 .nav-link--game { color:var(--lime) !important; font-weight:700; }
+
+/* =============================================
+   THEME: neutral (minimal monochrome)
+   Лаймовая тема остаётся базовой в :root без data-theme.
+   ============================================= */
+
+html[data-theme='neutral'] {
+  color-scheme: dark;
+  --accent-rgb: 212, 212, 216;
+  --lime: rgb(var(--accent-rgb));
+  --lime-dim: #a1a1aa;
+  --lime-glow: rgba(var(--accent-rgb), 0.05);
+  --accent: var(--lime);
+  --btn-primary-fg: #111113;
+  --lime-cta-hover: #f4f4f5;
+  --lime-gradient-end: #d4d4d8;
+  --hero-spot-rgb: 218, 218, 222;
+
+  --bg: #0f0f11;
+  --bg-card: #18181b;
+  --bg-card-2: #202024;
+  --border: rgba(255, 255, 255, 0.065);
+  --border-hi: rgba(var(--accent-rgb), 0.14);
+
+  --text: #fafafa;
+  --text-muted: #71717a;
+  --text-dim: #27272a;
+
+  --shadow-lime: 0 0 44px rgba(0, 0, 0, 0.38);
+  --shadow-lift: 0 16px 48px rgba(0, 0, 0, 0.52);
+  --shadow-lift-soft: 0 16px 44px rgba(0, 0, 0, 0.48);
+  --shadow-indicator: 0 16px 44px rgba(0, 0, 0, 0.56);
+  --shadow-popover-mid: 0 8px 26px rgba(0, 0, 0, 0.52);
+  --shadow-popover-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-modal-lobby: 0 20px 48px rgba(0, 0, 0, 0.62);
+  --shadow-focus-ring: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+  --shadow-accent-drop: 0 8px 26px rgba(0, 0, 0, 0.5);
+  --shadow-accent-ambient: 0 0 22px rgba(0, 0, 0, 0.35);
+  --shadow-accent-mid: 0 6px 22px rgba(0, 0, 0, 0.46);
+}
+
+html[data-theme='neutral'] .hero__title .glow {
+  color: #e4e4e7;
+  text-shadow: none;
+}
+
+html[data-theme='neutral'] ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+html[data-theme='neutral'] ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+html[data-theme='neutral'] .mafia-topbar {
+  background: color-mix(in srgb, var(--bg) 97%, transparent);
+}
+
+html[data-theme='neutral'] .mf-dd__item:hover,
+html[data-theme='neutral'] .mf-dd__item.is-selected {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--mf-text, var(--text));
+}
+
+html[data-theme='neutral'] .mf-slot__role--doctor {
+  color: #a1a1aa;
+}
+
+html[data-theme='neutral'] body.mafia-body.ph-night,
+html[data-theme='neutral'] body.mafia-body.ph-night-doc,
+html[data-theme='neutral'] body.mafia-body.ph-night-sheriff,
+html[data-theme='neutral'] body.mafia-body.ph-don,
+html[data-theme='neutral'] body.mafia-body.ph-night-maniac,
+html[data-theme='neutral'] body.mafia-body.ph-night-lover,
+html[data-theme='neutral'] body.mafia-body.ph-night-commissar {
+  background: var(--bg);
+}
+
+html[data-theme='neutral'] body.mafia-body.ph-night .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-don .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-night-doc .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-night-sheriff .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-night-maniac .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-night-lover .mafia-topbar,
+html[data-theme='neutral'] body.mafia-body.ph-night-commissar .mafia-topbar {
+  border-bottom-color: var(--border);
+}
 
 /* =============================================
    RESPONSIVE
