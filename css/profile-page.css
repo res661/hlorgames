@@ -963,133 +963,46 @@ body.pf-page--public .pf-tabs-sticky {
   );
 }
 
-.pf-achievement__icon-box {
+/* Тонкая полоска редкости вместо иконки (фон карточки уже несёт тему) */
+.pf-achievement__accent {
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  width: 62px;
-  height: 62px;
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(232, 236, 229, 0.88);
-  background: rgba(6, 8, 6, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: var(--shadow-xs);
+  width: 3px;
+  border-radius: 999px;
+  align-self: stretch;
+  min-height: 3.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.1) 100%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
 }
 
-/* Тематические «картинки» в плитке (мафия / время / зал и т.д.) */
-.pf-achievement--art-mafia .pf-achievement__icon-box {
-  background:
-    radial-gradient(ellipse 90% 70% at 25% 15%, rgba(248, 113, 113, 0.42), transparent 55%),
-    radial-gradient(circle at 85% 75%, rgba(91, 33, 182, 0.38), transparent 52%),
-    linear-gradient(148deg, rgba(55, 22, 32, 0.97), rgba(16, 10, 14, 0.99));
-  border-color: rgba(248, 113, 113, 0.28);
+.pf-achievement--tier-uncommon .pf-achievement__accent {
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.95) 0%, rgba(var(--accent-rgb), 0.32) 100%);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.22);
 }
 
-.pf-achievement--art-whoami .pf-achievement__icon-box {
-  background:
-    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.38), transparent 48%),
-    radial-gradient(circle at 80% 70%, rgba(129, 140, 248, 0.35), transparent 50%),
-    linear-gradient(142deg, rgba(18, 32, 48, 0.97), rgba(10, 14, 24, 0.99));
-  border-color: rgba(125, 211, 252, 0.26);
+.pf-achievement--tier-rare .pf-achievement__accent {
+  background: linear-gradient(180deg, #5eead4 0%, #115e59 100%);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.28);
 }
 
-.pf-achievement--art-dual .pf-achievement__icon-box {
-  background:
-    linear-gradient(118deg, rgba(180, 83, 9, 0.55) 0%, transparent 48%, rgba(37, 99, 235, 0.45) 100%),
-    radial-gradient(ellipse at 50% 20%, rgba(234, 179, 8, 0.25), transparent 55%),
-    linear-gradient(158deg, rgba(28, 28, 36, 0.96), rgba(12, 14, 20, 1));
-  border-color: rgba(250, 204, 21, 0.22);
+.pf-achievement--tier-epic .pf-achievement__accent {
+  background: linear-gradient(180deg, #e9d5ff 0%, #5b21b6 100%);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.32);
 }
 
-.pf-achievement--art-time .pf-achievement__icon-box {
-  background:
-    radial-gradient(circle at 30% 25%, rgba(251, 191, 36, 0.45), transparent 45%),
-    radial-gradient(circle at 75% 60%, rgba(245, 158, 11, 0.22), transparent 48%),
-    linear-gradient(165deg, rgba(48, 32, 12, 0.96), rgba(14, 12, 10, 1));
-  border-color: rgba(252, 211, 77, 0.28);
+.pf-achievement--tier-legendary .pf-achievement__accent {
+  background: linear-gradient(180deg, #fde68a 0%, #b45309 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
 }
 
-.pf-achievement--art-hall .pf-achievement__icon-box {
-  background:
-    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(180, 83, 9, 0.35), transparent 58%),
-    radial-gradient(circle at 15% 80%, rgba(120, 53, 15, 0.45), transparent 45%),
-    linear-gradient(145deg, rgba(42, 32, 24, 0.98), rgba(18, 14, 12, 1));
-  border-color: rgba(180, 83, 9, 0.3);
+.pf-achievement--locked .pf-achievement__accent {
+  opacity: 0.4;
+  filter: saturate(0.7);
 }
 
-.pf-achievement--art-sessions .pf-achievement__icon-box {
-  background:
-    radial-gradient(circle at 70% 25%, rgba(var(--accent-rgb), 0.38), transparent 42%),
-    radial-gradient(circle at 25% 75%, rgba(74, 222, 128, 0.18), transparent 45%),
-    linear-gradient(138deg, rgba(22, 36, 26, 0.98), rgba(8, 12, 10, 1));
-  border-color: rgba(var(--accent-rgb), 0.28);
-}
-
-.pf-achievement--art-mixed .pf-achievement__icon-box {
-  background:
-    radial-gradient(circle at 20% 40%, rgba(var(--accent-rgb), 0.32), transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(167, 139, 250, 0.28), transparent 48%),
-    radial-gradient(circle at 50% 90%, rgba(251, 191, 36, 0.2), transparent 42%),
-    linear-gradient(152deg, rgba(28, 24, 38, 0.97), rgba(12, 12, 16, 1));
-  border-color: rgba(167, 139, 250, 0.22);
-}
-
-.pf-achievement--art-default .pf-achievement__icon-box {
-  background:
-    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.08), transparent 52%),
-    linear-gradient(145deg, rgba(32, 38, 32, 0.95), rgba(12, 14, 14, 1));
-}
-
-.pf-achievement__art-emoji {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.9rem;
-  line-height: 1;
-  opacity: 0.24;
-  pointer-events: none;
-  user-select: none;
-}
-
-.pf-achievement--got .pf-achievement__art-emoji {
-  opacity: 0.32;
-}
-
-.pf-achievement--locked .pf-achievement__art-emoji {
-  opacity: 0.14;
-  filter: grayscale(0.85);
-}
-
-.pf-achievement--got .pf-achievement__icon-box {
-  border-color: rgba(var(--accent-rgb), 0.35);
-  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.12);
-  color: var(--lime);
-}
-
-.pf-achievement--locked .pf-achievement__icon-box {
-  color: rgba(140, 150, 138, 0.45);
-}
-
-.pf-achievement__icon {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 0;
-}
-
-.pf-achievement__icon-svg {
-  width: 1.625rem;
-  height: 1.625rem;
-  display: block;
-  flex-shrink: 0;
+.pf-achievement--got .pf-achievement__accent {
+  opacity: 1;
 }
 
 .pf-achievement__body {
@@ -2478,6 +2391,15 @@ body.pf-page--public .pf-tabs-sticky {
     padding: 16px 16px 16px 16px;
   }
 
+  .pf-achievement__accent {
+    width: auto;
+    height: 3px;
+    min-height: 0;
+    align-self: stretch;
+    order: -1;
+    margin-bottom: 2px;
+  }
+
   .pf-achievement__plate {
     background-size: 210% auto;
     background-position: 78% 36%;
@@ -2486,10 +2408,5 @@ body.pf-page--public .pf-tabs-sticky {
 
   .pf-achievement--got .pf-achievement__plate {
     opacity: 0.44;
-  }
-
-  .pf-achievement__icon-box {
-    width: 52px;
-    height: 52px;
   }
 }

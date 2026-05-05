@@ -60,17 +60,6 @@ const PF_ACH_ART_BY_ID = {
   time_and_games: 'mixed',
 };
 
-const PF_ACH_ART_EMOJI = {
-  mafia: '🎭',
-  whoami: '❓',
-  dual: '🎲',
-  time: '⏱',
-  hall: '🚪',
-  sessions: '🏅',
-  mixed: '✨',
-  default: '✦',
-};
-
 /** Фоновая иллюстрация на всей плашке карточки (по теме достижения). */
 const PF_ACH_PLATE_BY_ART = {
   mafia: 'img/achievements/mafia.png',
@@ -686,17 +675,13 @@ function achievementCardHtml(a) {
   const statusLabel = a.ok ? 'Получено' : 'В процессе';
   const stateClass = a.ok ? 'pf-achievement--got' : 'pf-achievement--locked';
   const art = pfAchievementArtKey(a.id);
-  const artEmoji = PF_ACH_ART_EMOJI[art] || PF_ACH_ART_EMOJI.default;
   const plateSrc = PF_ACH_PLATE_BY_ART[art] || PF_ACH_PLATE_BY_ART.default;
   const plateUrl = escapeHtml(plateSrc);
   return `
       <div class="pf-achievement pf-achievement--tier-${tier} pf-achievement--art-${art} ${stateClass}" role="article">
         <div class="pf-achievement__plate" style="background-image:url('${plateUrl}')" aria-hidden="true"></div>
         <div class="pf-achievement__scrim" aria-hidden="true"></div>
-        <div class="pf-achievement__icon-box" aria-hidden="true">
-          <span class="pf-achievement__art-emoji">${artEmoji}</span>
-          <span class="pf-achievement__icon">${a.icon}</span>
-        </div>
+        <div class="pf-achievement__accent" aria-hidden="true"></div>
         <div class="pf-achievement__body">
           <div class="pf-achievement__headline">
             <span class="pf-achievement__tier">${escapeHtml(tierLabel)}</span>
