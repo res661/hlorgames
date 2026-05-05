@@ -273,6 +273,7 @@ async function loadLobbies() {
         <thead>
           <tr>
             <th>Код</th><th>Игра</th><th>Статус</th>
+            <th>Каталог</th>
             <th>Игроков</th><th>Создано</th><th>Действия</th>
           </tr>
         </thead>
@@ -282,6 +283,7 @@ async function loadLobbies() {
               <td><code class="a-room-code">${esc(l.code)}</code></td>
               <td>${gameNames[l.game] || l.game}</td>
               <td>${statusBadge(l.status)}</td>
+              <td>${l.hide_from_public ? '<span class="a-badge a-badge--gray">Скрыто</span>' : 'В списках'}</td>
               <td>${Array.isArray(l.players) ? l.players.length : 0}</td>
               <td>${fmtDate(l.created_at)}</td>
               <td class="a-actions">

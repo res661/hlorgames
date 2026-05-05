@@ -18,6 +18,7 @@ create table if not exists public.lobbies (
   mafia_chat    jsonb not null default '[]'::jsonb,
   lobby_chat    jsonb not null default '[]'::jsonb,
   host_plays    boolean not null default false,
+  hide_from_public boolean not null default false,
   created_at    timestamptz not null default now(),
   constraint lobbies_status_check check (status in ('waiting', 'active', 'ended'))
 );
@@ -27,6 +28,7 @@ comment on column public.lobbies.presenter_id is 'Ведущий в мафии; 
 comment on column public.lobbies.mafia_chat is 'История чата mafia-play';
 comment on column public.lobbies.lobby_chat is 'История чата lobby.html';
 comment on column public.lobbies.host_plays is '+1 место в лобби для хоста вне сетки камер';
+comment on column public.lobbies.hide_from_public is 'true — не показывать в публичных списках на game.html; вход по коду без изменений.';
 
 create index if not exists idx_lobbies_code on public.lobbies (code);
 create index if not exists idx_lobbies_game_status on public.lobbies (game, status);

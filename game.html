@@ -17,7 +17,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/game.css?v=2" />
+  <link rel="stylesheet" href="css/game.css?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
@@ -100,6 +100,16 @@
             <div class="form-group">
               <label class="form-label">Пароль <span class="form-hint" style="display:inline">(необязательно)</span></label>
               <input type="text" class="form-input" id="lobbyPassword" placeholder="Без пароля — открытая" maxlength="20" />
+            </div>
+            <div class="form-group g-privacy-field">
+              <label class="g-privacy-card" for="lobbyHideFromPublic">
+                <input type="checkbox" id="lobbyHideFromPublic" class="g-privacy-card__input" />
+                <span class="g-privacy-card__ui" aria-hidden="true"></span>
+                <span class="g-privacy-card__body">
+                  <span class="g-privacy-card__title">Приватная комната</span>
+                  <span class="g-privacy-card__desc">Не показывать в «Активные» и «Недавние игры». Вход по коду или ссылке. Статистика считается как обычно.</span>
+                </span>
+              </label>
             </div>
             <div id="createRoomLockedNotice" class="g-notice hidden" style="margin-bottom:.85rem;line-height:1.45;color:var(--text-muted);font-size:0.84rem;background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25)">
               Ты уже в комнате. Чтобы создать новую или зайти в другую по коду — сначала выйди через плашку справа внизу («Выйти» из комнаты).
@@ -250,6 +260,6 @@
   <script src="js/shared.js"></script>
   <script src="js/lobby-indicator.js?v=7"></script>
   <script src="js/lobby-seat-utils.js?v=5"></script>
-  <script src="js/game.js?v=7"></script>
+  <script src="js/game.js?v=8"></script>
 </body>
 </html>

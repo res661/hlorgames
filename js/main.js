@@ -316,6 +316,7 @@ async function createLobby() {
       max_players: maxPlayers,
       host_plays:  false,
       players,
+      hide_from_public: false,
     });
 
     if (error) throw error;

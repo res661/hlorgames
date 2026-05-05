@@ -482,6 +482,7 @@ async function handleCreateLobby(e) {
   const name       = document.getElementById('lobbyName').value.trim() || `Лобби ${generateCode()}`;
   const maxPlayers = parseInt(document.getElementById('lobbyMaxPlayers').value);
   const password   = document.getElementById('lobbyPassword').value.trim();
+  const hideFromPublic = !!document.getElementById('lobbyHideFromPublic')?.checked;
   const code       = generateCode();
 
   const btn = e.target.querySelector('button[type=submit]');
@@ -530,6 +531,7 @@ async function handleCreateLobby(e) {
       password:    password || null,
       host_plays:  false,
       players:     playersSeed,
+      hide_from_public: hideFromPublic,
     });
 
     if (error) throw error;
@@ -588,6 +590,7 @@ async function loadLobbies() {
       .select('*')
       .eq('game', gameType)
       .eq('status', 'waiting')
+      .eq('hide_from_public', false)
       .order('created_at', { ascending: false })
       .limit(20);
 
@@ -596,10 +599,12 @@ async function loadLobbies() {
       .select('*')
       .eq('game', gameType)
       .in('status', ['ended', 'active'])
+      .eq('hide_from_public', false)
       .order('created_at', { ascending: false })
       .limit(10);
 
     if (e1) throw e1;
+    if (e2) throw e2;
 
     cachedActiveLobbies = active || [];
     filterLobbies(); // применяем текущий поиск
