@@ -10,7 +10,7 @@
   <script src="js/site-config.js"></script>
   <script src="js/seo-meta.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/leaderboard-page.css?v=6" />
+  <link rel="stylesheet" href="css/leaderboard-page.css?v=8" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="lb-page">
@@ -47,31 +47,38 @@
       </p>
     </div>
 
-    <div class="lb-tabstrip lb-tabs" role="tablist" aria-label="Режим топа">
-      <button type="button" class="lb-tab lb-tab--active" data-tab="total" role="tab" aria-selected="true">Всего игр</button>
-      <button type="button" class="lb-tab" data-tab="mafia" role="tab" aria-selected="false">Мафия</button>
-      <button type="button" class="lb-tab" data-tab="whoami" role="tab" aria-selected="false">Кто я?</button>
-      <button type="button" class="lb-tab" data-tab="time" role="tab" aria-selected="false">Время</button>
-    </div>
-
-    <div id="lb-loading" class="lb-loading hidden">Загружаем таблицу…</div>
-    <div id="lb-error" class="lb-error hidden"></div>
-    <div id="lb-empty" class="lb-empty hidden">
-      Пока список пуст. В профиле включи «Показывать меня в топе игроков», поиграй пару партий и позже загляни снова — после обновления рейтинга на сервере имена появятся здесь.
-    </div>
-
-    <div id="lb-board" class="hidden">
-      <div class="lb-podium" id="lb-podium" aria-live="polite"></div>
-
-      <div class="lb-list">
-        <div class="lb-list-head" aria-hidden="true">
-          <div>#</div>
-          <div>Игрок</div>
-          <div>Вклад</div>
-          <div>Всего</div>
-          <div>Время</div>
+    <div class="lb-stack">
+      <div class="lb-stack__head">
+        <p class="lb-stack__eyebrow" id="lb-stack-eyebrow">Режим таблицы</p>
+        <div class="lb-tabstrip lb-tabs" role="tablist" aria-labelledby="lb-stack-eyebrow">
+          <button type="button" class="lb-tab lb-tab--active" data-tab="total" role="tab" aria-selected="true">Всего игр</button>
+          <button type="button" class="lb-tab" data-tab="mafia" role="tab" aria-selected="false">Мафия</button>
+          <button type="button" class="lb-tab" data-tab="whoami" role="tab" aria-selected="false">Кто я?</button>
+          <button type="button" class="lb-tab" data-tab="time" role="tab" aria-selected="false">Время</button>
         </div>
-        <div id="lb-rows"></div>
+      </div>
+
+      <div class="lb-stack__body">
+        <div id="lb-loading" class="lb-loading hidden">Загружаем таблицу…</div>
+        <div id="lb-error" class="lb-error hidden"></div>
+        <div id="lb-empty" class="lb-empty hidden">
+          Пока список пуст. В профиле включи «Показывать меня в топе игроков», поиграй пару партий и позже загляни снова — после обновления рейтинга на сервере имена появятся здесь.
+        </div>
+
+        <div id="lb-board" class="hidden">
+          <div class="lb-podium" id="lb-podium" aria-live="polite"></div>
+
+          <div class="lb-list">
+            <div class="lb-list-head" aria-hidden="true">
+              <div>#</div>
+              <div>Игрок</div>
+              <div>Вклад</div>
+              <div>Всего</div>
+              <div>Время</div>
+            </div>
+            <div id="lb-rows"></div>
+          </div>
+        </div>
       </div>
     </div>
 
