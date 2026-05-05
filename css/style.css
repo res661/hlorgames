@@ -664,6 +664,11 @@ section { padding: 80px 24px; }
   object-position: center 35%;
   display: block;
 }
+
+.game-card__poster--soon img {
+  filter: saturate(0.7) brightness(0.88);
+  object-position: center 50%;
+}
 .game-card::before {
   content: '';
   position: absolute; top: -40px; right: -40px;
