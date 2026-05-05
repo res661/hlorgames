@@ -910,13 +910,67 @@ body.pf-page--public .pf-tabs-sticky {
   --ach-border: rgba(245, 158, 11, 0.4);
 }
 
+/* Иллюстрация на всей плашке + затемнение слева под текст */
+.pf-achievement__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: #0a0c0a;
+  background-size: 152% auto;
+  background-position: 86% center;
+  background-repeat: no-repeat;
+  opacity: 0.52;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 16%,
+    rgba(0, 0, 0, 0.42) 40%,
+    rgba(0, 0, 0, 0.88) 68%,
+    black 100%
+  );
+  mask-image: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 16%,
+    rgba(0, 0, 0, 0.42) 40%,
+    rgba(0, 0, 0, 0.88) 68%,
+    black 100%
+  );
+}
+
+.pf-achievement--got .pf-achievement__plate {
+  opacity: 0.58;
+}
+
+.pf-achievement--locked .pf-achievement__plate {
+  opacity: 0.32;
+  filter: saturate(0.78) brightness(0.86);
+}
+
+.pf-achievement__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(6, 8, 6, 0.96) 0%,
+    rgba(6, 8, 6, 0.78) 30%,
+    rgba(6, 8, 6, 0.28) 56%,
+    rgba(6, 8, 6, 0.06) 80%,
+    transparent 100%
+  );
+}
+
 .pf-achievement__icon-box {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex-shrink: 0;
-  width: 58px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   border-radius: 16px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -924,6 +978,92 @@ body.pf-page--public .pf-tabs-sticky {
   background: rgba(6, 8, 6, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: var(--shadow-xs);
+}
+
+/* Тематические «картинки» в плитке (мафия / время / зал и т.д.) */
+.pf-achievement--art-mafia .pf-achievement__icon-box {
+  background:
+    radial-gradient(ellipse 90% 70% at 25% 15%, rgba(248, 113, 113, 0.42), transparent 55%),
+    radial-gradient(circle at 85% 75%, rgba(91, 33, 182, 0.38), transparent 52%),
+    linear-gradient(148deg, rgba(55, 22, 32, 0.97), rgba(16, 10, 14, 0.99));
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+.pf-achievement--art-whoami .pf-achievement__icon-box {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.38), transparent 48%),
+    radial-gradient(circle at 80% 70%, rgba(129, 140, 248, 0.35), transparent 50%),
+    linear-gradient(142deg, rgba(18, 32, 48, 0.97), rgba(10, 14, 24, 0.99));
+  border-color: rgba(125, 211, 252, 0.26);
+}
+
+.pf-achievement--art-dual .pf-achievement__icon-box {
+  background:
+    linear-gradient(118deg, rgba(180, 83, 9, 0.55) 0%, transparent 48%, rgba(37, 99, 235, 0.45) 100%),
+    radial-gradient(ellipse at 50% 20%, rgba(234, 179, 8, 0.25), transparent 55%),
+    linear-gradient(158deg, rgba(28, 28, 36, 0.96), rgba(12, 14, 20, 1));
+  border-color: rgba(250, 204, 21, 0.22);
+}
+
+.pf-achievement--art-time .pf-achievement__icon-box {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(251, 191, 36, 0.45), transparent 45%),
+    radial-gradient(circle at 75% 60%, rgba(245, 158, 11, 0.22), transparent 48%),
+    linear-gradient(165deg, rgba(48, 32, 12, 0.96), rgba(14, 12, 10, 1));
+  border-color: rgba(252, 211, 77, 0.28);
+}
+
+.pf-achievement--art-hall .pf-achievement__icon-box {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(180, 83, 9, 0.35), transparent 58%),
+    radial-gradient(circle at 15% 80%, rgba(120, 53, 15, 0.45), transparent 45%),
+    linear-gradient(145deg, rgba(42, 32, 24, 0.98), rgba(18, 14, 12, 1));
+  border-color: rgba(180, 83, 9, 0.3);
+}
+
+.pf-achievement--art-sessions .pf-achievement__icon-box {
+  background:
+    radial-gradient(circle at 70% 25%, rgba(var(--accent-rgb), 0.38), transparent 42%),
+    radial-gradient(circle at 25% 75%, rgba(74, 222, 128, 0.18), transparent 45%),
+    linear-gradient(138deg, rgba(22, 36, 26, 0.98), rgba(8, 12, 10, 1));
+  border-color: rgba(var(--accent-rgb), 0.28);
+}
+
+.pf-achievement--art-mixed .pf-achievement__icon-box {
+  background:
+    radial-gradient(circle at 20% 40%, rgba(var(--accent-rgb), 0.32), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(167, 139, 250, 0.28), transparent 48%),
+    radial-gradient(circle at 50% 90%, rgba(251, 191, 36, 0.2), transparent 42%),
+    linear-gradient(152deg, rgba(28, 24, 38, 0.97), rgba(12, 12, 16, 1));
+  border-color: rgba(167, 139, 250, 0.22);
+}
+
+.pf-achievement--art-default .pf-achievement__icon-box {
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.08), transparent 52%),
+    linear-gradient(145deg, rgba(32, 38, 32, 0.95), rgba(12, 14, 14, 1));
+}
+
+.pf-achievement__art-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1;
+  opacity: 0.24;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pf-achievement--got .pf-achievement__art-emoji {
+  opacity: 0.32;
+}
+
+.pf-achievement--locked .pf-achievement__art-emoji {
+  opacity: 0.14;
+  filter: grayscale(0.85);
 }
 
 .pf-achievement--got .pf-achievement__icon-box {
@@ -937,6 +1077,8 @@ body.pf-page--public .pf-tabs-sticky {
 }
 
 .pf-achievement__icon {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -952,7 +1094,7 @@ body.pf-page--public .pf-tabs-sticky {
 
 .pf-achievement__body {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -2334,6 +2476,16 @@ body.pf-page--public .pf-tabs-sticky {
     flex-direction: column;
     align-items: stretch;
     padding: 16px 16px 16px 16px;
+  }
+
+  .pf-achievement__plate {
+    background-size: 210% auto;
+    background-position: 78% 36%;
+    opacity: 0.38;
+  }
+
+  .pf-achievement--got .pf-achievement__plate {
+    opacity: 0.44;
   }
 
   .pf-achievement__icon-box {

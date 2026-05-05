@@ -22,6 +22,71 @@ const PF_TIER_ORDER = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 }
 const PF_SORT_KEY = 'pf_achievement_sort_v1';
 const PF_SORT_MODES = ['default', 'done_first', 'locked_first', 'tier_high', 'tier_low', 'progress_desc'];
 
+/** Тема превью карточки достижения: градиент в плитке + крупный эмодзи (как наглядное «фото» у рамок) */
+const PF_ACH_ART_BY_ID = {
+  first_visit: 'hall',
+  table_regular: 'hall',
+  table_25: 'hall',
+  table_50: 'hall',
+  table_100: 'hall',
+  mafia_fan: 'mafia',
+  mafia_double: 'mafia',
+  mafia_triple: 'mafia',
+  whoami_fan: 'whoami',
+  whoami_double: 'whoami',
+  whoami_triple: 'whoami',
+  both_games: 'dual',
+  both_packed: 'dual',
+  time_30: 'time',
+  warmup_quarter: 'time',
+  time_sink: 'time',
+  time_two_h: 'time',
+  time_three_h: 'time',
+  night_shift: 'time',
+  marathon: 'time',
+  time_ultra: 'time',
+  finisher: 'sessions',
+  committed: 'sessions',
+  soldier: 'sessions',
+  veteran: 'sessions',
+  champion: 'sessions',
+  legend_sessions: 'sessions',
+  sessions_mid: 'sessions',
+  sessions_strong: 'sessions',
+  sessions_elite: 'sessions',
+  sessions_titan: 'sessions',
+  sessions_immortal: 'sessions',
+  closer_habit: 'sessions',
+  time_and_games: 'mixed',
+};
+
+const PF_ACH_ART_EMOJI = {
+  mafia: '🎭',
+  whoami: '❓',
+  dual: '🎲',
+  time: '⏱',
+  hall: '🚪',
+  sessions: '🏅',
+  mixed: '✨',
+  default: '✦',
+};
+
+/** Фоновая иллюстрация на всей плашке карточки (по теме достижения). */
+const PF_ACH_PLATE_BY_ART = {
+  mafia: 'img/achievements/mafia.png',
+  whoami: 'img/achievements/whoami.png',
+  dual: 'img/achievements/dual.png',
+  time: 'img/achievements/time.png',
+  hall: 'img/achievements/hall.png',
+  sessions: 'img/achievements/sessions.png',
+  mixed: 'img/achievements/mixed.png',
+  default: 'img/achievements/default.png',
+};
+
+function pfAchievementArtKey(achId) {
+  return PF_ACH_ART_BY_ID[achId] || 'default';
+}
+
 const PF_FRAME_KEY = 'pf_profile_frame_v1';
 
 /** Рамки: по уровню (опыт) или по достижению */
@@ -620,9 +685,16 @@ function achievementCardHtml(a) {
   const pct = a.ok ? 100 : Math.max(0, Math.min(100, Number(a.progress) || 0));
   const statusLabel = a.ok ? 'Получено' : 'В процессе';
   const stateClass = a.ok ? 'pf-achievement--got' : 'pf-achievement--locked';
+  const art = pfAchievementArtKey(a.id);
+  const artEmoji = PF_ACH_ART_EMOJI[art] || PF_ACH_ART_EMOJI.default;
+  const plateSrc = PF_ACH_PLATE_BY_ART[art] || PF_ACH_PLATE_BY_ART.default;
+  const plateUrl = escapeHtml(plateSrc);
   return `
-      <div class="pf-achievement pf-achievement--tier-${tier} ${stateClass}" role="article">
+      <div class="pf-achievement pf-achievement--tier-${tier} pf-achievement--art-${art} ${stateClass}" role="article">
+        <div class="pf-achievement__plate" style="background-image:url('${plateUrl}')" aria-hidden="true"></div>
+        <div class="pf-achievement__scrim" aria-hidden="true"></div>
         <div class="pf-achievement__icon-box" aria-hidden="true">
+          <span class="pf-achievement__art-emoji">${artEmoji}</span>
           <span class="pf-achievement__icon">${a.icon}</span>
         </div>
         <div class="pf-achievement__body">
